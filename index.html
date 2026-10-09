@@ -50,7 +50,6 @@
       height: 30px !important;
     }
     
-    /* Piccola personalizzazione per integrare meglio il calendario Flatpickr col tuo tema */
     .flatpickr-calendar.dark {
       background: #1e293b !important;
       border: 1px solid #475569 !important;
@@ -75,8 +74,14 @@
         </div>
       </div>
       <div class="flex items-center space-x-2">
-        <!-- Date Picker Sostituito in Input Text per la libreria -->
-        <input type="text" id="targetDate" class="bg-slate-800 text-emerald-400 border border-slate-600 rounded-lg px-2 py-1.5 text-xs font-bold shadow focus:outline-none focus:ring-2 focus:ring-emerald-500 w-[115px] cursor-pointer text-center" readonly placeholder="Seleziona data">
+        
+        <!-- Date Picker con Icona Calendario -->
+        <div class="relative flex items-center">
+          <input type="text" id="targetDate" class="bg-slate-800 text-emerald-400 border border-slate-600 rounded-lg pl-2 pr-8 py-1.5 text-xs font-bold shadow focus:outline-none focus:ring-2 focus:ring-emerald-500 w-[125px] cursor-pointer text-center" readonly placeholder="Seleziona data">
+          <svg class="w-4 h-4 text-emerald-400 absolute right-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+        </div>
         
         <button onclick="refreshData()" class="bg-emerald-600 hover:bg-emerald-500 text-white p-1.5 rounded-lg text-sm font-semibold shadow transition" title="Ricarica Dati">
           🔄
@@ -124,12 +129,11 @@
       navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registrato:', err));
     }
 
-    // --------------------------Ricorda di impostare qui il tuo PIN segreto prima di caricare su GitHub---------------
+    // ------------------Ricorda di impostare qui il tuo PIN segreto prima di caricare su GitHub
     const PIN_CORRETTO = "5972";
 
     function initCustomCalendar() {
       const today = new Date();
-      // Limite max 14 giorni nel futuro per l'API di Open-Meteo
       const maxDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000);
 
       flatpickr("#targetDate", {
@@ -138,7 +142,7 @@
         defaultDate: "today",
         maxDate: maxDate,
         theme: "dark",
-        disableMobile: true, // Forza il popup personalizzato su tutti i telefoni annullando i menu di sistema
+        disableMobile: true,
         onChange: function(selectedDates, dateStr, instance) {
           refreshData();
         }
@@ -225,157 +229,3 @@
         }
 
         const res = await fetch(url);
-        if (!res.ok) return null;
-        const data = await res.json();
-        
-        if (!data || !data.daily || !data.daily.precipitation_sum) return null;
-
-        let missingInfoDays = 0;
-        
-        if (!isToday) {
-          data.daily.precipitation_sum.forEach(v => {
-            if (v === null) missingInfoDays++;
-          });
-        }
-
-        const padArray = (arr, len, fillVal) => {
-          let res = arr.map(v => v === null ? fillVal : v);
-          while(res.length < len) {
-            res.unshift(fillVal);
-            if (!isToday && fillVal === 0) missingInfoDays++; 
-          }
-          return res.slice(-len);
-        };
-
-        const rainDays = padArray(data.daily.precipitation_sum, 21, 0);
-        const tempDays = padArray(data.daily.temperature_2m_mean, 21, 15);
-        const windSpeedDays = padArray(data.daily.wind_speed_10m_max, 21, 0);
-        const windDirDays = padArray(data.daily.wind_direction_10m_dominant, 21, 0);
-
-        const totalRain = rainDays.reduce((a, b) => a + b, 0);
-        
-        const goldenWindowRain = rainDays.slice(6, 15).reduce((a, b) => a + b, 0); 
-        const recentRain = rainDays.slice(17, 21).reduce((a, b) => a + b, 0); 
-
-        const recentTemps = tempDays.slice(-7);
-        const avgTemp = recentTemps.reduce((a, b) => a + b, 0) / recentTemps.length;
-
-        let goldenScore = 0;
-        if (goldenWindowRain >= 30 && goldenWindowRain <= 90) goldenScore = 100;
-        else if (goldenWindowRain > 5 && goldenWindowRain < 30) goldenScore = (goldenWindowRain - 5) * 4;
-        else if (goldenWindowRain > 90) goldenScore = Math.max(0, 100 - (goldenWindowRain - 90));
-
-        let totalRainScore = 0;
-        if (totalRain >= 40 && totalRain <= 150) totalRainScore = 100;
-        else if (totalRain > 10 && totalRain < 40) totalRainScore = (totalRain - 10) * 3.3;
-
-        let tempScore = 0;
-        if (avgTemp >= 12 && avgTemp <= 20) tempScore = 100;
-        else if (avgTemp > 8 && avgTemp < 12) tempScore = (avgTemp - 8) * 25;
-        else if (avgTemp > 20 && avgTemp < 26) tempScore = (26 - avgTemp) * 16.6;
-
-        let combinedScore = (goldenScore * 0.60) + (tempScore * 0.30) + (totalRainScore * 0.10);
-
-        const recentWindsSpeed = windSpeedDays.slice(-7);
-        const recentWindsDir = windDirDays.slice(-7);
-        const avgWindSpeed = recentWindsSpeed.reduce((a, b) => a + b, 0) / recentWindsSpeed.length;
-        const avgWindDir = recentWindsDir.reduce((a, b) => a + b, 0) / recentWindsDir.length;
-
-        const isDryWind = (avgWindDir >= 315 || avgWindDir <= 67);
-        const isHumidWind = (avgWindDir > 135 && avgWindDir < 247);
-        let windNote = "🌬️ Vento neutro";
-
-        if (avgWindSpeed > 18 && isDryWind) {
-          combinedScore = combinedScore * 0.75; 
-          windNote = "💨 Tramontana/Secco (-25%)";
-        } else if (avgWindSpeed <= 12 || isHumidWind) {
-          combinedScore = Math.min(100, combinedScore * 1.10); 
-          windNote = "🍃 Vento debole/Umido (+10%)";
-        }
-
-        let penaltyNote = "";
-        if (!isToday && missingInfoDays > 0) {
-          const penalty = missingInfoDays * 5;
-          combinedScore -= penalty;
-          penaltyNote = `⚠️ Incertezza previsione: penalità -${penalty}%`;
-        }
-
-        const finalScore = Math.min(100, Math.max(0, Math.round(combinedScore)));
-
-        let predictionNote = "Fase stazionaria / Attesa";
-        let predictionColor = "text-slate-500";
-        if (recentRain > 30 && goldenWindowRain < 20) {
-          predictionNote = "💧 Suolo appena bagnato: boom atteso tra 7-12 gg";
-          predictionColor = "text-blue-600 font-bold";
-        } else if (goldenWindowRain >= 30 && finalScore > 60) {
-          predictionNote = "🍄 Piena Finestra di Fruttificazione!";
-          predictionColor = "text-emerald-600 font-bold";
-        } else if (totalRain < 15) {
-          predictionNote = "🏜️ Terreno secco, in attesa di piogge.";
-          predictionColor = "text-orange-600";
-        }
-
-        return { 
-          totalRain: Math.round(totalRain), 
-          recentRain: Math.round(recentRain),
-          goldenWindowRain: Math.round(goldenWindowRain),
-          predictionNote, predictionColor, penaltyNote,
-          avgTemp: Math.round(avgTemp), 
-          windSpeed: Math.round(avgWindSpeed), windNote,
-          score: finalScore 
-        };
-
-      } catch (e) { return null; }
-    }
-
-    async function loadMeteoData() {
-      for (const loc of locations) {
-        const data = await getFungiScore(loc.lat, loc.lon);
-
-        if (!data) continue;
-
-        let color = '#dc2626'; let labelText = "Molto Basso";
-        if (data.score > 20 && data.score <= 40) { color = '#f97316'; labelText = "Basso"; }
-        else if (data.score > 40 && data.score <= 60) { color = '#f59e0b'; labelText = "Medio"; }
-        else if (data.score > 60 && data.score <= 80) { color = '#16a34a'; labelText = "Buono"; }
-        else if (data.score > 80) { color = '#34d399'; labelText = "Eccellente"; }
-
-        const size = loc.type === "Provincia" ? 34 : 28;
-        const markerIcon = L.divIcon({
-          className: 'custom-score-icon',
-          html: `<div class="score-marker" style="background-color: ${color}; width: ${size}px; height: ${size}px;">${data.score}%</div>`,
-          iconSize: [size, size],
-          iconAnchor: [size/2, size/2]
-        });
-
-        L.marker([loc.lat, loc.lon], { icon: markerIcon }).addTo(map).bindPopup(`
-          <div class="text-slate-900 p-1 max-w-[240px]">
-            <h3 class="font-bold text-sm border-b pb-1 mb-2">${loc.name} <span class="text-[10px] text-slate-500">(${loc.type})</span></h3>
-            
-            <div class="bg-slate-100 p-2 rounded-lg mb-2 text-center relative">
-              <div class="text-xs text-slate-600">Probabilità Calcolata</div>
-              <div class="text-xl font-black" style="color:${color}">${data.score}% (${labelText})</div>
-              <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>
-              ${data.penaltyNote ? `<div class="text-[9px] mt-1 text-red-600 font-bold bg-red-100 p-1 rounded">${data.penaltyNote}</div>` : ''}
-            </div>
-
-            <div class="text-[11px] space-y-1.5 text-slate-700">
-              <p><b>🌧️ Finestra d'Oro (-14 a -6gg):</b> ${data.goldenWindowRain} mm</p>
-              <p><b>💧 Pioggia Recente (Ultimi 3gg):</b> ${data.recentRain} mm</p>
-              <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C</p>
-              <p><b>💨 Vento:</b> ${data.windSpeed} km/h - ${data.windNote}</p>
-            </div>
-          </div>
-        `);
-      }
-    }
-
-    function refreshData() {
-      map.eachLayer(layer => { if (layer instanceof L.Marker) map.removeLayer(layer); });
-      loadMeteoData();
-    }
-
-    window.onload = verificaAccesso;
-  </script>
-</body>
-</html>
