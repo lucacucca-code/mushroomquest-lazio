@@ -58,9 +58,14 @@
           <p class="text-xs text-slate-400">Mappa probabilità funghi e dettaglio indicatori</p>
         </div>
       </div>
-      <button onclick="refreshData()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition">
-        🔄 Aggiorna
-      </button>
+      <div class="flex items-center space-x-2">
+        <button onclick="refreshData()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition">
+          🔄 Aggiorna
+        </button>
+        <button onclick="logoutPIN()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow transition" title="Blocca App">
+          🔒 Esci
+        </button>
+      </div>
     </div>
   </div>
 
@@ -102,6 +107,38 @@
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registrato:', err));
+    }
+
+    // Imposta qui il tuo PIN segreto
+    const PIN_CORRETTO = "5972";
+
+    function verificaAccesso() {
+      // Controlla se l'utente ha già inserito il PIN in precedenza nel telefono
+      if (localStorage.getItem("fungicast_auth") === "true") {
+        initMap(); // PIN già salvato, carica la mappa direttamente
+        return;
+      }
+
+      const pinInserito = prompt("🔒 Inserisci il PIN per accedere a FungiCast:");
+      
+      if (pinInserito === PIN_CORRETTO) {
+        localStorage.setItem("fungicast_auth", "true"); // Ricorda l'accesso sul telefono
+        initMap();
+      } else {
+        alert("❌ PIN errato! Accesso negato.");
+        document.body.innerHTML = `
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#0f172a; color:white; font-family:sans-serif; text-align:center; padding:20px;">
+            <span style="font-size:50px; margin-bottom:10px;">🔒</span>
+            <h2>Accesso Riservato</h2>
+            <p style="color:#94a3b8; font-size:14px; margin-top:8px;">Riavvia l'app per inserire nuovamente il PIN.</p>
+          </div>
+        `;
+      }
+    }
+
+    function logoutPIN() {
+      localStorage.removeItem("fungicast_auth");
+      location.reload();
     }
 
     const locations = [
@@ -310,7 +347,7 @@
       loadMeteoData();
     }
 
-    window.onload = initMap;
+    window.onload = verificaAccesso;
   </script>
 </body>
 </html>
