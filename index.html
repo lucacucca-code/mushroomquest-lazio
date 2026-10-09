@@ -15,6 +15,12 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
+  <!-- Flatpickr (Calendario Popup Custom) CSS & JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://npmcdn.com/flatpickr/dist/l10n/it.js"></script>
+
   <style>
     #map { height: 100vh; width: 100vw; }
     
@@ -43,6 +49,17 @@
       width: 30px !important;
       height: 30px !important;
     }
+    
+    /* Piccola personalizzazione per integrare meglio il calendario Flatpickr col tuo tema */
+    .flatpickr-calendar.dark {
+      background: #1e293b !important;
+      border: 1px solid #475569 !important;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+    }
+    .flatpickr-day.selected {
+      background: #059669 !important;
+      border-color: #059669 !important;
+    }
   </style>
 </head>
 <body class="bg-slate-900 text-slate-100 flex flex-col h-screen overflow-hidden">
@@ -58,8 +75,8 @@
         </div>
       </div>
       <div class="flex items-center space-x-2">
-        <!-- Date Picker Aggiunto -->
-        <input type="date" id="targetDate" onchange="refreshData()" class="bg-slate-800 text-emerald-400 border border-slate-600 rounded-lg px-2 py-1.5 text-xs font-bold shadow focus:outline-none focus:ring-2 focus:ring-emerald-500 w-[115px]">
+        <!-- Date Picker Sostituito in Input Text per la libreria -->
+        <input type="text" id="targetDate" class="bg-slate-800 text-emerald-400 border border-slate-600 rounded-lg px-2 py-1.5 text-xs font-bold shadow focus:outline-none focus:ring-2 focus:ring-emerald-500 w-[115px] cursor-pointer text-center" readonly placeholder="Seleziona data">
         
         <button onclick="refreshData()" class="bg-emerald-600 hover:bg-emerald-500 text-white p-1.5 rounded-lg text-sm font-semibold shadow transition" title="Ricarica Dati">
           🔄
@@ -107,31 +124,37 @@
       navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registrato:', err));
     }
 
+    // --------------------------Ricorda di impostare qui il tuo PIN segreto prima di caricare su GitHub---------------
     const PIN_CORRETTO = "5972";
 
-    function setInitialDate() {
-      const dateInput = document.getElementById('targetDate');
-      if (!dateInput.value) {
-        const today = new Date();
-        const offset = today.getTimezoneOffset() * 60000;
-        const localISOTime = (new Date(today - offset)).toISOString().split('T')[0];
-        dateInput.value = localISOTime;
-        
-        // Limite max 14 giorni nel futuro per l'API di Open-Meteo
-        const maxDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000);
-        dateInput.max = (new Date(maxDate - offset)).toISOString().split('T')[0];
-      }
+    function initCustomCalendar() {
+      const today = new Date();
+      // Limite max 14 giorni nel futuro per l'API di Open-Meteo
+      const maxDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000);
+
+      flatpickr("#targetDate", {
+        locale: "it",
+        dateFormat: "Y-m-d",
+        defaultDate: "today",
+        maxDate: maxDate,
+        theme: "dark",
+        disableMobile: true, // Forza il popup personalizzato su tutti i telefoni annullando i menu di sistema
+        onChange: function(selectedDates, dateStr, instance) {
+          refreshData();
+        }
+      });
     }
 
     function verificaAccesso() {
-      setInitialDate();
       if (localStorage.getItem("fungicast_auth") === "true") {
+        initCustomCalendar();
         initMap(); 
         return;
       }
       const pinInserito = prompt("🔒 Inserisci il PIN per accedere a FungiCast:");
       if (pinInserito === PIN_CORRETTO) {
         localStorage.setItem("fungicast_auth", "true");
+        initCustomCalendar();
         initMap();
       } else {
         alert("❌ PIN errato!");
@@ -194,7 +217,6 @@
         if (isToday) {
           url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&past_days=20&forecast_days=1&daily=precipitation_sum,temperature_2m_mean,wind_speed_10m_max,wind_direction_10m_dominant&timezone=Europe%2FRome`;
         } else {
-          // Calcola l'intervallo esatto per la data selezionata (-20 giorni)
           const tDate = new Date(targetDateStr);
           const sDate = new Date(tDate);
           sDate.setDate(sDate.getDate() - 20);
@@ -210,24 +232,21 @@
 
         let missingInfoDays = 0;
         
-        // Conta quanti giorni mancano o hanno valore nullo (applicato solo se NON è la data odierna)
         if (!isToday) {
           data.daily.precipitation_sum.forEach(v => {
             if (v === null) missingInfoDays++;
           });
         }
 
-        // Funzione per assicurarsi di avere 21 giorni di array riempiendo i vuoti/nulli
         const padArray = (arr, len, fillVal) => {
           let res = arr.map(v => v === null ? fillVal : v);
           while(res.length < len) {
             res.unshift(fillVal);
-            if (!isToday && fillVal === 0) missingInfoDays++; // penalità anche se l'API restituisce un array più corto
+            if (!isToday && fillVal === 0) missingInfoDays++; 
           }
           return res.slice(-len);
         };
 
-        // Standardizziamo tutto a 21 giorni esatti
         const rainDays = padArray(data.daily.precipitation_sum, 21, 0);
         const tempDays = padArray(data.daily.temperature_2m_mean, 21, 15);
         const windSpeedDays = padArray(data.daily.wind_speed_10m_max, 21, 0);
@@ -235,25 +254,21 @@
 
         const totalRain = rainDays.reduce((a, b) => a + b, 0);
         
-        // Indice 0 è -20 giorni dalla data scelta, l'indice 20 è la data scelta.
-        const goldenWindowRain = rainDays.slice(6, 15).reduce((a, b) => a + b, 0); // Da -14 a -6 gg
-        const recentRain = rainDays.slice(17, 21).reduce((a, b) => a + b, 0); // Ultimi 3 giorni + target
+        const goldenWindowRain = rainDays.slice(6, 15).reduce((a, b) => a + b, 0); 
+        const recentRain = rainDays.slice(17, 21).reduce((a, b) => a + b, 0); 
 
         const recentTemps = tempDays.slice(-7);
         const avgTemp = recentTemps.reduce((a, b) => a + b, 0) / recentTemps.length;
 
-        // 1. SCORE FINESTRA D'ORO (Peso dominante: 60%)
         let goldenScore = 0;
         if (goldenWindowRain >= 30 && goldenWindowRain <= 90) goldenScore = 100;
         else if (goldenWindowRain > 5 && goldenWindowRain < 30) goldenScore = (goldenWindowRain - 5) * 4;
         else if (goldenWindowRain > 90) goldenScore = Math.max(0, 100 - (goldenWindowRain - 90));
 
-        // 2. SCORE PIOGGIA TOTALE (Peso marginale: 10% - Indica solo riserva idrica)
         let totalRainScore = 0;
         if (totalRain >= 40 && totalRain <= 150) totalRainScore = 100;
         else if (totalRain > 10 && totalRain < 40) totalRainScore = (totalRain - 10) * 3.3;
 
-        // 3. SCORE TEMPERATURA (Peso: 30%)
         let tempScore = 0;
         if (avgTemp >= 12 && avgTemp <= 20) tempScore = 100;
         else if (avgTemp > 8 && avgTemp < 12) tempScore = (avgTemp - 8) * 25;
@@ -261,7 +276,6 @@
 
         let combinedScore = (goldenScore * 0.60) + (tempScore * 0.30) + (totalRainScore * 0.10);
 
-        // 4. IMPATTO VENTO
         const recentWindsSpeed = windSpeedDays.slice(-7);
         const recentWindsDir = windDirDays.slice(-7);
         const avgWindSpeed = recentWindsSpeed.reduce((a, b) => a + b, 0) / recentWindsSpeed.length;
@@ -279,7 +293,6 @@
           windNote = "🍃 Vento debole/Umido (+10%)";
         }
 
-        // 5. PENALITÀ DATI MANCANTI (Solo per previsioni future)
         let penaltyNote = "";
         if (!isToday && missingInfoDays > 0) {
           const penalty = missingInfoDays * 5;
@@ -289,7 +302,6 @@
 
         const finalScore = Math.min(100, Math.max(0, Math.round(combinedScore)));
 
-        // MESSAGGIO PREDITTIVO
         let predictionNote = "Fase stazionaria / Attesa";
         let predictionColor = "text-slate-500";
         if (recentRain > 30 && goldenWindowRain < 20) {
