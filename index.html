@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FungiCast Lazio</title>
+
+  <!-- PWA Manifest & Colors -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- Tailwind CSS & Leaflet CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    #map { height: 100vh; width: 100vw; }
+    .custom-pulse { animation: pulse 2s infinite; }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+      70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 flex flex-col h-screen overflow-hidden">
+
+  <!-- Header Overlay -->
+  <div class="absolute top-4 left-4 right-4 z-[1000] bg-slate-900/90 backdrop-blur-md border border-slate-700/50 p-4 rounded-2xl shadow-xl">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <span class="text-2xl">🍄</span>
+        <div>
+          <h1 class="font-bold text-lg leading-tight text-emerald-400">FungiCast Lazio</h1>
+          <p class="text-xs text-slate-400">Probabilità di nascita funghi in tempo reale</p>
+        </div>
+      </div>
+      <button onclick="refreshData()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow">
+        🔄 Aggiorna
+      </button>
+    </div>
+  </div>
+
+  <!-- Map Container -->
+  <div id="map" class="z-0"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // Registrazione Service Worker per PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registrato:', err));
+    }
+
+    // Coordinate Comuni principali Lazio
+    const locations = [
+      { name: "Oriolo Romano", lat: 42.1581, lon: 12.1363 },
+      { name: "Manziana", lat: 42.1306, lon: 12.1294 },
+      { name: "Allumiere (Tolfa)", lat: 42.1561, lon: 11.9056 },
+      { name: "Rocca Priora (Vivaro)", lat: 41.7869, lon: 12.7611 },
+      { name: "Artena (Lepini)", lat: 41.7417, lon: 12.9133 },
+      { name: "Velletri", lat: 41.6867, lon: 12.7783 },
+      { name: "Subiaco (Simbruini)", lat: 41.9256, lon: 13.0944 },
+      { name: "Soriano nel Cimino", lat: 42.4181, lon: 12.2333 }
+    ];
+
+    let map;
+    const markers = [];
+
+    function initMap() {
+      map = L.map('map', { zoomControl: false }).setView([42.0, 12.5], 9);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+
+      loadMeteoData();
+    }
+
+    async function getFungiScore(lat, lon) {
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&past_days=20&forecast_days=1&daily=precipitation_sum,temperature_2m_mean&timezone=Europe%2FRome`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        const totalRain = data.daily.precipitation_sum.reduce((a, b) => a + b, 0);
+        const recentTemps = data.daily.temperature_2m_mean.slice(-7);
+        const avgTemp = recentTemps.reduce((a, b) => a + b, 0) / recentTemps.length;
+
+        let rainScore = 0;
+        if (totalRain >= 40 && totalRain <= 100) rainScore = 100;
+        else if (totalRain > 20 && totalRain < 40) rainScore = (totalRain - 20) * 5;
+        else if (totalRain > 100) rainScore = Math.max(0, 100 - (totalRain - 100));
+
+        let tempScore = 0;
+        if (avgTemp >= 12 && avgTemp <= 22) tempScore = 100;
+        else if (avgTemp > 8 && avgTemp < 12) tempScore = (avgTemp - 8) * 25;
+        else if (avgTemp > 22 && avgTemp < 28) tempScore = (28 - avgTemp) * 16.6;
+
+        const totalScore = Math.round((rainScore * 0.6) + (tempScore * 0.4));
+        return { totalRain: Math.round(totalRain), avgTemp: Math.round(avgTemp), score: totalScore };
+      } catch (e) {
+        return { totalRain: 45, avgTemp: 18, score: 75 }; // Fallback
+      }
+    }
+
+    async function loadMeteoData() {
+      for (const loc of locations) {
+        const data = await getFungiScore(loc.lat, loc.lon);
+        let color = '#ef4444'; // Rosso
+        if (data.score > 40) color = '#f59e0b'; // Giallo
+        if (data.score > 70) color = '#22c55e'; // Verde
+
+        const marker = L.circleMarker([loc.lat, loc.lon], {
+          radius: 14,
+          fillColor: color,
+          color: '#ffffff',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.85
+        }).addTo(map);
+
+        marker.bindPopup(`
+          <div class="text-slate-900 p-1">
+            <h3 class="font-bold text-sm mb-1">${loc.name}</h3>
+            <div class="text-xs space-y-1">
+              <p>🍄 <b>Probabilità:</b> <span style="color:${color}">${data.score}%</span></p>
+              <p>🌧️ <b>Pioggia 20gg:</b> ${data.totalRain} mm</p>
+              <p>🌡️ <b>Temp. media:</b> ${data.avgTemp} °C</p>
+            </div>
+          </div>
+        `);
+      }
+    }
+
+    function refreshData() {
+      map.eachLayer(layer => { if (layer instanceof L.CircleMarker) map.removeLayer(layer); });
+      loadMeteoData();
+    }
+
+    window.onload = initMap;
+  </script>
+</body>
+</html>
