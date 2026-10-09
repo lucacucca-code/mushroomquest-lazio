@@ -17,16 +17,32 @@
 
   <style>
     #map { height: 100vh; width: 100vw; }
+    
+    /* Marker personalizzato con percentuale scritta dentro */
+    .score-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 10px;
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      text-shadow: 0px 1px 2px rgba(0,0,0,0.8);
+      text-align: center;
+    }
+
     .no-data-icon {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
+      font-size: 16px;
       background: rgba(239, 68, 68, 0.2);
       border: 2px solid #ef4444;
       border-radius: 50%;
-      width: 28px !important;
-      height: 28px !important;
+      width: 30px !important;
+      height: 30px !important;
     }
   </style>
 </head>
@@ -39,7 +55,7 @@
         <span class="text-2xl">🍄</span>
         <div>
           <h1 class="font-bold text-lg leading-tight text-emerald-400">FungiCast Lazio</h1>
-          <p class="text-xs text-slate-400">Mappa probabilità funghi e precipitazioni</p>
+          <p class="text-xs text-slate-400">Mappa probabilità funghi e dettaglio indicatori</p>
         </div>
       </div>
       <button onclick="refreshData()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition">
@@ -88,7 +104,6 @@
       navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registrato:', err));
     }
 
-    // Elenco Ampio: Province e principali città/comuni del Lazio
     const locations = [
       // Capoluoghi
       { name: "Roma", lat: 41.9028, lon: 12.4964, type: "Provincia" },
@@ -104,25 +119,23 @@
       { name: "Soriano nel Cimino", lat: 42.4181, lon: 12.2333, type: "Comune" },
       { name: "Vejano", lat: 42.2183, lon: 12.0967, type: "Comune" },
 
-      //Roma
-      { name: "Bosco di Gattacieca (Mentana)", lat: 42.0292, lon: 12.6681, type: "Riserva" },
-
       // Castelli Romani & Lepini
       { name: "Rocca Priora (Vivaro)", lat: 41.7869, lon: 12.7611, type: "Comune" },
       { name: "Artena", lat: 41.7417, lon: 12.9133, type: "Comune" },
       { name: "Velletri", lat: 41.6867, lon: 12.7783, type: "Comune" },
       { name: "Palestrina", lat: 41.8389, lon: 12.8911, type: "Comune" },
-       { name: "Pisoniano", lat: 41.9078, lon: 12.9575, type: "Comune" },
 
       // Tiburtina & Simbruini
       { name: "Tivoli", lat: 41.9608, lon: 12.7989, type: "Comune" },
       { name: "Subiaco (Simbruini)", lat: 41.9256, lon: 13.0944, type: "Comune" },
       { name: "Monte Livata", lat: 41.9328, lon: 13.1603, type: "Località" },
+      { name: "Pisoniano", lat: 41.9078, lon: 12.9575, type: "Comune" },
+      { name: "Bosco di Gattacieca (Mentana)", lat: 42.0292, lon: 12.6681, type: "Riserva" },
 
       // Reatino & Sabina
+      { name: "Montenero Sabino", lat: 42.2803, lon: 12.8144, type: "Comune" },
       { name: "Amatrice", lat: 42.6289, lon: 13.2942, type: "Comune" },
       { name: "Leonessa", lat: 42.5658, lon: 12.9619, type: "Comune" },
-      { name: "Montenero Sabino", lat: 42.2803, lon: 12.8144, type: "Comune" },
 
       // Ciociaria & Basso Lazio
       { name: "Fiuggi", lat: 41.7919, lon: 13.2208, type: "Comune" },
@@ -144,97 +157,96 @@
     }
 
     async function getFungiScore(lat, lon) {
-  try {
-    // Richiesta API estesa con direzione e velocità del vento
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&past_days=20&forecast_days=1&daily=precipitation_sum,temperature_2m_mean,wind_speed_10m_max,wind_direction_10m_dominant&timezone=Europe%2FRome`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    
-    const data = await res.json();
-    if (!data || !data.daily || !data.daily.precipitation_sum) return null;
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&past_days=20&forecast_days=1&daily=precipitation_sum,temperature_2m_mean,wind_speed_10m_max,wind_direction_10m_dominant&timezone=Europe%2FRome`;
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        
+        const data = await res.json();
+        if (!data || !data.daily || !data.daily.precipitation_sum) return null;
 
-    const rainDays = data.daily.precipitation_sum; // Array di 21 giorni (da -20 ad oggi)
-    const totalRain = rainDays.reduce((a, b) => a + b, 0);
-    const recentTemps = data.daily.temperature_2m_mean.slice(-7);
-    const avgTemp = recentTemps.reduce((a, b) => a + b, 0) / recentTemps.length;
+        const rainDays = data.daily.precipitation_sum;
+        const totalRain = rainDays.reduce((a, b) => a + b, 0);
+        const recentTemps = data.daily.temperature_2m_mean.slice(-7);
+        const avgTemp = recentTemps.reduce((a, b) => a + b, 0) / recentTemps.length;
 
-    // -------------------------------------------------------------
-    // 1. PUNTEGGIO BASE PIOGGIA (Quantità cumulata 20 giorni)
-    // -------------------------------------------------------------
-    let rainScore = 0;
-    if (totalRain >= 40 && totalRain <= 100) rainScore = 100;
-    else if (totalRain > 20 && totalRain < 40) rainScore = (totalRain - 20) * 5;
-    else if (totalRain > 100) rainScore = Math.max(0, 100 - (totalRain - 100) * 0.8);
+        // 1. Punteggio Base Pioggia
+        let baseRainScore = 0;
+        if (totalRain >= 40 && totalRain <= 100) baseRainScore = 100;
+        else if (totalRain > 20 && totalRain < 40) baseRainScore = (totalRain - 20) * 5;
+        else if (totalRain > 100) baseRainScore = Math.max(0, 100 - (totalRain - 100) * 0.8);
 
-    // -------------------------------------------------------------
-    // 2. TIMING PIOGGIA (Finestra ideale: tra -14 e -7 giorni fa)
-    // -------------------------------------------------------------
-    // Indici nell'array dei 21 giorni: -14gg fa è l'indice 6, -7gg fa è l'indice 13
-    const goldenWindowRain = rainDays.slice(6, 14).reduce((a, b) => a + b, 0);
-    
-    if (totalRain > 15) {
-      const goldenRatio = goldenWindowRain / totalRain;
-      if (goldenRatio >= 0.5) {
-        rainScore = Math.min(100, rainScore * 1.20); // +20% se la pioggia è ben concentrata nel periodo ideale
-      } else if (goldenRatio < 0.2) {
-        rainScore = rainScore * 0.90; // -10% se è piovuto solo troppo di recente o troppo tempo fa
+        // 2. Timing Finestra d'Oro (-14 / -7 giorni)
+        const goldenWindowRain = rainDays.slice(6, 14).reduce((a, b) => a + b, 0);
+        let goldenNote = "Neutro";
+        let rainScore = baseRainScore;
+
+        if (totalRain > 15) {
+          const goldenRatio = goldenWindowRain / totalRain;
+          if (goldenRatio >= 0.5) {
+            rainScore = Math.min(100, baseRainScore * 1.20);
+            goldenNote = "🔥 Ottimale (+20%)";
+          } else if (goldenRatio < 0.2) {
+            rainScore = baseRainScore * 0.90;
+            goldenNote = "⚠️ Non concentrata (-10%)";
+          }
+        }
+
+        // 3. Punteggio Temperatura
+        let tempScore = 0;
+        if (avgTemp >= 12 && avgTemp <= 22) tempScore = 100;
+        else if (avgTemp > 8 && avgTemp < 12) tempScore = (avgTemp - 8) * 25;
+        else if (avgTemp > 22 && avgTemp < 28) tempScore = (28 - avgTemp) * 16.6;
+
+        let combinedScore = (rainScore * 0.6) + (tempScore * 0.4);
+
+        // 4. Impatto Vento
+        const recentWindsSpeed = data.daily.wind_speed_10m_max.slice(-7);
+        const recentWindsDir = data.daily.wind_direction_10m_dominant.slice(-7);
+        const avgWindSpeed = recentWindsSpeed.reduce((a, b) => a + b, 0) / recentWindsSpeed.length;
+        const avgWindDir = recentWindsDir.reduce((a, b) => a + b, 0) / recentWindsDir.length;
+
+        const isDryWind = (avgWindDir >= 315 || avgWindDir <= 67);
+        const isHumidWind = (avgWindDir > 135 && avgWindDir < 247);
+        let windNote = "Moderato / Neutro";
+
+        if (avgWindSpeed > 20 && isDryWind) {
+          combinedScore = combinedScore * 0.82;
+          windNote = "💨 Vento forte secco (-18%)";
+        } else if (avgWindSpeed <= 12 || isHumidWind) {
+          combinedScore = Math.min(100, combinedScore * 1.08);
+          windNote = "🍃 Vento debole/umido (+8%)";
+        }
+
+        const finalScore = Math.min(100, Math.max(0, Math.round(combinedScore)));
+
+        return { 
+          totalRain: Math.round(totalRain), 
+          goldenWindowRain: Math.round(goldenWindowRain),
+          goldenNote: goldenNote,
+          avgTemp: Math.round(avgTemp), 
+          tempScore: Math.round(tempScore),
+          rainScore: Math.round(rainScore),
+          windSpeed: Math.round(avgWindSpeed),
+          windNote: windNote,
+          score: finalScore 
+        };
+
+      } catch (e) {
+        return null;
       }
     }
-
-    // -------------------------------------------------------------
-    // 3. PUNTEGGIO TEMPERATURA (Media ultimi 7 giorni)
-    // -------------------------------------------------------------
-    let tempScore = 0;
-    if (avgTemp >= 12 && avgTemp <= 22) tempScore = 100;
-    else if (avgTemp > 8 && avgTemp < 12) tempScore = (avgTemp - 8) * 25;
-    else if (avgTemp > 22 && avgTemp < 28) tempScore = (28 - avgTemp) * 16.6;
-
-    // Punteggio Combinato Base (60% Pioggia + 40% Temperatura)
-    let score = (rainScore * 0.6) + (tempScore * 0.4);
-
-    // -------------------------------------------------------------
-    // 4. IMPATTO VENTI (Ultimi 7 giorni)
-    // -------------------------------------------------------------
-    const recentWindsSpeed = data.daily.wind_speed_10m_max.slice(-7);
-    const recentWindsDir = data.daily.wind_direction_10m_dominant.slice(-7);
-
-    const avgWindSpeed = recentWindsSpeed.reduce((a, b) => a + b, 0) / recentWindsSpeed.length;
-    const avgWindDir = recentWindsDir.reduce((a, b) => a + b, 0) / recentWindsDir.length;
-
-    // Venti di Tramontana / Grecale / Scirocco
-    const isDryWind = (avgWindDir >= 315 || avgWindDir <= 67); // Nord / Nord-Est
-    const isHumidWind = (avgWindDir > 135 && avgWindDir < 247); // Sud / Libeccio / Scirocco
-
-    if (avgWindSpeed > 20 && isDryWind) {
-      score = score * 0.82; // Malus -18% per vento forte e secco
-    } else if (avgWindSpeed <= 12 || isHumidWind) {
-      score = Math.min(100, score * 1.08); // Bonus +8% per calma di vento o vento umido di mare
-    }
-
-    const finalScore = Math.min(100, Math.max(0, Math.round(score)));
-
-    return { 
-      totalRain: Math.round(totalRain), 
-      avgTemp: Math.round(avgTemp), 
-      score: finalScore 
-    };
-
-  } catch (e) {
-    return null;
-  }
-}
 
     async function loadMeteoData() {
       for (const loc of locations) {
         const data = await getFungiScore(loc.lat, loc.lon);
 
         if (!data) {
-          // Marker di DIVIETO 🚫 se l'informazione non è stata recuperata
           const noDataIcon = L.divIcon({
             className: 'custom-div-icon',
             html: `<div class="no-data-icon">🚫</div>`,
-            iconSize: [28, 28],
-            iconAnchor: [14, 14]
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
           });
 
           L.marker([loc.lat, loc.lon], { icon: noDataIcon })
@@ -248,32 +260,41 @@
           continue;
         }
 
-        // Assegnazione colori a 5 livelli
-        let color = '#dc2626'; // 0-20% Rosso
+        // Colori in 5 fasce
+        let color = '#dc2626'; // Rosso
         let labelText = "Molto Basso";
-        if (data.score > 20 && data.score <= 40) { color = '#f97316'; labelText = "Basso"; } // Arancione
-        else if (data.score > 40 && data.score <= 60) { color = '#f59e0b'; labelText = "Medio"; } // Giallo
-        else if (data.score > 60 && data.score <= 80) { color = '#16a34a'; labelText = "Buono"; } // Verde
-        else if (data.score > 80) { color = '#34d399'; labelText = "Eccellente"; } // Verde Brillante
+        if (data.score > 20 && data.score <= 40) { color = '#f97316'; labelText = "Basso"; }
+        else if (data.score > 40 && data.score <= 60) { color = '#f59e0b'; labelText = "Medio"; }
+        else if (data.score > 60 && data.score <= 80) { color = '#16a34a'; labelText = "Buono"; }
+        else if (data.score > 80) { color = '#34d399'; labelText = "Eccellente"; }
 
-        const radius = loc.type === "Provincia" ? 16 : 12;
+        const size = loc.type === "Provincia" ? 34 : 28;
 
-        const marker = L.circleMarker([loc.lat, loc.lon], {
-          radius: radius,
-          fillColor: color,
-          color: '#ffffff',
-          weight: 2,
-          opacity: 1,
-          fillOpacity: 0.85
-        }).addTo(map);
+        // Marker personalizzato con il numero % dentro
+        const markerIcon = L.divIcon({
+          className: 'custom-score-icon',
+          html: `<div class="score-marker" style="background-color: ${color}; width: ${size}px; height: ${size}px;">${data.score}%</div>`,
+          iconSize: [size, size],
+          iconAnchor: [size/2, size/2]
+        });
 
+        const marker = L.marker([loc.lat, loc.lon], { icon: markerIcon }).addTo(map);
+
+        // Popup dettagliato con scomposizione dello Score
         marker.bindPopup(`
-          <div class="text-slate-900 p-1">
-            <h3 class="font-bold text-sm mb-1">${loc.name} <span class="text-[10px] text-slate-500">(${loc.type})</span></h3>
-            <div class="text-xs space-y-1">
-              <p>🍄 <b>Probabilità:</b> <span style="color:${color}; font-weight:bold;">${data.score}% (${labelText})</span></p>
-              <p>🌧️ <b>Pioggia 20gg:</b> ${data.totalRain} mm</p>
-              <p>🌡️ <b>Temp. media:</b> ${data.avgTemp} °C</p>
+          <div class="text-slate-900 p-1 max-w-[220px]">
+            <h3 class="font-bold text-sm border-b pb-1 mb-2">${loc.name} <span class="text-[10px] text-slate-500">(${loc.type})</span></h3>
+            
+            <div class="bg-slate-100 p-2 rounded-lg mb-2 text-center">
+              <div class="text-xs text-slate-600">Probabilità Totale</div>
+              <div class="text-xl font-black" style="color:${color}">${data.score}% (${labelText})</div>
+            </div>
+
+            <div class="text-xs space-y-1.5 text-slate-700">
+              <p><b>🌧️ Pioggia 20gg:</b> ${data.totalRain} mm <span class="text-[10px] text-slate-500">(Score: ${data.rainScore}%)</span></p>
+              <p><b>⏳ Finestra -14/-7gg:</b> ${data.goldenWindowRain} mm<br><span class="text-[10px] font-semibold text-emerald-700">${data.goldenNote}</span></p>
+              <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C <span class="text-[10px] text-slate-500">(Score: ${data.tempScore}%)</span></p>
+              <p><b>💨 Vento:</b> ${data.windSpeed} km/h<br><span class="text-[10px] font-semibold text-slate-600">${data.windNote}</span></p>
             </div>
           </div>
         `);
@@ -282,7 +303,7 @@
 
     function refreshData() {
       map.eachLayer(layer => { 
-        if (layer instanceof L.CircleMarker || layer instanceof L.Marker) {
+        if (layer instanceof L.Marker) {
           map.removeLayer(layer);
         }
       });
