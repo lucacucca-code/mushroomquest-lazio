@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>FungiCast Lazio</title>
+  <title>FungiCast Lazio - Smart</title>
 
   <!-- PWA Manifest & Colors -->
   <link rel="manifest" href="manifest.json">
@@ -15,14 +15,13 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-  <!-- Flatpickr (Calendario Popup Custom) CSS & JS (Link Aggiornati e Sicuri) -->
+  <!-- Flatpickr (Calendario Popup Custom) CSS & JS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/it.js"></script>
+  <script src="https://npmcdn.com/flatpickr/dist/l10n/it.js"></script>
 
   <style>
-    /* Assicura che la mappa sia a tutto schermo e sempre sul fondo */
     #map { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; }
     
     .score-marker {
@@ -39,18 +38,6 @@
       text-align: center;
     }
 
-    .no-data-icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      background: rgba(239, 68, 68, 0.2);
-      border: 2px solid #ef4444;
-      border-radius: 50%;
-      width: 30px !important;
-      height: 30px !important;
-    }
-    
     .flatpickr-calendar.dark {
       background: #1e293b !important;
       border: 1px solid #475569 !important;
@@ -71,12 +58,12 @@
         <span class="text-2xl">🍄</span>
         <div>
           <h1 class="font-bold text-lg leading-tight text-emerald-400">FungiCast Lazio</h1>
-          <p class="text-[10px] text-slate-400">Seleziona la data di previsione</p>
+          <p id="status-text" class="text-[10px] text-slate-400">Monitoraggio attivo con allerte meteo</p>
         </div>
       </div>
       <div class="flex items-center space-x-2">
         
-        <!-- Date Picker con Icona Calendario -->
+        <!-- Date Picker -->
         <div class="relative flex items-center">
           <input type="text" id="targetDate" class="bg-slate-800 text-emerald-400 border border-slate-600 rounded-lg pl-2 pr-8 py-1.5 text-xs font-bold shadow focus:outline-none focus:ring-2 focus:ring-emerald-500 w-[125px] cursor-pointer text-center" readonly placeholder="Seleziona data">
           <svg class="w-4 h-4 text-emerald-400 absolute right-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -127,11 +114,47 @@
 
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registrato:', err));
+      navigator.serviceWorker.register('sw.js').then(reg => {
+        console.log('Service Worker registrato con successo');
+        requestNotificationPermission();
+      }).catch(err => console.log('SW errore:', err));
     }
 
-    // Ricorda di impostare qui il tuo PIN segreto prima di caricare su GitHub
     const PIN_CORRETTO = "1234";
+    let map;
+    let activeMarkers = {};
+    let meteoCache = {};
+    let debounceTimer = null;
+
+    function requestNotificationPermission() {
+      if ('Notification' in window && Notification.permission !== 'granted') {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            console.log('Permesso notifiche accordato.');
+          }
+        });
+      }
+    }
+
+    function sendFungiAlert(locationName, recentRain) {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        // Evita di inviare notifiche spam identiche nello stesso giorno
+        const lastAlert = localStorage.getItem(`alert_${locationName}`);
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        if (lastAlert !== todayStr) {
+          navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification("🍄 FungiCast Lazio - Allerta Crescita!", {
+              body: `💧 Rilevati ${recentRain} mm di pioggia a ${locationName}!\n🌱 Fruttificazione altamente probabile tra 7-14 giorni.`,
+              icon: "icon.png",
+              badge: "icon.png",
+              vibrate: [200, 100, 200]
+            });
+            localStorage.setItem(`alert_${locationName}`, todayStr);
+          });
+        }
+      }
+    }
 
     function initCustomCalendar() {
       try {
@@ -144,13 +167,12 @@
           defaultDate: "today",
           maxDate: maxDate,
           disableMobile: true,
-          onChange: function(selectedDates, dateStr, instance) {
+          onChange: function() {
+            meteoCache = {};
             refreshData();
           }
         });
       } catch(e) {
-        console.error("Errore Flatpickr:", e);
-        // Fallback di sicurezza: se il calendario fallisce, impostiamo la data di oggi manualmente
         const offset = (new Date()).getTimezoneOffset() * 60000;
         document.getElementById('targetDate').value = (new Date(Date.now() - offset)).toISOString().split('T')[0];
       }
@@ -178,46 +200,132 @@
       location.reload();
     }
 
-    const locations = [
-      { name: "Roma", lat: 41.9028, lon: 12.4964, type: "Provincia" },
-      { name: "Viterbo", lat: 42.4174, lon: 12.1047, type: "Provincia" },
-      { name: "Frosinone", lat: 41.6400, lon: 13.3511, type: "Provincia" },
-      { name: "Latina", lat: 41.4676, lon: 12.9036, type: "Provincia" },
-      { name: "Rieti", lat: 42.4042, lon: 12.8628, type: "Provincia" },
-      { name: "Oriolo Romano", lat: 42.1581, lon: 12.1363, type: "Comune" },
-      { name: "Manziana", lat: 42.1306, lon: 12.1294, type: "Comune" },
-      { name: "Allumiere (Tolfa)", lat: 42.1561, lon: 11.9056, type: "Comune" },
-      { name: "Soriano nel Cimino", lat: 42.4181, lon: 12.2333, type: "Comune" },
-      { name: "Vejano", lat: 42.2183, lon: 12.0967, type: "Comune" },
-      { name: "Rocca Priora", lat: 41.7869, lon: 12.7611, type: "Comune" },
-      { name: "Artena", lat: 41.7417, lon: 12.9133, type: "Comune" },
-      { name: "Velletri", lat: 41.6867, lon: 12.7783, type: "Comune" },
-      { name: "Palestrina", lat: 41.8389, lon: 12.8911, type: "Comune" },
-      { name: "Tivoli", lat: 41.9608, lon: 12.7989, type: "Comune" },
-      { name: "Subiaco", lat: 41.9256, lon: 13.0944, type: "Comune" },
-      { name: "Monte Livata", lat: 41.9328, lon: 13.1603, type: "Località" },
-      { name: "Pisoniano", lat: 41.9078, lon: 12.9575, type: "Comune" },
-      { name: "Bosco Gattacieca", lat: 42.0292, lon: 12.6681, type: "Riserva" },
-      { name: "Montenero Sabino", lat: 42.2803, lon: 12.8144, type: "Comune" },
-      { name: "Amatrice", lat: 42.6289, lon: 13.2942, type: "Comune" },
-      { name: "Leonessa", lat: 42.5658, lon: 12.9619, type: "Comune" },
-      { name: "Fiuggi", lat: 41.7919, lon: 13.2208, type: "Comune" },
-      { name: "Cassino", lat: 41.4922, lon: 13.8306, type: "Comune" },
-      { name: "Terracina", lat: 41.2867, lon: 13.2442, type: "Comune" },
-      { name: "Formia", lat: 41.2575, lon: 13.6067, type: "Comune" }
-    ];
-
-    let map;
-
     function initMap() {
-      map = L.map('map', { zoomControl: false }).setView([41.9, 12.7], 8);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OS' }).addTo(map);
-      loadMeteoData();
+      map = L.map('map', { zoomControl: false }).setView([41.9, 12.7], 9);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
+      
+      map.on('moveend zoomend', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(fetchPlacesAndMeteo, 500);
+      });
+
+      fetchPlacesAndMeteo();
+    }
+
+    async function fetchPlacesAndMeteo() {
+      const zoom = map.getZoom();
+      const statusText = document.getElementById("status-text");
+
+      if (zoom < 8) {
+        statusText.innerText = "Fai zoom per vedere i luoghi...";
+        return;
+      }
+
+      statusText.innerText = "🔍 Analisi meteo zone in corso...";
+
+      const bounds = map.getBounds();
+      const bbox = `${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()}`;
+
+      let placeFilter = "node[place=city]";
+      if (zoom >= 9 && zoom < 11) {
+        placeFilter = "node[place~='city|town']";
+      } else if (zoom >= 11) {
+        placeFilter = "node[place~='city|town|village|hamlet']";
+      }
+
+      const overpassQuery = `[out:json][timeout:10];(${placeFilter}(${bbox}););out body 25;`;
+      const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Errore Overpass");
+        const json = await res.json();
+        
+        const places = json.elements.map(el => ({
+          id: el.id,
+          name: el.tags.name || "Località",
+          lat: el.lat,
+          lon: el.lon,
+          type: el.tags.place
+        }));
+
+        statusText.innerText = `🍄 Monitorati ${places.length} punti`;
+        processPlaces(places);
+
+      } catch (err) {
+        statusText.innerText = "⚠️ Errore caricamento dati";
+      }
+    }
+
+    async function processPlaces(places) {
+      const currentKeys = new Set();
+
+      for (const place of places) {
+        const key = `${place.lat.toFixed(3)}_${place.lon.toFixed(3)}`;
+        currentKeys.add(key);
+
+        if (!activeMarkers[key]) {
+          const data = await getFungiScore(place.lat, place.lon);
+          if (!data) continue;
+
+          // CONTROLLO NOTIFICA: Se c'è stata pioggia intensa recente (> 30mm negli ultimi 3 giorni)
+          if (data.recentRain >= 30) {
+            sendFungiAlert(place.name, data.recentRain);
+          }
+
+          let color = '#dc2626'; let labelText = "Molto Basso";
+          if (data.score > 20 && data.score <= 40) { color = '#f97316'; labelText = "Basso"; }
+          else if (data.score > 40 && data.score <= 60) { color = '#f59e0b'; labelText = "Medio"; }
+          else if (data.score > 60 && data.score <= 80) { color = '#16a34a'; labelText = "Buono"; }
+          else if (data.score > 80) { color = '#34d399'; labelText = "Eccellente"; }
+
+          const size = (place.type === "city" || place.type === "town") ? 32 : 26;
+          const markerIcon = L.divIcon({
+            className: 'custom-score-icon',
+            html: `<div class="score-marker" style="background-color: ${color}; width: ${size}px; height: ${size}px;">${data.score}%</div>`,
+            iconSize: [size, size],
+            iconAnchor: [size/2, size/2]
+          });
+
+          const marker = L.marker([place.lat, place.lon], { icon: markerIcon }).addTo(map).bindPopup(`
+            <div class="text-slate-900 p-1 max-w-[240px]">
+              <h3 class="font-bold text-sm border-b pb-1 mb-2">${place.name} <span class="text-[10px] text-slate-500">(${place.type})</span></h3>
+              
+              <div class="bg-slate-100 p-2 rounded-lg mb-2 text-center relative">
+                <div class="text-xs text-slate-600">Probabilità Calcolata</div>
+                <div class="text-xl font-black" style="color:${color}">${data.score}% (${labelText})</div>
+                <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>
+                ${data.penaltyNote ? `<div class="text-[9px] mt-1 text-red-600 font-bold bg-red-100 p-1 rounded">${data.penaltyNote}</div>` : ''}
+              </div>
+
+              <div class="text-[11px] space-y-1.5 text-slate-700">
+                <p><b>🌧️ Finestra d'Oro (-14 a -6gg):</b> ${data.goldenWindowRain} mm</p>
+                <p><b>💧 Pioggia Recente (Ultimi 3gg):</b> ${data.recentRain} mm</p>
+                <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C</p>
+                <p><b>💨 Vento:</b> ${data.windSpeed} km/h - ${data.windNote}</p>
+              </div>
+            </div>
+          `);
+
+          activeMarkers[key] = marker;
+        }
+      }
+
+      Object.keys(activeMarkers).forEach(key => {
+        if (!currentKeys.has(key)) {
+          map.removeLayer(activeMarkers[key]);
+          delete activeMarkers[key];
+        }
+      });
     }
 
     async function getFungiScore(lat, lon) {
+      const targetDateStr = document.getElementById('targetDate').value;
+      const cacheKey = `${lat.toFixed(3)}_${lon.toFixed(3)}_${targetDateStr}`;
+
+      if (meteoCache[cacheKey]) return meteoCache[cacheKey];
+
       try {
-        const targetDateStr = document.getElementById('targetDate').value;
         const todayObj = new Date();
         const offset = todayObj.getTimezoneOffset() * 60000;
         const localTodayStr = (new Date(todayObj - offset)).toISOString().split('T')[0];
@@ -242,11 +350,8 @@
         if (!data || !data.daily || !data.daily.precipitation_sum) return null;
 
         let missingInfoDays = 0;
-        
         if (!isToday) {
-          data.daily.precipitation_sum.forEach(v => {
-            if (v === null) missingInfoDays++;
-          });
+          data.daily.precipitation_sum.forEach(v => { if (v === null) missingInfoDays++; });
         }
 
         const padArray = (arr, len, fillVal) => {
@@ -264,7 +369,6 @@
         const windDirDays = padArray(data.daily.wind_direction_10m_dominant, 21, 0);
 
         const totalRain = rainDays.reduce((a, b) => a + b, 0);
-        
         const goldenWindowRain = rainDays.slice(6, 15).reduce((a, b) => a + b, 0); 
         const recentRain = rainDays.slice(17, 21).reduce((a, b) => a + b, 0); 
 
@@ -326,7 +430,7 @@
           predictionColor = "text-orange-600";
         }
 
-        return { 
+        const result = { 
           totalRain: Math.round(totalRain), 
           recentRain: Math.round(recentRain),
           goldenWindowRain: Math.round(goldenWindowRain),
@@ -336,54 +440,18 @@
           score: finalScore 
         };
 
+        meteoCache[cacheKey] = result;
+        return result;
+
       } catch (e) { return null; }
     }
 
-    async function loadMeteoData() {
-      for (const loc of locations) {
-        const data = await getFungiScore(loc.lat, loc.lon);
-
-        if (!data) continue;
-
-        let color = '#dc2626'; let labelText = "Molto Basso";
-        if (data.score > 20 && data.score <= 40) { color = '#f97316'; labelText = "Basso"; }
-        else if (data.score > 40 && data.score <= 60) { color = '#f59e0b'; labelText = "Medio"; }
-        else if (data.score > 60 && data.score <= 80) { color = '#16a34a'; labelText = "Buono"; }
-        else if (data.score > 80) { color = '#34d399'; labelText = "Eccellente"; }
-
-        const size = loc.type === "Provincia" ? 34 : 28;
-        const markerIcon = L.divIcon({
-          className: 'custom-score-icon',
-          html: `<div class="score-marker" style="background-color: ${color}; width: ${size}px; height: ${size}px;">${data.score}%</div>`,
-          iconSize: [size, size],
-          iconAnchor: [size/2, size/2]
-        });
-
-        L.marker([loc.lat, loc.lon], { icon: markerIcon }).addTo(map).bindPopup(`
-          <div class="text-slate-900 p-1 max-w-[240px]">
-            <h3 class="font-bold text-sm border-b pb-1 mb-2">${loc.name} <span class="text-[10px] text-slate-500">(${loc.type})</span></h3>
-            
-            <div class="bg-slate-100 p-2 rounded-lg mb-2 text-center relative">
-              <div class="text-xs text-slate-600">Probabilità Calcolata</div>
-              <div class="text-xl font-black" style="color:${color}">${data.score}% (${labelText})</div>
-              <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>
-              ${data.penaltyNote ? `<div class="text-[9px] mt-1 text-red-600 font-bold bg-red-100 p-1 rounded">${data.penaltyNote}</div>` : ''}
-            </div>
-
-            <div class="text-[11px] space-y-1.5 text-slate-700">
-              <p><b>🌧️ Finestra d'Oro (-14 a -6gg):</b> ${data.goldenWindowRain} mm</p>
-              <p><b>💧 Pioggia Recente (Ultimi 3gg):</b> ${data.recentRain} mm</p>
-              <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C</p>
-              <p><b>💨 Vento:</b> ${data.windSpeed} km/h - ${data.windNote}</p>
-            </div>
-          </div>
-        `);
-      }
-    }
-
     function refreshData() {
-      map.eachLayer(layer => { if (layer instanceof L.Marker) map.removeLayer(layer); });
-      loadMeteoData();
+      Object.keys(activeMarkers).forEach(key => {
+        map.removeLayer(activeMarkers[key]);
+      });
+      activeMarkers = {};
+      fetchPlacesAndMeteo();
     }
 
     window.onload = verificaAccesso;
