@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>FungiCast Italia - Satellite Edition</title>
+  <title>Fungoradar Italia - Satellite Edition</title>
 
   <!-- PWA Manifest & Colors -->
   <link rel="manifest" href="manifest.json">
@@ -60,7 +60,7 @@
       <div class="flex items-center space-x-3">
         <span class="text-2xl">🍄</span>
         <div>
-          <h1 class="font-bold text-lg leading-tight text-emerald-400">FungiCast Italia</h1>
+          <h1 class="font-bold text-lg leading-tight text-emerald-400">Fungoradar Italia</h1>
           <p id="status-text" class="text-[10px] text-slate-400">Modello con Umidità Satellitare del Suolo</p>
         </div>
       </div>
@@ -140,7 +140,7 @@
 
         if (lastAlert !== todayStr) {
           navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification("🍄 FungiCast - Allerta Crescita!", {
+            registration.showNotification("🍄 Fungoradar - Allerta Crescita!", {
               body: `💧 Rilevati ${recentRain} mm di pioggia a ${locationName}!\n🌱 Fruttificazione altamente probabile tra 7-14 giorni.`,
               icon: "icon.png",
               badge: "icon.png"
@@ -179,7 +179,7 @@
         initMap(); 
         return;
       }
-      const pinInserito = prompt("🔒 Inserisci il PIN per accedere a FungiCast:");
+      const pinInserito = prompt("🔒 Inserisci il PIN per accedere a Fungoradar:");
       if (pinInserito === PIN_CORRETTO) {
         localStorage.setItem("fungicast_auth", "true");
         initCustomCalendar();
@@ -197,7 +197,8 @@
 
     function initMap() {
       map = L.map('map', { zoomControl: false }).setView([42.5, 12.5], 7);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}„{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
+      // CORRETTO IL LINK ALLE TILE DI OPENSTREETMAP
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
       
       map.on('moveend zoomend', loadMeteoData);
       loadMeteoData();
@@ -295,7 +296,6 @@
         const isToday = (targetDateStr === localTodayStr);
         let url;
 
-        // Richiesta inclusiva di umidità del suolo (0-7cm e 7-28cm)
         const dailyParams = "precipitation_sum,temperature_2m_mean,temperature_2m_min,wind_speed_10m_max,wind_direction_10m_dominant,soil_moisture_0_to_7cm,soil_moisture_7_to_28cm";
 
         if (isToday) {
@@ -334,7 +334,6 @@
         const windSpeedDays = padArray(data.daily.wind_speed_10m_max, 21, 0);
         const windDirDays = padArray(data.daily.wind_direction_10m_dominant, 21, 0);
         
-        // Umidità del suolo (superficiale e profonda)
         const soil0_7Days = padArray(data.daily.soil_moisture_0_to_7cm, 21, 0.2);
         const soil7_28Days = padArray(data.daily.soil_moisture_7_to_28cm, 21, 0.2);
 
@@ -348,44 +347,34 @@
         const recentMinTemps = tempMinDays.slice(-7);
         const avgMinTemp = recentMinTemps.reduce((a, b) => a + b, 0) / recentMinTemps.length;
 
-        // Calcolo umidità media recente del suolo (ultimi 5 giorni)
         const recentSoil0_7 = soil0_7Days.slice(-5);
         const recentSoil7_28 = soil7_28Days.slice(-5);
         const avgSoilMoisture = (
           (recentSoil0_7.reduce((a, b) => a + b, 0) / recentSoil0_7.length) * 0.4 +
           (recentSoil7_28.reduce((a, b) => a + b, 0) / recentSoil7_28.length) * 0.6
-        ); // m³/m³ (tipicamente tra 0.05 e 0.45)
+        );
 
-        // --- CALCOLO PUNTEGGI PARZIALI (Pesi ponderati) ---
-
-        // 1. Finestra d'Oro (Peso: 45%)
         let goldenScore = 0;
         if (goldenWindowRain >= 30 && goldenWindowRain <= 90) goldenScore = 100;
         else if (goldenWindowRain > 5 && goldenWindowRain < 30) goldenScore = (goldenWindowRain - 5) * 4;
         else if (goldenWindowRain > 90) goldenScore = Math.max(0, 100 - (goldenWindowRain - 90));
 
-        // 2. Umidità del Suolo Reale Satellitare (Peso: 20%)
-        // Ottimale tra 0.22 e 0.40 m³/m³
         let soilScore = 0;
         if (avgSoilMoisture >= 0.22 && avgSoilMoisture <= 0.42) soilScore = 100;
         else if (avgSoilMoisture > 0.10 && avgSoilMoisture < 0.22) soilScore = (avgSoilMoisture - 0.10) * 833;
         else if (avgSoilMoisture > 0.42) soilScore = Math.max(50, 100 - (avgSoilMoisture - 0.42) * 200);
 
-        // 3. Temperatura Media (Peso: 20%)
         let tempScore = 0;
         if (avgTemp >= 12 && avgTemp <= 20) tempScore = 100;
         else if (avgTemp > 8 && avgTemp < 12) tempScore = (avgTemp - 8) * 25;
         else if (avgTemp > 20 && avgTemp < 26) tempScore = (26 - avgTemp) * 16.6;
 
-        // 4. Riserva Idrica Totale (Peso: 10%)
         let totalRainScore = 0;
         if (totalRain >= 40 && totalRain <= 150) totalRainScore = 100;
         else if (totalRain > 10 && totalRain < 40) totalRainScore = (totalRain - 10) * 3.3;
 
-        // Somma ponderata iniziale (100% totale)
         let combinedScore = (goldenScore * 0.45) + (soilScore * 0.20) + (tempScore * 0.20) + (totalRainScore * 0.15);
 
-        // --- MODIFICATORI ESTERNI (Vento e Minime Notturne) ---
         const recentWindsSpeed = windSpeedDays.slice(-7);
         const recentWindsDir = windDirDays.slice(-7);
         const avgWindSpeed = recentWindsSpeed.reduce((a, b) => a + b, 0) / recentWindsSpeed.length;
@@ -405,7 +394,7 @@
 
         let tempMinNote = "";
         if (avgMinTemp < 15) {
-          combinedScore = combinedScore * 0.90; // -10%
+          combinedScore = combinedScore * 0.90;
           tempMinNote = `❄️ Minime fredde (${Math.round(avgMinTemp)}°C) (-10%)`;
         }
 
@@ -435,7 +424,7 @@
           totalRain: Math.round(totalRain), 
           recentRain: Math.round(recentRain),
           goldenWindowRain: Math.round(goldenWindowRain),
-          soilMoisture: Math.round(avgSoilMoisture * 100), // Convertito in percentuale visibile
+          soilMoisture: Math.round(avgSoilMoisture * 100),
           predictionNote, predictionColor, penaltyNote, tempMinNote,
           avgTemp: Math.round(avgTemp), avgMinTemp: Math.round(avgMinTemp),
           windSpeed: Math.round(avgWindSpeed), windNote,
