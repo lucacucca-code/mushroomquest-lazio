@@ -199,14 +199,12 @@
         return;
       }
 
-      // Filtra le aree visibili in base allo zoom e ai confini dello schermo
       const visibleLocs = COMUNI_ITALIA.filter(loc => {
         return currentZoom >= loc.minZoom && bounds.contains([loc.lat, loc.lon]);
       });
 
       statusText.innerText = `🍄 Caricamento ${visibleLocs.length} aree...`;
 
-      // Caricamento in parallelo per massima velocità
       await Promise.all(visibleLocs.map(async (loc) => {
         const locKey = `${loc.lat}_${loc.lon}`;
         
@@ -226,7 +224,6 @@
 
           const size = loc.type === "Provincia" ? 34 : 28;
           
-          // IMPORTANTE: className: '' evita che Leaflet interferisca con lo stile del marker
           const markerIcon = L.divIcon({
             className: '',
             html: `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #ffffff; font-weight: bold; font-size: 10px; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0px 1px 2px rgba(0,0,0,0.8);">${data.score}%</div>`,
@@ -251,7 +248,7 @@
 
               <div class="text-[11px] space-y-1.5 text-slate-700">
                 <p><b>🌧️ Finestra d'Oro (-14 a -6gg):</b> ${data.goldenWindowRain} mm</p>
-                <p><b>🌱 Umidità Suolo (Satellite):</b> ${data.soilMoisture}%</p>
+                <p><b>🌱 Umidità Suolo:</b> ${data.soilMoisture}%</p>
                 <p><b>💧 Pioggia Recente (Ultimi 3gg):</b> ${data.recentRain} mm</p>
                 <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C (Min: ${data.avgMinTemp}°C)</p>
                 <p><b>💨 Vento:</b> ${data.windSpeed} km/h - ${data.windNote}</p>
@@ -263,7 +260,6 @@
         }
       }));
 
-      // Rimuove i marker non più visibili
       Object.keys(activeMarkers).forEach(key => {
         const [lat, lon] = key.split('_').map(Number);
         const stillVisible = visibleLocs.some(loc => loc.lat === lat && loc.lon === lon);
@@ -290,7 +286,8 @@
         const isToday = (targetDateStr === localTodayStr);
         let url;
 
-        const dailyParams = "precipitation_sum,temperature_2m_mean,temperature_2m_min,wind_speed_10m_max,wind_direction_10m_dominant,soil_moisture_0_to_7cm,soil_moisture_7_to_28cm";
+        // Parametri giornalieri stabili e supportati
+        const dailyParams = "precipitation_sum,temperature_2m_mean,temperature_2m_min,wind_speed_10m_max,wind_direction_10m_dominant";
 
         if (isToday) {
           url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&past_days=20&forecast_days=1&daily=${dailyParams}&timezone=Europe%2FRome`;
@@ -327,9 +324,6 @@
         const tempMinDays = padArray(data.daily.temperature_2m_min, 21, 10);
         const windSpeedDays = padArray(data.daily.wind_speed_10m_max, 21, 0);
         const windDirDays = padArray(data.daily.wind_direction_10m_dominant, 21, 0);
-        
-        const soil0_7Days = padArray(data.daily.soil_moisture_0_to_7cm, 21, 0.2);
-        const soil7_28Days = padArray(data.daily.soil_moisture_7_to_28cm, 21, 0.2);
 
         const totalRain = rainDays.reduce((a, b) => a + b, 0);
         const goldenWindowRain = rainDays.slice(6, 15).reduce((a, b) => a + b, 0); 
@@ -341,22 +335,15 @@
         const recentMinTemps = tempMinDays.slice(-7);
         const avgMinTemp = recentMinTemps.reduce((a, b) => a + b, 0) / recentMinTemps.length;
 
-        const recentSoil0_7 = soil0_7Days.slice(-5);
-        const recentSoil7_28 = soil7_28Days.slice(-5);
-        const avgSoilMoisture = (
-          (recentSoil0_7.reduce((a, b) => a + b, 0) / recentSoil0_7.length) * 0.4 +
-          (recentSoil7_28.reduce((a, b) => a + b, 0) / recentSoil7_28.length) * 0.6
-        );
+        // Calcolo dell'umidità del suolo stimata in base alla pioggia recente e cumulativa
+        const soilMoistureEst = Math.min(100, Math.max(10, Math.round((totalRain * 0.4 + recentRain * 1.5) / 1.2)));
 
         let goldenScore = 0;
         if (goldenWindowRain >= 30 && goldenWindowRain <= 90) goldenScore = 100;
         else if (goldenWindowRain > 5 && goldenWindowRain < 30) goldenScore = (goldenWindowRain - 5) * 4;
         else if (goldenWindowRain > 90) goldenScore = Math.max(0, 100 - (goldenWindowRain - 90));
 
-        let soilScore = 0;
-        if (avgSoilMoisture >= 0.22 && avgSoilMoisture <= 0.42) soilScore = 100;
-        else if (avgSoilMoisture > 0.10 && avgSoilMoisture < 0.22) soilScore = (avgSoilMoisture - 0.10) * 833;
-        else if (avgSoilMoisture > 0.42) soilScore = Math.max(50, 100 - (avgSoilMoisture - 0.42) * 200);
+        let soilScore = Math.min(100, soilMoistureEst * 1.5);
 
         let tempScore = 0;
         if (avgTemp >= 12 && avgTemp <= 20) tempScore = 100;
@@ -418,7 +405,7 @@
           totalRain: Math.round(totalRain), 
           recentRain: Math.round(recentRain),
           goldenWindowRain: Math.round(goldenWindowRain),
-          soilMoisture: Math.round(avgSoilMoisture * 100),
+          soilMoisture: soilMoistureEst,
           predictionNote, predictionColor, penaltyNote, tempMinNote,
           avgTemp: Math.round(avgTemp), avgMinTemp: Math.round(avgMinTemp),
           windSpeed: Math.round(avgWindSpeed), windNote,
