@@ -1,13 +1,23 @@
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open('fungicast-v1').then((cache) => {
-      return cache.addAll(['./', './index.html', './manifest.json']);
-    })
-  );
+// sw.js - Service Worker per FungiCast Lazio
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
 });
 
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
+});
+
+// Gestione del click sulla notifica
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) return client.focus();
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
   );
 });
