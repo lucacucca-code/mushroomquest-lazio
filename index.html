@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fungoradar Italia - Satellite Edition</title>
+  <title>Fungoradar Italia</title>
 
   <!-- PWA Manifest & Colors -->
   <link rel="manifest" href="manifest.json">
@@ -27,20 +27,6 @@
   <style>
     #map { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; }
     
-    .score-marker {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      color: #ffffff;
-      font-weight: bold;
-      font-size: 10px;
-      border: 2px solid #ffffff;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-      text-shadow: 0px 1px 2px rgba(0,0,0,0.8);
-      text-align: center;
-    }
-
     .flatpickr-calendar.dark {
       background: #1e293b !important;
       border: 1px solid #475569 !important;
@@ -61,7 +47,7 @@
         <span class="text-2xl">🍄</span>
         <div>
           <h1 class="font-bold text-lg leading-tight text-emerald-400">Fungoradar Italia</h1>
-          <p id="status-text" class="text-[10px] text-slate-400">Modello con Umidità Satellitare del Suolo</p>
+          <p id="status-text" class="text-[10px] text-slate-400">Zoom per esplorare i boschi</p>
         </div>
       </div>
       <div class="flex items-center space-x-2">
@@ -140,7 +126,7 @@
 
         if (lastAlert !== todayStr) {
           navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification("🍄 Fungoradar - Allerta Crescita!", {
+            registration.showNotification("🍄 FungiCast - Allerta Crescita!", {
               body: `💧 Rilevati ${recentRain} mm di pioggia a ${locationName}!\n🌱 Fruttificazione altamente probabile tra 7-14 giorni.`,
               icon: "icon.png",
               badge: "icon.png"
@@ -179,7 +165,7 @@
         initMap(); 
         return;
       }
-      const pinInserito = prompt("🔒 Inserisci il PIN per accedere a Fungoradar:");
+      const pinInserito = prompt("🔒 Inserisci il PIN per accedere a FungiCast:");
       if (pinInserito === PIN_CORRETTO) {
         localStorage.setItem("fungicast_auth", "true");
         initCustomCalendar();
@@ -197,7 +183,6 @@
 
     function initMap() {
       map = L.map('map', { zoomControl: false }).setView([42.5, 12.5], 7);
-      // CORRETTO IL LINK ALLE TILE DI OPENSTREETMAP
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
       
       map.on('moveend zoomend', loadMeteoData);
@@ -209,77 +194,86 @@
       const bounds = map.getBounds();
       const statusText = document.getElementById("status-text");
 
-      let loadedCount = 0;
-
       if (typeof COMUNI_ITALIA === 'undefined') {
         statusText.innerText = "⚠️ Errore: comuni_italia.js non caricato";
         return;
       }
 
-      for (const loc of COMUNI_ITALIA) {
+      // Filtra le aree visibili in base allo zoom e ai confini dello schermo
+      const visibleLocs = COMUNI_ITALIA.filter(loc => {
+        return currentZoom >= loc.minZoom && bounds.contains([loc.lat, loc.lon]);
+      });
+
+      statusText.innerText = `🍄 Caricamento ${visibleLocs.length} aree...`;
+
+      // Caricamento in parallelo per massima velocità
+      await Promise.all(visibleLocs.map(async (loc) => {
         const locKey = `${loc.lat}_${loc.lon}`;
-        const isVisibleInBounds = bounds.contains([loc.lat, loc.lon]);
-        const isZoomSufficient = currentZoom >= loc.minZoom;
+        
+        if (!activeMarkers[locKey]) {
+          const data = await getFungiScore(loc.lat, loc.lon);
+          if (!data) return;
 
-        if (isVisibleInBounds && isZoomSufficient) {
-          loadedCount++;
-          if (!activeMarkers[locKey]) {
-            const data = await getFungiScore(loc.lat, loc.lon);
-            if (!data) continue;
+          if (data.recentRain >= 30) {
+            sendFungiAlert(loc.name, data.recentRain);
+          }
 
-            if (data.recentRain >= 30) {
-              sendFungiAlert(loc.name, data.recentRain);
-            }
+          let color = '#dc2626'; let labelText = "Molto Basso";
+          if (data.score > 20 && data.score <= 40) { color = '#f97316'; labelText = "Basso"; }
+          else if (data.score > 40 && data.score <= 60) { color = '#f59e0b'; labelText = "Medio"; }
+          else if (data.score > 60 && data.score <= 80) { color = '#16a34a'; labelText = "Buono"; }
+          else if (data.score > 80) { color = '#34d399'; labelText = "Eccellente"; }
 
-            let color = '#dc2626'; let labelText = "Molto Basso";
-            if (data.score > 20 && data.score <= 40) { color = '#f97316'; labelText = "Basso"; }
-            else if (data.score > 40 && data.score <= 60) { color = '#f59e0b'; labelText = "Medio"; }
-            else if (data.score > 60 && data.score <= 80) { color = '#16a34a'; labelText = "Buono"; }
-            else if (data.score > 80) { color = '#34d399'; labelText = "Eccellente"; }
+          const size = loc.type === "Provincia" ? 34 : 28;
+          
+          // IMPORTANTE: className: '' evita che Leaflet interferisca con lo stile del marker
+          const markerIcon = L.divIcon({
+            className: '',
+            html: `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #ffffff; font-weight: bold; font-size: 10px; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0px 1px 2px rgba(0,0,0,0.8);">${data.score}%</div>`,
+            iconSize: [size, size],
+            iconAnchor: [size/2, size/2]
+          });
 
-            const size = loc.type === "Provincia" ? 34 : 28;
-            const markerIcon = L.divIcon({
-              className: 'custom-score-icon',
-              html: `<div class="score-marker" style="background-color: ${color}; width: ${size}px; height: ${size}px;">${data.score}%</div>`,
-              iconSize: [size, size],
-              iconAnchor: [size/2, size/2]
-            });
-
-            const marker = L.marker([loc.lat, loc.lon], { icon: markerIcon }).addTo(map).bindPopup(`
-              <div class="text-slate-900 p-1 max-w-[250px]">
-                <h3 class="font-bold text-sm border-b pb-1 mb-2">
-                  ${loc.name} 
-                  <span class="text-[10px] text-slate-500 font-normal">(${loc.type} - ⛰️ ${loc.alt}m slm)</span>
-                </h3>
-                
-                <div class="bg-slate-100 p-2 rounded-lg mb-2 text-center relative">
-                  <div class="text-xs text-slate-600">Probabilità Calcolata</div>
-                  <div class="text-xl font-black" style="color:${color}">${data.score}% (${labelText})</div>
-                  <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>
-                  ${data.tempMinNote ? `<div class="text-[9px] mt-1 text-amber-700 font-bold bg-amber-100 p-1 rounded">${data.tempMinNote}</div>` : ''}
-                  ${data.penaltyNote ? `<div class="text-[9px] mt-1 text-red-600 font-bold bg-red-100 p-1 rounded">${data.penaltyNote}</div>` : ''}
-                </div>
-
-                <div class="text-[11px] space-y-1.5 text-slate-700">
-                  <p><b>🌧️ Finestra d'Oro (-14 a -6gg):</b> ${data.goldenWindowRain} mm</p>
-                  <p><b>🌱 Umidità Suolo (Satellite):</b> ${data.soilMoisture}%</p>
-                  <p><b>💧 Pioggia Recente (Ultimi 3gg):</b> ${data.recentRain} mm</p>
-                  <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C (Min: ${data.avgMinTemp}°C)</p>
-                  <p><b>💨 Vento:</b> ${data.windSpeed} km/h - ${data.windNote}</p>
-                </div>
+          const marker = L.marker([loc.lat, loc.lon], { icon: markerIcon }).addTo(map).bindPopup(`
+            <div class="text-slate-900 p-1 max-w-[250px]">
+              <h3 class="font-bold text-sm border-b pb-1 mb-2">
+                ${loc.name} 
+                <span class="text-[10px] text-slate-500 font-normal">(${loc.type} - ⛰️ ${loc.alt}m slm)</span>
+              </h3>
+              
+              <div class="bg-slate-100 p-2 rounded-lg mb-2 text-center relative">
+                <div class="text-xs text-slate-600">Probabilità Calcolata</div>
+                <div class="text-xl font-black" style="color:${color}">${data.score}% (${labelText})</div>
+                <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>
+                ${data.tempMinNote ? `<div class="text-[9px] mt-1 text-amber-700 font-bold bg-amber-100 p-1 rounded">${data.tempMinNote}</div>` : ''}
+                ${data.penaltyNote ? `<div class="text-[9px] mt-1 text-red-600 font-bold bg-red-100 p-1 rounded">${data.penaltyNote}</div>` : ''}
               </div>
-            `);
 
-            activeMarkers[locKey] = marker;
-          }
-        } else {
-          if (activeMarkers[locKey]) {
-            map.removeLayer(activeMarkers[locKey]);
-            delete activeMarkers[locKey];
-          }
+              <div class="text-[11px] space-y-1.5 text-slate-700">
+                <p><b>🌧️ Finestra d'Oro (-14 a -6gg):</b> ${data.goldenWindowRain} mm</p>
+                <p><b>🌱 Umidità Suolo (Satellite):</b> ${data.soilMoisture}%</p>
+                <p><b>💧 Pioggia Recente (Ultimi 3gg):</b> ${data.recentRain} mm</p>
+                <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C (Min: ${data.avgMinTemp}°C)</p>
+                <p><b>💨 Vento:</b> ${data.windSpeed} km/h - ${data.windNote}</p>
+              </div>
+            </div>
+          `);
+
+          activeMarkers[locKey] = marker;
         }
-      }
-      statusText.innerText = `🍄 ${loadedCount} aree visibili`;
+      }));
+
+      // Rimuove i marker non più visibili
+      Object.keys(activeMarkers).forEach(key => {
+        const [lat, lon] = key.split('_').map(Number);
+        const stillVisible = visibleLocs.some(loc => loc.lat === lat && loc.lon === lon);
+        if (!stillVisible) {
+          map.removeLayer(activeMarkers[key]);
+          delete activeMarkers[key];
+        }
+      });
+
+      statusText.innerText = `🍄 ${visibleLocs.length} aree visibili`;
     }
 
     async function getFungiScore(lat, lon) {
