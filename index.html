@@ -233,7 +233,7 @@
             let color = '#dc2626'; let labelText = "Molto Basso";
             if (data.score > 20 && data.score <= 40) { color = '#f97316'; labelText = "Basso"; }
             else if (data.score > 40 && data.score <= 60) { color = '#f59e0b'; labelText = "Medio"; }
-            else if (data.score > 60 && data.score <= 80) { color = '#16a34a'; labelText = "Buono"; }
+            else if (data.score > 60 && data.score <= 80) { color = '#16a34a'; labelText> "Buono"; }
             else if (data.score > 80) { color = '#34d399'; labelText = "Eccellente"; }
 
             const size = loc.type === "Provincia" ? 34 : 28;
@@ -262,7 +262,7 @@
                 <div class="text-[11px] space-y-1.5 text-slate-700">
                   <p><b>🌧️ Finestra d'Oro (-14 a -6gg):</b> ${data.goldenWindowRain} mm</p>
                   <p><b>💧 Pioggia Recente (Ultimi 3gg):</b> ${data.recentRain} mm</p>
-                  <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C (Min notturna: ${data.avgMinTemp}°C)</p>
+                  <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C (Min: ${data.avgMinTemp}°C)</p>
                   <p><b>💨 Vento:</b> ${data.windSpeed} km/h - ${data.windNote}</p>
                 </div>
               </div>
@@ -294,7 +294,6 @@
         const isToday = (targetDateStr === localTodayStr);
         let url;
 
-        // Richiediamo anche temperature_2m_min per le minime notturne
         if (isToday) {
           url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&past_days=20&forecast_days=1&daily=precipitation_sum,temperature_2m_mean,temperature_2m_min,wind_speed_10m_max,wind_direction_10m_dominant&timezone=Europe%2FRome`;
         } else {
@@ -338,7 +337,6 @@
         const recentTemps = tempDays.slice(-7);
         const avgTemp = recentTemps.reduce((a, b) => a + b, 0) / recentTemps.length;
 
-        // Calcolo temperatura minima notturna degli ultimi 7 giorni
         const recentMinTemps = tempMinDays.slice(-7);
         const avgMinTemp = recentMinTemps.reduce((a, b) => a + b, 0) / recentMinTemps.length;
 
@@ -358,7 +356,7 @@
 
         let combinedScore = (goldenScore * 0.60) + (tempScore * 0.30) + (totalRainScore * 0.10);
 
-        // MODIFICATORE VENTO
+        // VENTO
         const recentWindsSpeed = windSpeedDays.slice(-7);
         const recentWindsDir = windDirDays.slice(-7);
         const avgWindSpeed = recentWindsSpeed.reduce((a, b) => a + b, 0) / recentWindsSpeed.length;
@@ -376,11 +374,11 @@
           windNote = "🍃 Vento debole/Umido (+10%)";
         }
 
-        // MODIFICATORE TEMPERATURA MINIMA NOTTURNA (< 15°C)
+        // TEMPERATURA MINIMA NOTTURNA (Soglia impostata a < 15°C)
         let tempMinNote = "";
         if (avgMinTemp < 15) {
-          combinedScore = combinedScore * 0.90; // Penalità del 10%
-          tempMinNote = `❄️ Minime notturne fredde (${Math.round(avgMinTemp)}°C) (-10%)`;
+          combinedScore = combinedScore * 0.90; // -10%
+          tempMinNote = `❄️ Minime fredde (${Math.round(avgMinTemp)}°C) (-10%)`;
         }
 
         let penaltyNote = "";
