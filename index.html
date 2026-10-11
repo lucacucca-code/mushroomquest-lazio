@@ -15,7 +15,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-  <!-- Flatpickr (Calendario Popup Custom) CSS & JS -->
+  <!-- Flatpickr CSS & JS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -47,7 +47,7 @@
         <span class="text-2xl">🍄</span>
         <div>
           <h1 class="font-bold text-lg leading-tight text-emerald-400">Fungoradar Italia</h1>
-          <p id="status-text" class="text-[10px] text-slate-400">Zoom per esplorare i boschi</p>
+          <p id="status-text" class="text-[10px] text-slate-400">Modello con Calibrazione Altitudine/Stagione</p>
         </div>
       </div>
       <div class="flex items-center space-x-2">
@@ -209,7 +209,7 @@
         const locKey = `${loc.lat}_${loc.lon}`;
         
         if (!activeMarkers[locKey]) {
-          const data = await getFungiScore(loc.lat, loc.lon);
+          const data = await getFungiScore(loc.lat, loc.lon, loc.alt || 300);
           if (!data) return;
 
           if (data.recentRain >= 30) {
@@ -242,6 +242,7 @@
                 <div class="text-xs text-slate-600">Probabilità Calcolata</div>
                 <div class="text-xl font-black" style="color:${color}">${data.score}% (${labelText})</div>
                 <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>
+                ${data.seasonNote ? `<div class="text-[9px] mt-1 text-purple-700 font-bold bg-purple-100 p-1 rounded">${data.seasonNote}</div>` : ''}
                 ${data.tempMinNote ? `<div class="text-[9px] mt-1 text-amber-700 font-bold bg-amber-100 p-1 rounded">${data.tempMinNote}</div>` : ''}
                 ${data.penaltyNote ? `<div class="text-[9px] mt-1 text-red-600 font-bold bg-red-100 p-1 rounded">${data.penaltyNote}</div>` : ''}
               </div>
@@ -249,7 +250,7 @@
               <div class="text-[11px] space-y-1.5 text-slate-700">
                 <p><b>🌧️ Finestra d'Oro (-14 a -6gg):</b> ${data.goldenWindowRain} mm</p>
                 <p><b>🌱 Umidità Suolo:</b> ${data.soilMoisture}%</p>
-                <p><b>💧 Pioggia Recente (Ultimi 3gg):</b> ${data.recentRain} mm</p>
+                <p><b>💧 Rugiada (Post-Finestra):</b> ${data.avgDewPoint} °C (${data.dewNote})</p>
                 <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C (Min: ${data.avgMinTemp}°C)</p>
                 <p><b>💨 Vento:</b> ${data.windSpeed} km/h - ${data.windNote}</p>
               </div>
@@ -272,9 +273,9 @@
       statusText.innerText = `🍄 ${visibleLocs.length} aree visibili`;
     }
 
-    async function getFungiScore(lat, lon) {
+    async function getFungiScore(lat, lon, altitude = 300) {
       const targetDateStr = document.getElementById('targetDate').value;
-      const cacheKey = `${lat}_${lon}_${targetDateStr}`;
+      const cacheKey = `${lat}_${lon}_${altitude}_${targetDateStr}`;
 
       if (meteoCache[cacheKey]) return meteoCache[cacheKey];
 
@@ -286,8 +287,7 @@
         const isToday = (targetDateStr === localTodayStr);
         let url;
 
-        // Parametri giornalieri stabili e supportati
-        const dailyParams = "precipitation_sum,temperature_2m_mean,temperature_2m_min,wind_speed_10m_max,wind_direction_10m_dominant";
+        const dailyParams = "precipitation_sum,temperature_2m_mean,temperature_2m_min,wind_speed_10m_max,wind_direction_10m_dominant,dew_point_2m";
 
         if (isToday) {
           url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&past_days=20&forecast_days=1&daily=${dailyParams}&timezone=Europe%2FRome`;
@@ -324,6 +324,7 @@
         const tempMinDays = padArray(data.daily.temperature_2m_min, 21, 10);
         const windSpeedDays = padArray(data.daily.wind_speed_10m_max, 21, 0);
         const windDirDays = padArray(data.daily.wind_direction_10m_dominant, 21, 0);
+        const dewPointDays = padArray(data.daily.dew_point_2m, 21, 10);
 
         const totalRain = rainDays.reduce((a, b) => a + b, 0);
         const goldenWindowRain = rainDays.slice(6, 15).reduce((a, b) => a + b, 0); 
@@ -335,7 +336,9 @@
         const recentMinTemps = tempMinDays.slice(-7);
         const avgMinTemp = recentMinTemps.reduce((a, b) => a + b, 0) / recentMinTemps.length;
 
-        // Calcolo dell'umidità del suolo stimata in base alla pioggia recente e cumulativa
+        const postGoldenDew = dewPointDays.slice(16, 21);
+        const avgDewPoint = postGoldenDew.reduce((a, b) => a + b, 0) / postGoldenDew.length;
+
         const soilMoistureEst = Math.min(100, Math.max(10, Math.round((totalRain * 0.4 + recentRain * 1.5) / 1.2)));
 
         let goldenScore = 0;
@@ -345,10 +348,26 @@
 
         let soilScore = Math.min(100, soilMoistureEst * 1.5);
 
+        // 1. TEMPERATURA RICALIBRATA PER ALTITUDINE
+        let minIdealTemp = 12;
+        let maxIdealTemp = 20;
+
+        if (altitude >= 1000) {
+          minIdealTemp = 10; // In alta montagna l'ottimo scende
+          maxIdealTemp = 17;
+        } else if (altitude <= 500) {
+          minIdealTemp = 13; // In collina/costa serve più caldo
+          maxIdealTemp = 22;
+        }
+
         let tempScore = 0;
-        if (avgTemp >= 12 && avgTemp <= 20) tempScore = 100;
-        else if (avgTemp > 8 && avgTemp < 12) tempScore = (avgTemp - 8) * 25;
-        else if (avgTemp > 20 && avgTemp < 26) tempScore = (26 - avgTemp) * 16.6;
+        if (avgTemp >= minIdealTemp && avgTemp <= maxIdealTemp) {
+          tempScore = 100;
+        } else if (avgTemp < minIdealTemp) {
+          tempScore = Math.max(0, 100 - (minIdealTemp - avgTemp) * 20);
+        } else if (avgTemp > maxIdealTemp) {
+          tempScore = Math.max(0, 100 - (avgTemp - maxIdealTemp) * 18);
+        }
 
         let totalRainScore = 0;
         if (totalRain >= 40 && totalRain <= 150) totalRainScore = 100;
@@ -356,6 +375,7 @@
 
         let combinedScore = (goldenScore * 0.45) + (soilScore * 0.20) + (tempScore * 0.20) + (totalRainScore * 0.15);
 
+        // MODIFICATORE VENTO
         const recentWindsSpeed = windSpeedDays.slice(-7);
         const recentWindsDir = windDirDays.slice(-7);
         const avgWindSpeed = recentWindsSpeed.reduce((a, b) => a + b, 0) / recentWindsSpeed.length;
@@ -373,10 +393,56 @@
           windNote = "🍃 Vento debole/Umido (+10%)";
         }
 
+        // MODIFICATORE RUGIADA
+        let dewNote = "Neutro";
+        if (avgDewPoint >= 12) {
+          combinedScore = Math.min(100, combinedScore * 1.10);
+          dewNote = "Ottimale (+10%)";
+        } else if (avgDewPoint < 6) {
+          combinedScore = combinedScore * 0.85;
+          dewNote = "Basso/Secco (-15%)";
+        }
+
+        // MODIFICATORE MINIME NOTTURNI DIVERSIFICATO PER ALTITUDINE
         let tempMinNote = "";
-        if (avgMinTemp < 15) {
-          combinedScore = combinedScore * 0.90;
-          tempMinNote = `❄️ Minime fredde (${Math.round(avgMinTemp)}°C) (-10%)`;
+        const minTempThreshold = (altitude >= 1000) ? 10 : 14; // Soglia freddo a 10°C in montagna, 14°C in collina/pianura
+        if (avgMinTemp < minTempThreshold) {
+          combinedScore = combinedScore * 0.85;
+          tempMinNote = `❄️ Notte fredda per la quota (${Math.round(avgMinTemp)}°C) (-15%)`;
+        }
+
+        // 2. FILTRO STAGIONALITÀ ADATTATIVO PER ALTITUDINE
+        const targetDateObj = new Date(targetDateStr);
+        const targetMonth = targetDateObj.getMonth() + 1; // 1 = Gennaio, 12 = Dicembre
+        let seasonNote = "";
+        let isFavorable = true;
+
+        if (altitude >= 1000) {
+          // Alta montagna: stagione da Luglio a Ottobre (Novembre troppo freddo)
+          if (targetMonth < 7 || targetMonth > 10) {
+            isFavorable = false;
+            if (targetMonth === 11) seasonNote = `❄️ Novembre in montagna: freddo bloccante (-70%)`;
+            else seasonNote = `⚠️ Fuori stagione di montagna (Mese ${targetMonth}) (-80%)`;
+          }
+        } else if (altitude <= 500) {
+          // Bassa quota/Costa (Allumiere, Fregene): stagione da Settembre a Novembre (Agosto troppo caldo/secco)
+          if (targetMonth < 5 || targetMonth > 11 || targetMonth === 7) {
+            isFavorable = false;
+            seasonNote = `⚠️ Fuori stagione a bassa quota (Mese ${targetMonth}) (-80%)`;
+          } else if (targetMonth === 8) {
+            combinedScore = combinedScore * 0.70; // Agosto a bassa quota è spesso troppo caldo
+            seasonNote = `☀️ Caldo estivo a bassa quota (-30%)`;
+          }
+        } else {
+          // Fascia media (500-1000m)
+          if ((targetMonth < 5 || targetMonth > 6) && (targetMonth < 8 || targetMonth > 11)) {
+            isFavorable = false;
+            seasonNote = `⚠️ Fuori stagione biologica (Mese ${targetMonth}) (-80%)`;
+          }
+        }
+
+        if (!isFavorable && targetMonth !== 8) {
+          combinedScore = combinedScore * 0.20;
         }
 
         let penaltyNote = "";
@@ -406,7 +472,9 @@
           recentRain: Math.round(recentRain),
           goldenWindowRain: Math.round(goldenWindowRain),
           soilMoisture: soilMoistureEst,
-          predictionNote, predictionColor, penaltyNote, tempMinNote,
+          avgDewPoint: Math.round(avgDewPoint),
+          dewNote,
+          predictionNote, predictionColor, penaltyNote, tempMinNote, seasonNote,
           avgTemp: Math.round(avgTemp), avgMinTemp: Math.round(avgMinTemp),
           windSpeed: Math.round(avgWindSpeed), windNote,
           score: finalScore 
