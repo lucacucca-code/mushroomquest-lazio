@@ -47,7 +47,7 @@
         <span class="text-2xl">🍄</span>
         <div>
           <h1 class="font-bold text-lg leading-tight text-emerald-400">Fungoradar Italia</h1>
-          <p id="status-text" class="text-[10px] text-slate-400">Modello con Calibrazione Altitudine/Stagione</p>
+          <p id="status-text" class="text-[10px] text-slate-400">Modello con Radar Live e Quota</p>
         </div>
       </div>
       <div class="flex items-center space-x-2">
@@ -60,6 +60,11 @@
           </svg>
         </div>
         
+        <!-- Pulsante Radar Pioggia Live -->
+        <button onclick="toggleRadar()" id="radar-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-sm font-semibold shadow transition" title="Attiva/Disattiva Radar Pioggia Live">
+          📡
+        </button>
+
         <button onclick="refreshData()" class="bg-emerald-600 hover:bg-emerald-500 text-white p-1.5 rounded-lg text-sm font-semibold shadow transition" title="Ricarica Dati">
           🔄
         </button>
@@ -112,6 +117,8 @@
     let map;
     let activeMarkers = {};
     let meteoCache = {};
+    let radarLayer = null;
+    let isRadarActive = false;
 
     function requestNotificationPermission() {
       if ('Notification' in window && Notification.permission !== 'granted') {
@@ -189,6 +196,48 @@
       loadMeteoData();
     }
 
+    // Funzione per attivare/disattivare il Radar Pioggia Live (RainViewer API)
+    async function toggleRadar() {
+      const btn = document.getElementById('radar-btn');
+      const statusText = document.getElementById("status-text");
+
+      if (isRadarActive) {
+        if (radarLayer) {
+          map.removeLayer(radarLayer);
+          radarLayer = null;
+        }
+        isRadarActive = false;
+        btn.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-500');
+        btn.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-600');
+        statusText.innerText = "Radar disattivato";
+      } else {
+        statusText.innerText = "📡 Caricamento Radar Live...";
+        try {
+          const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+          const data = await res.json();
+          if (data && data.radar && data.radar.past && data.radar.past.length > 0) {
+            const latestTimestamp = data.radar.past[data.radar.past.length - 1].time;
+            
+            radarLayer = L.tileLayer(`https://tile.rainviewer.com/v2/radar/${latestTimestamp}/256/{z}/{x}/{y}/2/1_1.png`, {
+              opacity: 0.65,
+              attribution: '© RainViewer'
+            }).addTo(map);
+
+            isRadarActive = true;
+            btn.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-600');
+            btn.classList.add('bg-emerald-600', 'text-white', 'border-emerald-500');
+            statusText.innerText = "📡 Radar Pioggia Attivo (Live)";
+          } else {
+            alert("Impossibile caricare i dati del radar in questo momento.");
+            statusText.innerText = "Errore caricamento radar";
+          }
+        } catch(e) {
+          alert("Errore di connessione al servizio radar.");
+          statusText.innerText = "Errore radar";
+        }
+      }
+    }
+
     async function loadMeteoData() {
       const currentZoom = map.getZoom();
       const bounds = map.getBounds();
@@ -203,7 +252,9 @@
         return currentZoom >= loc.minZoom && bounds.contains([loc.lat, loc.lon]);
       });
 
-      statusText.innerText = `🍄 Caricamento ${visibleLocs.length} aree...`;
+      if (!isRadarActive) {
+        statusText.innerText = `🍄 Caricamento ${visibleLocs.length} aree...`;
+      }
 
       await Promise.all(visibleLocs.map(async (loc) => {
         const locKey = `${loc.lat}_${loc.lon}`;
@@ -270,7 +321,9 @@
         }
       });
 
-      statusText.innerText = `🍄 ${visibleLocs.length} aree visibili`;
+      if (!isRadarActive) {
+        statusText.innerText = `🍄 ${visibleLocs.length} aree visibili`;
+      }
     }
 
     async function getFungiScore(lat, lon, altitude = 300) {
@@ -287,7 +340,6 @@
         const isToday = (targetDateStr === localTodayStr);
         let url;
 
-        // Parametri giornalieri corretti e supportati (senza dew_point_2m)
         const dailyParams = "precipitation_sum,temperature_2m_mean,temperature_2m_min,wind_speed_10m_max,wind_direction_10m_dominant";
 
         if (isToday) {
@@ -336,7 +388,6 @@
         const recentMinTemps = tempMinDays.slice(-7);
         const avgMinTemp = recentMinTemps.reduce((a, b) => a + b, 0) / recentMinTemps.length;
 
-        // Condensa stimata post-finestra basata sulle temperature minime notturne recenti
         const postGoldenMin = tempMinDays.slice(16, 21);
         const avgPostGoldenMin = postGoldenMin.reduce((a, b) => a + b, 0) / postGoldenMin.length;
 
@@ -349,7 +400,6 @@
 
         let soilScore = Math.min(100, soilMoistureEst * 1.5);
 
-        // Temperatura ricalibrata per altitudine
         let minIdealTemp = 12;
         let maxIdealTemp = 20;
 
@@ -376,7 +426,6 @@
 
         let combinedScore = (goldenScore * 0.45) + (soilScore * 0.20) + (tempScore * 0.20) + (totalRainScore * 0.15);
 
-        // Modificatore Vento
         const recentWindsSpeed = windSpeedDays.slice(-7);
         const recentWindsDir = windDirDays.slice(-7);
         const avgWindSpeed = recentWindsSpeed.reduce((a, b) => a + b, 0) / recentWindsSpeed.length;
@@ -394,7 +443,6 @@
           windNote = "🍃 Vento debole/Umido (+10%)";
         }
 
-        // Modificatore Condensa Notturna (basato sulle minime post-finestra)
         let dewNote = "Neutro";
         if (avgPostGoldenMin >= 10 && avgPostGoldenMin <= 16) {
           combinedScore = Math.min(100, combinedScore * 1.10);
@@ -404,7 +452,6 @@
           dewNote = "Scarso/Secco (-15%)";
         }
 
-        // Modificatore Minime Notturne
         let tempMinNote = "";
         const minTempThreshold = (altitude >= 1000) ? 10 : 14;
         if (avgMinTemp < minTempThreshold) {
@@ -412,7 +459,6 @@
           tempMinNote = `❄️ Notte fredda per la quota (${Math.round(avgMinTemp)}°C) (-15%)`;
         }
 
-        // Filtro Stagionalità Adattativo per Altitudine
         const targetDateObj = new Date(targetDateStr);
         const targetMonth = targetDateObj.getMonth() + 1;
         let seasonNote = "";
@@ -485,7 +531,7 @@
 
     function refreshData() {
       Object.keys(activeMarkers).forEach(key => {
-        map.removeLayer(activeMarkers[key]);
+        map.removeLink ? null : map.removeLayer(activeMarkers[key]);
       });
       activeMarkers = {};
       loadMeteoData();
