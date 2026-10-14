@@ -47,7 +47,7 @@
         <span class="text-2xl">🍄</span>
         <div>
           <h1 class="font-bold text-lg leading-tight text-emerald-400">Fungoradar Italia</h1>
-          <p id="status-text" class="text-[10px] text-slate-400">Modello con Radar Live e Quota</p>
+          <p id="status-text" class="text-[10px] text-slate-400">Modello Calibrato da Ground-Truthing</p>
         </div>
       </div>
       <div class="flex items-center space-x-2">
@@ -134,7 +134,7 @@
         if (lastAlert !== todayStr) {
           navigator.serviceWorker.ready.then(registration => {
             registration.showNotification("🍄 FungiCast - Allerta Crescita!", {
-              body: `💧 Rilevati ${recentRain} mm di pioggia a ${locationName}!\n🌱 Fruttificazione altamente probabile tra 7-14 giorni.`,
+              body: `💧 Rilevati ${recentRain} mm di pioggia a ${locationName}!\n🌱 Fruttificazione altamente probabile tra 7-10 giorni.`,
               icon: "icon.png",
               badge: "icon.png"
             });
@@ -196,7 +196,6 @@
       loadMeteoData();
     }
 
-    // Funzione per attivare/disattivare il Radar Pioggia Live (RainViewer API)
     async function toggleRadar() {
       const btn = document.getElementById('radar-btn');
       const statusText = document.getElementById("status-text");
@@ -294,12 +293,13 @@
                 <div class="text-xl font-black" style="color:${color}">${data.score}% (${labelText})</div>
                 <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>
                 ${data.seasonNote ? `<div class="text-[9px] mt-1 text-purple-700 font-bold bg-purple-100 p-1 rounded">${data.seasonNote}</div>` : ''}
+                ${data.windDryNote ? `<div class="text-[9px] mt-1 text-red-700 font-bold bg-red-100 p-1 rounded">${data.windDryNote}</div>` : ''}
                 ${data.tempMinNote ? `<div class="text-[9px] mt-1 text-amber-700 font-bold bg-amber-100 p-1 rounded">${data.tempMinNote}</div>` : ''}
                 ${data.penaltyNote ? `<div class="text-[9px] mt-1 text-red-600 font-bold bg-red-100 p-1 rounded">${data.penaltyNote}</div>` : ''}
               </div>
 
               <div class="text-[11px] space-y-1.5 text-slate-700">
-                <p><b>🌧️ Finestra d'Oro (-14 a -6gg):</b> ${data.goldenWindowRain} mm</p>
+                <p><b>🌧️ Finestra d'Oro (-7 a -10gg):</b> ${data.goldenWindowRain} mm</p>
                 <p><b>🌱 Umidità Suolo:</b> ${data.soilMoisture}%</p>
                 <p><b>💧 Condensa Notturna:</b> ${data.dewNote}</p>
                 <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C (Min: ${data.avgMinTemp}°C)</p>
@@ -379,7 +379,9 @@
         const windDirDays = padArray(data.daily.wind_direction_10m_dominant, 21, 0);
 
         const totalRain = rainDays.reduce((a, b) => a + b, 0);
-        const goldenWindowRain = rainDays.slice(6, 15).reduce((a, b) => a + b, 0); 
+        
+        // FINESTRA D'ORO RICALIBRATA: da -7 a -10 giorni (indici da 10 a 13 in un array di 21 giorni)
+        const goldenWindowRain = rainDays.slice(10, 14).reduce((a, b) => a + b, 0); 
         const recentRain = rainDays.slice(17, 21).reduce((a, b) => a + b, 0); 
 
         const recentTemps = tempDays.slice(-7);
@@ -394,9 +396,9 @@
         const soilMoistureEst = Math.min(100, Math.max(10, Math.round((totalRain * 0.4 + recentRain * 1.5) / 1.2)));
 
         let goldenScore = 0;
-        if (goldenWindowRain >= 30 && goldenWindowRain <= 90) goldenScore = 100;
-        else if (goldenWindowRain > 5 && goldenWindowRain < 30) goldenScore = (goldenWindowRain - 5) * 4;
-        else if (goldenWindowRain > 90) goldenScore = Math.max(0, 100 - (goldenWindowRain - 90));
+        if (goldenWindowRain >= 25 && goldenWindowRain <= 70) goldenScore = 100;
+        else if (goldenWindowRain > 5 && goldenWindowRain < 25) goldenScore = (goldenWindowRain - 5) * 5;
+        else if (goldenWindowRain > 70) goldenScore = Math.max(0, 100 - (goldenWindowRain - 70));
 
         let soilScore = Math.min(100, soilMoistureEst * 1.5);
 
@@ -426,21 +428,25 @@
 
         let combinedScore = (goldenScore * 0.45) + (soilScore * 0.20) + (tempScore * 0.20) + (totalRainScore * 0.15);
 
-        const recentWindsSpeed = windSpeedDays.slice(-7);
-        const recentWindsDir = windDirDays.slice(-7);
-        const avgWindSpeed = recentWindsSpeed.reduce((a, b) => a + b, 0) / recentWindsSpeed.length;
-        const avgWindDir = recentWindsDir.reduce((a, b) => a + b, 0) / recentWindsDir.length;
+        // MODIFICATORE VENTO E DISIDRATAZIONE RECENTE (ULTIMI 3 GIORNI)
+        const recent3WindsSpeed = windSpeedDays.slice(-3);
+        const recent3WindsDir = windDirDays.slice(-3);
+        const avgRecentWindSpeed = recent3WindsSpeed.reduce((a, b) => a + b, 0) / recent3WindsSpeed.length;
+        const avgRecentWindDir = recent3WindsDir.reduce((a, b) => a + b, 0) / recent3WindsDir.length;
 
-        const isDryWind = (avgWindDir >= 315 || avgWindDir <= 67);
-        const isHumidWind = (avgWindDir > 135 && avgWindDir < 247);
+        const isDryWindRecent = (avgRecentWindDir >= 315 || avgRecentWindDir <= 67);
         let windNote = "🌬️ Vento neutro";
+        let windDryNote = "";
 
-        if (avgWindSpeed > 18 && isDryWind) {
-          combinedScore = combinedScore * 0.75; 
-          windNote = "💨 Tramontana/Secco (-25%)";
-        } else if (avgWindSpeed <= 12 || isHumidWind) {
+        if (avgRecentWindSpeed > 14 && isDryWindRecent) {
+          // Se bassa quota (quercia/cerro come Manziana), la tramontana azzera l'umidità superficiale
+          const dryingPenalty = (altitude <= 600) ? 0.55 : 0.70; // -45% per collina/bassa quota, -30% per montagna
+          combinedScore = combinedScore * dryingPenalty; 
+          windNote = "💨 Tramontana secca recente";
+          windDryNote = `⚠️ Vento secco post-pioggia: suolo superficiale disidratato (-${Math.round((1-dryingPenalty)*100)}%)`;
+        } else if (avgRecentWindSpeed <= 12) {
           combinedScore = Math.min(100, combinedScore * 1.10); 
-          windNote = "🍃 Vento debole/Umido (+10%)";
+          windNote = "🍃 Vento debole protetto (+10%)";
         }
 
         let dewNote = "Neutro";
@@ -501,9 +507,9 @@
         let predictionNote = "Fase stazionaria / Attesa";
         let predictionColor = "text-slate-500";
         if (recentRain > 30 && goldenWindowRain < 20) {
-          predictionNote = "💧 Suolo appena bagnato: boom atteso tra 7-12 gg";
+          predictionNote = "💧 Suolo appena bagnato: boom atteso tra 7-10 gg";
           predictionColor = "text-blue-600 font-bold";
-        } else if (goldenWindowRain >= 30 && finalScore > 60) {
+        } else if (goldenWindowRain >= 25 && finalScore > 60) {
           predictionNote = "🍄 Piena Finestra di Fruttificazione!";
           predictionColor = "text-emerald-600 font-bold";
         } else if (totalRain < 15) {
@@ -517,9 +523,9 @@
           goldenWindowRain: Math.round(goldenWindowRain),
           soilMoisture: soilMoistureEst,
           dewNote,
-          predictionNote, predictionColor, penaltyNote, tempMinNote, seasonNote,
+          predictionNote, predictionColor, penaltyNote, tempMinNote, seasonNote, windDryNote,
           avgTemp: Math.round(avgTemp), avgMinTemp: Math.round(avgMinTemp),
-          windSpeed: Math.round(avgWindSpeed), windNote,
+          windSpeed: Math.round(avgRecentWindSpeed), windNote,
           score: finalScore 
         };
 
@@ -531,7 +537,7 @@
 
     function refreshData() {
       Object.keys(activeMarkers).forEach(key => {
-        map.removeLink ? null : map.removeLayer(activeMarkers[key]);
+        map.removeLayer(activeMarkers[key]);
       });
       activeMarkers = {};
       loadMeteoData();
