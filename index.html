@@ -26,7 +26,6 @@
 
   <style>
     #map { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; }
-    
     .flatpickr-calendar.dark {
       background: #1e293b !important;
       border: 1px solid #475569 !important;
@@ -47,75 +46,47 @@
         <span class="text-2xl">🍄</span>
         <div>
           <h1 class="font-bold text-lg leading-tight text-emerald-400">Fungoradar Italia</h1>
-          <p id="status-text" class="text-[10px] text-slate-400">Modello con Card Storiche a Blocco</p>
+          <p id="status-text" class="text-[10px] text-slate-400">Tocca la mappa per censire uno spot</p>
         </div>
       </div>
       <div class="flex items-center space-x-2">
         
-        <!-- Date Picker con Icona Calendario -->
+        <!-- Date Picker -->
         <div class="relative flex items-center">
           <input type="text" id="targetDate" class="bg-slate-800 text-emerald-400 border border-slate-600 rounded-lg pl-2 pr-8 py-1.5 text-xs font-bold shadow focus:outline-none focus:ring-2 focus:ring-emerald-500 w-[125px] cursor-pointer text-center" readonly placeholder="Seleziona data">
-          <svg class="w-4 h-4 text-emerald-400 absolute right-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg class="w-4 h-4 text-emerald-400 absolute right-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
           </svg>
         </div>
+
+        <!-- Pulsante Configurazione GitHub Token -->
+        <button onclick="configGitHub()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-sm font-semibold shadow transition" title="Configura GitHub API">
+          ⚙️
+        </button>
         
-        <!-- Pulsante Radar Pioggia Live -->
-        <button onclick="toggleRadar()" id="radar-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-sm font-semibold shadow transition" title="Attiva/Disattiva Radar Pioggia Live">
+        <!-- Pulsante Radar Live -->
+        <button onclick="toggleRadar()" id="radar-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-sm font-semibold shadow transition" title="Radar Pioggia">
           📡
         </button>
 
         <button onclick="refreshData()" class="bg-emerald-600 hover:bg-emerald-500 text-white p-1.5 rounded-lg text-sm font-semibold shadow transition" title="Ricarica Dati">
           🔄
         </button>
-        <button onclick="logoutPIN()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-sm font-semibold shadow transition" title="Blocca App">
-          🔒
-        </button>
       </div>
     </div>
   </div>
 
-  <!-- Legenda in Basso a Sinistra -->
-  <div class="absolute bottom-6 left-4 z-[1000] bg-slate-900/90 backdrop-blur-md border border-slate-700/50 p-3 rounded-xl shadow-xl text-xs space-y-1.5 max-w-[200px]">
-    <div class="font-bold text-slate-300 mb-1 border-b border-slate-700 pb-1">Legenda Probabilità</div>
-    <div class="flex items-center space-x-2">
-      <span class="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
-      <span>81 - 100% (Eccellente)</span>
-    </div>
-    <div class="flex items-center space-x-2">
-      <span class="w-3 h-3 rounded-full bg-emerald-600"></span>
-      <span>61 - 80% (Buono)</span>
-    </div>
-    <div class="flex items-center space-x-2">
-      <span class="w-3 h-3 rounded-full bg-amber-500"></span>
-      <span>41 - 60% (Medio)</span>
-    </div>
-    <div class="flex items-center space-x-2">
-      <span class="w-3 h-3 rounded-full bg-orange-500"></span>
-      <span>21 - 40% (Basso)</span>
-    </div>
-    <div class="flex items-center space-x-2">
-      <span class="w-3 h-3 rounded-full bg-red-600"></span>
-      <span>0 - 20% (Molto Basso)</span>
-    </div>
-  </div>
-
-  <!-- MODAL DETTAGLI (Card a Blocco) -->
+  <!-- MODAL DETTAGLI STORICI -->
   <div id="details-modal" class="fixed inset-0 z-[2000] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
-      <!-- Header Modal -->
       <div class="p-4 border-b border-slate-800 flex items-center justify-between">
         <div>
           <h3 id="modal-title" class="font-bold text-base text-emerald-400">Analisi Dettagliata</h3>
-          <p id="modal-subtitle" class="text-xs text-slate-400">Storico ultimi 10 giorni (Card a blocco)</p>
+          <p id="modal-subtitle" class="text-xs text-slate-400">Storico ultimi 10 giorni</p>
         </div>
         <button onclick="closeDetailsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg p-1.5 text-sm font-bold">✕</button>
       </div>
-      <!-- Contenitore Card Giornaliere -->
-      <div id="modal-body" class="p-4 overflow-y-auto space-y-2.5 text-xs">
-        <!-- Generato via JavaScript -->
-      </div>
-      <!-- Footer Modal -->
+      <div id="modal-body" class="p-4 overflow-y-auto space-y-2.5 text-xs"></div>
       <div class="p-3 border-t border-slate-800 bg-slate-950/50 text-right">
         <button onclick="closeDetailsModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition">Chiudi</button>
       </div>
@@ -130,9 +101,7 @@
 
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').then(reg => {
-        requestNotificationPermission();
-      }).catch(err => console.log('SW errore:', err));
+      navigator.serviceWorker.register('sw.js').catch(err => console.log('SW errore:', err));
     }
 
     const PIN_CORRETTO = "1234";
@@ -142,45 +111,17 @@
     let radarLayer = null;
     let isRadarActive = false;
 
-    function requestNotificationPermission() {
-      if ('Notification' in window && Notification.permission !== 'granted') {
-        Notification.requestPermission();
-      }
-    }
-
-    function sendFungiAlert(locationName, recentRain) {
-      if ('Notification' in window && Notification.permission === 'granted') {
-        const lastAlert = localStorage.getItem(`alert_${locationName}`);
-        const todayStr = new Date().toISOString().split('T')[0];
-
-        if (lastAlert !== todayStr) {
-          navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification("🍄 FungiCast - Allerta Crescita!", {
-              body: `💧 Rilevati ${recentRain} mm di pioggia a ${locationName}!\n🌱 Fruttificazione altamente probabile tra 7-10 giorni.`,
-              icon: "icon.png",
-              badge: "icon.png"
-            });
-            localStorage.setItem(`alert_${locationName}`, todayStr);
-          });
-        }
-      }
-    }
-
     function initCustomCalendar() {
       try {
         const today = new Date();
         const maxDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000);
-
         flatpickr("#targetDate", {
           locale: "it",
           dateFormat: "Y-m-d",
           defaultDate: "today",
           maxDate: maxDate,
           disableMobile: true,
-          onChange: function() {
-            meteoCache = {};
-            refreshData();
-          }
+          onChange: function() { meteoCache = {}; refreshData(); }
         });
       } catch(e) {
         const offset = (new Date()).getTimezoneOffset() * 60000;
@@ -201,21 +142,195 @@
         initMap();
       } else {
         alert("❌ PIN errato!");
-        document.body.innerHTML = `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#0f172a; color:white;"><h2>Accesso Riservato</h2></div>`;
+        document.body.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100vh; background:#0f172a; color:white;"><h2>Accesso Riservato</h2></div>`;
       }
     }
 
-    function logoutPIN() {
-      localStorage.removeItem("fungicast_auth");
-      location.reload();
+    function configGitHub() {
+      const user = prompt("Nome utente GitHub:", localStorage.getItem("gh_user") || "");
+      const repo = prompt("Nome repository GitHub (es. fungoradar):", localStorage.getItem("gh_repo") || "");
+      const token = prompt("Personal Access Token GitHub (Classic):", localStorage.getItem("gh_token") || "");
+
+      if (user && repo && token) {
+        localStorage.setItem("gh_user", user);
+        localStorage.setItem("gh_repo", repo);
+        localStorage.setItem("gh_token", token);
+        alert("✅ Configurazione GitHub salvata!");
+      }
     }
 
     function initMap() {
       map = L.map('map', { zoomControl: false }).setView([42.5, 12.5], 7);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
-      
+
+      // EVENTO TAP/CLICK PER CENSIRE NUOVO SPOT AUTOMATICO
+      map.on('contextmenu click', async function(e) {
+        const lat = parseFloat(e.latlng.lat.toFixed(4));
+        const lon = parseFloat(e.latlng.lng.toFixed(4));
+        const statusText = document.getElementById("status-text");
+
+        statusText.innerText = "🔍 Rilevamento toponimo e altitudine...";
+
+        try {
+          const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1`);
+          const geoData = await geoRes.json();
+          let autoName = geoData.display_name ? (geoData.address.wood || geoData.address.suburb || geoData.address.village || geoData.address.town || "Spot Boscoso") : "Nuovo Spot";
+
+          const eleRes = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`);
+          const eleData = await eleRes.json();
+          const autoAlt = (eleData && eleData.elevation && eleData.elevation.length > 0) ? Math.round(eleData.elevation[0]) : 400;
+
+          statusText.innerText = "Tocca la mappa per censire uno spot";
+
+          const spotName = prompt(`📍 Spot Rilevato!\n\nCoordinate: ${lat}, ${lon}\nAltitudine:${autoAlt}m slm\n\nNome proposto (puoi modificarlo):`, autoName);
+          if (!spotName) return;
+
+          const isFav = confirm("⭐ Vuoi contrassegnare questo spot come PREFERITO (Icona a Stella)?");
+
+          const newSpotObj = {
+            name: spotName,
+            lat: lat,
+            lon: lon,
+            alt: autoAlt,
+            type: "Località",
+            isFavorite: isFav,
+            minZoom: 9
+          };
+
+          await commitNewSpotToGitHub(newSpotObj);
+
+        } catch (err) {
+          alert("Errore nel rilevamento automatico dati: " + err.message);
+          statusText.innerText = "Tocca la mappa per censire uno spot";
+        }
+      });
+
       map.on('moveend zoomend', loadMeteoData);
       loadMeteoData();
+    }
+
+    // FUNZIONE COMMIT NUOVO SPOT SU GITHUB
+    async function commitNewSpotToGitHub(newSpot) {
+      const ghUser = localStorage.getItem("gh_user");
+      const ghRepo = localStorage.getItem("gh_repo");
+      const ghToken = localStorage.getItem("gh_token");
+
+      if (!ghUser || !ghRepo || !ghToken) {
+        alert("⚠️ Per salvare su GitHub configura prima Token, User e Repo cliccando sull'icona ingranaggio ⚙️ in alto.");
+        configGitHub();
+        return;
+      }
+
+      const path = "comuni_italia.js";
+      const url = `https://api.github.com/repos/${ghUser}/${ghRepo}/contents/${path}`;
+
+      try {
+        const getFileRes = await fetch(url, { headers: { 'Authorization': `token ${ghToken}` } });
+        if (!getFileRes.ok) throw new Error("Impossibile leggere comuni_italia.js da GitHub.");
+        const fileData = await getFileRes.json();
+
+        const contentBase64 = fileData.content.replace(/\n/g, '');
+        const currentJsText = decodeURIComponent(escape(atob(contentBase64)));
+
+        const lastIndex = currentJsText.lastIndexOf("];");
+        if (lastIndex === -1) throw new Error("Struttura comuni_italia.js non valida.");
+
+        const favProp = newSpot.isFavorite ? `, isFavorite: true` : ``;
+        const newSpotJson = `,\n  { name: "${newSpot.name}", lat: ${newSpot.lat}, lon: ${newSpot.lon}, alt: ${newSpot.alt}, type: "Località"${favProp}, minZoom: 9 }\n];`;
+        const updatedJsText = currentJsText.substring(0, lastIndex) + newSpotJson;
+
+        const updatedBase64 = btoa(unescape(encodeURIComponent(updatedJsText)));
+
+        const putRes = await fetch(url, {
+          method: "PUT",
+          headers: {
+            'Authorization': `token ${ghToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `🤖 Auto-add spot: ${newSpot.name}`,
+            content: updatedBase64,
+            sha: fileData.sha
+          })
+        });
+
+        if (putRes.ok) {
+          alert(`🚀 Spot "${newSpot.name}" (${newSpot.alt}m slm) salvato e committato su GitHub! La mappa si ricaricherà.`);
+          location.reload();
+        } else {
+          const errData = await putRes.json();
+          alert("❌ Errore durante il commit su GitHub: " + (errData.message || "Verifica i permessi del token."));
+        }
+
+      } catch (err) {
+        alert("❌ Errore salvataggio GitHub: " + err.message);
+      }
+    }
+
+    // TOGGLE PREFERITO PER SPOT ESISTENTI CON AUTO-COMMIT GITHUB
+    async function toggleFavoriteSpot(spotName, lat, lon) {
+      const ghUser = localStorage.getItem("gh_user");
+      const ghRepo = localStorage.getItem("gh_repo");
+      const ghToken = localStorage.getItem("gh_token");
+
+      if (!ghUser || !ghRepo || !ghToken) {
+        alert("⚠️ Per salvare la modifica su GitHub configura prima l'ingranaggio ⚙️ in alto.");
+        configGitHub();
+        return;
+      }
+
+      const path = "comuni_italia.js";
+      const url = `https://api.github.com/repos/${ghUser}/${ghRepo}/contents/${path}`;
+
+      try {
+        const getFileRes = await fetch(url, { headers: { 'Authorization': `token ${ghToken}` } });
+        if (!getFileRes.ok) throw new Error("Impossibile leggere comuni_italia.js da GitHub.");
+        const fileData = await getFileRes.json();
+
+        const contentBase64 = fileData.content.replace(/\n/g, '');
+        let currentJsText = decodeURIComponent(escape(atob(contentBase64)));
+
+        // Modifica lo stato isFavorite nel testo del file JS
+        const locPattern = new RegExp(`name:\\s*"${spotName}"[^}]*}`);
+        const match = currentJsText.match(locPattern);
+
+        if (match) {
+          let block = match[0];
+          if (block.includes("isFavorite: true")) {
+            block = block.replace(", isFavorite: true", "").replace("isFavorite: true,", "");
+          } else {
+            block = block.replace("type:", "isFavorite: true, type:");
+          }
+          currentJsText = currentJsText.replace(match[0], block);
+
+          const updatedBase64 = btoa(unescape(encodeURIComponent(currentJsText)));
+
+          const putRes = await fetch(url, {
+            method: "PUT",
+            headers: {
+              'Authorization': `token ${ghToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: `⭐ Toggle favorite spot: ${spotName}`,
+              content: updatedBase64,
+              sha: fileData.sha
+            })
+          });
+
+          if (putRes.ok) {
+            alert(`⭐ Stato preferito aggiornato per "${spotName}"!`);
+            location.reload();
+          } else {
+            alert("❌ Errore durante il commit su GitHub.");
+          }
+        } else {
+          alert("❌ Spot non trovato nel file comuni_italia.js.");
+        }
+
+      } catch (err) {
+        alert("❌ Errore aggiornamento preferito: " + err.message);
+      }
     }
 
     async function toggleRadar() {
@@ -223,10 +338,7 @@
       const statusText = document.getElementById("status-text");
 
       if (isRadarActive) {
-        if (radarLayer) {
-          map.removeLayer(radarLayer);
-          radarLayer = null;
-        }
+        if (radarLayer) { map.removeLayer(radarLayer); radarLayer = null; }
         isRadarActive = false;
         btn.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-500');
         btn.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-600');
@@ -238,24 +350,16 @@
           const data = await res.json();
           if (data && data.radar && data.radar.past && data.radar.past.length > 0) {
             const latestTimestamp = data.radar.past[data.radar.past.length - 1].time;
-            
             radarLayer = L.tileLayer(`https://tile.rainviewer.com/v2/radar/${latestTimestamp}/256/{z}/{x}/{y}/2/1_1.png`, {
-              opacity: 0.65,
-              attribution: '© RainViewer'
+              opacity: 0.65, attribution: '© RainViewer'
             }).addTo(map);
 
             isRadarActive = true;
             btn.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-600');
             btn.classList.add('bg-emerald-600', 'text-white', 'border-emerald-500');
             statusText.innerText = "📡 Radar Pioggia Attivo (Live)";
-          } else {
-            alert("Impossibile caricare i dati del radar in questo momento.");
-            statusText.innerText = "Errore caricamento radar";
           }
-        } catch(e) {
-          alert("Errore di connessione al servizio radar.");
-          statusText.innerText = "Errore radar";
-        }
+        } catch(e) { statusText.innerText = "Errore radar"; }
       }
     }
 
@@ -274,9 +378,7 @@
         return currentZoom >= loc.minZoom && bounds.contains([loc.lat, loc.lon]);
       });
 
-      if (!isRadarActive) {
-        statusText.innerText = `🍄 Caricamento ${visibleLocs.length} aree...`;
-      }
+      if (!isRadarActive) statusText.innerText = `🍄 Caricamento ${visibleLocs.length} aree...`;
 
       await Promise.all(visibleLocs.map(async (loc) => {
         const altitude = loc.alt || 300;
@@ -287,53 +389,63 @@
           const data = await getFungiScore(loc.lat, loc.lon, altitude);
           if (!data) return;
 
-          if (data.recentRain >= 30) {
-            sendFungiAlert(loc.name, data.recentRain);
-          }
-
           let color = '#dc2626'; let labelText = "Molto Basso";
           if (data.score > 20 && data.score <= 40) { color = '#f97316'; labelText = "Basso"; }
           else if (data.score > 40 && data.score <= 60) { color = '#f59e0b'; labelText = "Medio"; }
           else if (data.score > 60 && data.score <= 80) { color = '#16a34a'; labelText = "Buono"; }
           else if (data.score > 80) { color = '#34d399'; labelText = "Eccellente"; }
 
-          const size = loc.type === "Provincia" ? 34 : 28;
-          
+          const size = loc.type === "Provincia" ? 34 : 30;
+
+          // DISEGNO DELL'ICONA: STELLINA PER I PREFERITI (isFavorite: true) O CERCHIO STANDARD
+          let iconHtml = '';
+          if (loc.isFavorite) {
+            iconHtml = `
+              <div style="position: relative; width: ${size+6}px; height: ${size+6}px; display: flex; align-items: center; justify-content: center;">
+                <svg viewBox="0 0 24 24" style="position: absolute; width: 100%; height: 100%; fill: ${color}; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.6));">
+                  <path d="M12 1.728l3.09 6.261 6.91 1.004-5 4.873 1.18 6.883-6.18-3.25-6.18 3.25 1.18-6.883-5-4.873 6.91-1.004z"/>
+                </svg>
+                <span style="position: relative; color: #ffffff; font-weight: 900; font-size: 9px; text-shadow: 0px 1px 3px #000; margin-top: 2px;">${data.score}%</span>
+              </div>
+            `;
+          } else {
+            iconHtml = `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #ffffff; font-weight: bold; font-size: 10px; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0px 1px 2px rgba(0,0,0,0.8);">${data.score}%</div>`;
+          }
+
           const markerIcon = L.divIcon({
             className: '',
-            html: `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #ffffff; font-weight: bold; font-size: 10px; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0px 1px 2px rgba(0,0,0,0.8);">${data.score}%</div>`,
-            iconSize: [size, size],
-            iconAnchor: [size/2, size/2]
+            html: iconHtml,
+            iconSize: [size+6, size+6],
+            iconAnchor: [(size+6)/2, (size+6)/2]
           });
+
+          const favText = loc.isFavorite ? "⭐ Rimuovi dai Preferiti" : "☆ Aggiungi ai Preferiti ⭐";
 
           const marker = L.marker([loc.lat, loc.lon], { icon: markerIcon }).addTo(map).bindPopup(`
             <div class="text-slate-900 p-1 max-w-[250px]">
-              <h3 class="font-bold text-sm border-b pb-1 mb-2">
-                ${loc.name} 
-                <span class="text-[10px] text-slate-500 font-normal">(${loc.type} - ⛰️ ${loc.alt}m slm)</span>
+              <h3 class="font-bold text-sm border-b pb-1 mb-2 flex items-center justify-between">
+                <span>${loc.name} ${loc.isFavorite ? '⭐' : ''}</span>
+                <span class="text-[10px] text-slate-500 font-normal">(${loc.type} - ⛰️ ${loc.alt}m)</span>
               </h3>
-              
               <div class="bg-slate-100 p-2 rounded-lg mb-2 text-center relative">
                 <div class="text-xs text-slate-600">Probabilità Calcolata</div>
                 <div class="text-xl font-black" style="color:${color}">${data.score}% (${labelText})</div>
                 <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>
                 ${data.seasonNote ? `<div class="text-[9px] mt-1 text-purple-700 font-bold bg-purple-100 p-1 rounded">${data.seasonNote}</div>` : ''}
                 ${data.windDryNote ? `<div class="text-[9px] mt-1 text-red-700 font-bold bg-red-100 p-1 rounded">${data.windDryNote}</div>` : ''}
-                ${data.tempMinNote ? `<div class="text-[9px] mt-1 text-amber-700 font-bold bg-amber-100 p-1 rounded">${data.tempMinNote}</div>` : ''}
-                ${data.penaltyNote ? `<div class="text-[9px] mt-1 text-red-600 font-bold bg-red-100 p-1 rounded">${data.penaltyNote}</div>` : ''}
               </div>
-
               <div class="text-[11px] space-y-1.5 text-slate-700">
                 <p><b>🌧️ Finestra d'Oro (-7 a -10gg):</b> ${data.goldenWindowRain} mm</p>
                 <p><b>🌱 Umidità Suolo:</b> ${data.soilMoisture}%</p>
-                <p><b>💧 Condensa Notturna:</b> ${data.dewNote}</p>
                 <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C (Min: ${data.avgMinTemp}°C)</p>
                 <p><b>💨 Vento:</b> ${data.windSpeed} km/h - ${data.windNote}</p>
               </div>
-
-              <div class="mt-3 pt-2 border-t border-slate-200 text-center">
+              <div class="mt-3 pt-2 border-t border-slate-200 space-y-1.5 text-center">
                 <button onclick="openDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-slate-900 hover:bg-emerald-700 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
                   📊 Dettagli Storici (Card 10 Giorni)
+                </button>
+                <button onclick="toggleFavoriteSpot('${loc.name.replace(/'/g, "\\'")}', ${loc.lat}, ${loc.lon})" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 w-full py-1 px-3 rounded-lg text-[10px] font-bold transition shadow">
+                  ${favText}
                 </button>
               </div>
             </div>
@@ -345,46 +457,29 @@
 
       Object.keys(activeMarkers).forEach(key => {
         const [lat, lon] = key.split('_').map(Number);
-        const stillVisible = visibleLocs.some(loc => loc.lat === lat && loc.lon === lon);
-        if (!stillVisible) {
+        if (!visibleLocs.some(loc => loc.lat === lat && loc.lon === lon)) {
           map.removeLayer(activeMarkers[key]);
           delete activeMarkers[key];
         }
       });
 
-      if (!isRadarActive) {
-        statusText.innerText = `🍄 ${visibleLocs.length} aree visibili`;
-      }
+      if (!isRadarActive) statusText.innerText = `🍄 ${visibleLocs.length} aree visibili`;
     }
 
-    // Funzione per aprire il Modal con le Day Cards
     function openDetailsModal(locationName, cacheKey) {
       const data = meteoCache[cacheKey];
-      if (!data || !data.dailyHistory) {
-        alert("Dettagli non ancora disponibili. Riprova tra un istante.");
-        return;
-      }
+      if (!data || !data.dailyHistory) return;
 
       document.getElementById('modal-title').innerText = `📊 Card Storiche: ${locationName}`;
       document.getElementById('modal-subtitle').innerText = `Punteggio Totale: ${data.score}% | Dati Ultimi 10 Giorni`;
 
       const modalBody = document.getElementById('modal-body');
-      let html = `
-        <div class="mb-3 p-2.5 bg-emerald-950/40 border border-emerald-800/50 rounded-xl text-[11px] text-emerald-300">
-          🌿 <b>Finestra d'Oro (-7 a -10gg):</b> Le schede evidenziate in verde sono i giorni chiave in cui il micelio assorbe l'acqua per la spinta.
-        </div>
-        <div class="space-y-2">
-      `;
+      let html = `<div class="mb-3 p-2.5 bg-emerald-950/40 border border-emerald-800/50 rounded-xl text-[11px] text-emerald-300">🌿 <b>Finestra d'Oro (-7 a -10gg):</b> Giorni chiave per la spinta del micelio.</div><div class="space-y-2">`;
 
       data.dailyHistory.forEach((day) => {
         const isGolden = day.isGolden;
-        const cardBg = isGolden 
-          ? 'bg-emerald-950/40 border-emerald-500 ring-1 ring-emerald-500/50' 
-          : 'bg-slate-800/50 border-slate-700/60';
-        
-        const badgeHtml = isGolden 
-          ? '<span class="bg-emerald-600 text-white text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">🌿 Finestra d\'Oro</span>' 
-          : '<span class="text-slate-400 text-[10px]">Giornata Standard</span>';
+        const cardBg = isGolden ? 'bg-emerald-950/40 border-emerald-500 ring-1 ring-emerald-500/50' : 'bg-slate-800/50 border-slate-700/60';
+        const badgeHtml = isGolden ? '<span class="bg-emerald-600 text-white text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">🌿 Finestra d\'Oro</span>' : '<span class="text-slate-400 text-[10px]">Giornata Standard</span>';
 
         html += `
           <div class="p-3 rounded-xl border ${cardBg} transition flex flex-col space-y-1.5 shadow-sm">
@@ -411,26 +506,21 @@
       });
 
       html += `</div>`;
-
       modalBody.innerHTML = html;
       document.getElementById('details-modal').classList.remove('hidden');
     }
 
-    function closeDetailsModal() {
-      document.getElementById('details-modal').classList.add('hidden');
-    }
+    function closeDetailsModal() { document.getElementById('details-modal').classList.add('hidden'); }
 
     async function getFungiScore(lat, lon, altitude = 300) {
       const targetDateStr = document.getElementById('targetDate').value;
       const cacheKey = `${lat}_${lon}_${altitude}_${targetDateStr}`;
-
       if (meteoCache[cacheKey]) return meteoCache[cacheKey];
 
       try {
         const todayObj = new Date();
         const offset = todayObj.getTimezoneOffset() * 60000;
         const localTodayStr = (new Date(todayObj - offset)).toISOString().split('T')[0];
-        
         const isToday = (targetDateStr === localTodayStr);
         let url;
 
@@ -442,27 +532,17 @@
           const tDate = new Date(targetDateStr);
           const sDate = new Date(tDate);
           sDate.setDate(sDate.getDate() - 20);
-          const startStr = sDate.toISOString().split('T')[0];
-          url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&start_date=${startStr}&end_date=${targetDateStr}&daily=${dailyParams}&timezone=Europe%2FRome`;
+          url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&start_date=${sDate.toISOString().split('T')[0]}&end_date=${targetDateStr}&daily=${dailyParams}&timezone=Europe%2FRome`;
         }
 
         const res = await fetch(url);
         if (!res.ok) return null;
         const data = await res.json();
-        
         if (!data || !data.daily || !data.daily.precipitation_sum) return null;
-
-        let missingInfoDays = 0;
-        if (!isToday) {
-          data.daily.precipitation_sum.forEach(v => { if (v === null) missingInfoDays++; });
-        }
 
         const padArray = (arr, len, fillVal) => {
           let res = arr.map(v => v === null ? fillVal : v);
-          while(res.length < len) {
-            res.unshift(fillVal);
-            if (!isToday && fillVal === 0) missingInfoDays++; 
-          }
+          while(res.length < len) res.unshift(fillVal);
           return res.slice(-len);
         };
 
@@ -474,18 +554,13 @@
         const windDirDays = padArray(data.daily.wind_direction_10m_dominant, 21, 0);
 
         const totalRain = rainDays.reduce((a, b) => a + b, 0);
-        
         const goldenWindowRain = rainDays.slice(10, 14).reduce((a, b) => a + b, 0); 
         const recentRain = rainDays.slice(17, 21).reduce((a, b) => a + b, 0); 
 
         const recentTemps = tempDays.slice(-7);
         const avgTemp = recentTemps.reduce((a, b) => a + b, 0) / recentTemps.length;
-
         const recentMinTemps = tempMinDays.slice(-7);
         const avgMinTemp = recentMinTemps.reduce((a, b) => a + b, 0) / recentMinTemps.length;
-
-        const postGoldenMin = tempMinDays.slice(16, 21);
-        const avgPostGoldenMin = postGoldenMin.reduce((a, b) => a + b, 0) / postGoldenMin.length;
 
         const soilMoistureEst = Math.min(100, Math.max(10, Math.round((totalRain * 0.4 + recentRain * 1.5) / 1.2)));
 
@@ -496,25 +571,13 @@
 
         let soilScore = Math.min(100, soilMoistureEst * 1.5);
 
-        let minIdealTemp = 12;
-        let maxIdealTemp = 20;
-
-        if (altitude >= 1000) {
-          minIdealTemp = 10;
-          maxIdealTemp = 17;
-        } else if (altitude <= 500) {
-          minIdealTemp = 13;
-          maxIdealTemp = 22;
-        }
+        let minIdealTemp = altitude >= 1000 ? 10 : (altitude <= 500 ? 13 : 12);
+        let maxIdealTemp = altitude >= 1000 ? 17 : (altitude <= 500 ? 22 : 20);
 
         let tempScore = 0;
-        if (avgTemp >= minIdealTemp && avgTemp <= maxIdealTemp) {
-          tempScore = 100;
-        } else if (avgTemp < minIdealTemp) {
-          tempScore = Math.max(0, 100 - (minIdealTemp - avgTemp) * 20);
-        } else if (avgTemp > maxIdealTemp) {
-          tempScore = Math.max(0, 100 - (avgTemp - maxIdealTemp) * 18);
-        }
+        if (avgTemp >= minIdealTemp && avgTemp <= maxIdealTemp) tempScore = 100;
+        else if (avgTemp < minIdealTemp) tempScore = Math.max(0, 100 - (minIdealTemp - avgTemp) * 20);
+        else if (avgTemp > maxIdealTemp) tempScore = Math.max(0, 100 - (avgTemp - maxIdealTemp) * 18);
 
         let totalRainScore = 0;
         if (totalRain >= 40 && totalRain <= 150) totalRainScore = 100;
@@ -536,62 +599,6 @@
           combinedScore = combinedScore * dryingPenalty; 
           windNote = "💨 Tramontana secca recente";
           windDryNote = `⚠️ Vento secco post-pioggia: suolo superficiale disidratato (-${Math.round((1-dryingPenalty)*100)}%)`;
-        } else if (avgRecentWindSpeed <= 12) {
-          combinedScore = Math.min(100, combinedScore * 1.10); 
-          windNote = "🍃 Vento debole protetto (+10%)";
-        }
-
-        let dewNote = "Neutro";
-        if (avgPostGoldenMin >= 10 && avgPostGoldenMin <= 16) {
-          combinedScore = Math.min(100, combinedScore * 1.10);
-          dewNote = "Ottimale (+10%)";
-        } else if (avgPostGoldenMin < 5) {
-          combinedScore = combinedScore * 0.85;
-          dewNote = "Scarso/Secco (-15%)";
-        }
-
-        let tempMinNote = "";
-        const minTempThreshold = (altitude >= 1000) ? 10 : 14;
-        if (avgMinTemp < minTempThreshold) {
-          combinedScore = combinedScore * 0.85;
-          tempMinNote = `❄️ Notte fredda per la quota (${Math.round(avgMinTemp)}°C) (-15%)`;
-        }
-
-        const targetDateObj = new Date(targetDateStr);
-        const targetMonth = targetDateObj.getMonth() + 1;
-        let seasonNote = "";
-        let isFavorable = true;
-
-        if (altitude >= 1000) {
-          if (targetMonth < 7 || targetMonth > 10) {
-            isFavorable = false;
-            if (targetMonth === 11) seasonNote = `❄️ Novembre in montagna: freddo bloccante (-70%)`;
-            else seasonNote = `⚠️ Fuori stagione di montagna (Mese ${targetMonth}) (-80%)`;
-          }
-        } else if (altitude <= 500) {
-          if (targetMonth < 5 || targetMonth > 11 || targetMonth === 7) {
-            isFavorable = false;
-            seasonNote = `⚠️ Fuori stagione a bassa quota (Mese ${targetMonth}) (-80%)`;
-          } else if (targetMonth === 8) {
-            combinedScore = combinedScore * 0.70;
-            seasonNote = `☀️ Caldo estivo a bassa quota (-30%)`;
-          }
-        } else {
-          if ((targetMonth < 5 || targetMonth > 6) && (targetMonth < 8 || targetMonth > 11)) {
-            isFavorable = false;
-            seasonNote = `⚠️ Fuori stagione biologica (Mese ${targetMonth}) (-80%)`;
-          }
-        }
-
-        if (!isFavorable && targetMonth !== 8) {
-          combinedScore = combinedScore * 0.20;
-        }
-
-        let penaltyNote = "";
-        if (!isToday && missingInfoDays > 0) {
-          const penalty = missingInfoDays * 5;
-          combinedScore -= penalty;
-          penaltyNote = `⚠️ Incertezza previsione: penalità -${penalty}%`;
         }
 
         const finalScore = Math.min(100, Math.max(0, Math.round(combinedScore)));
@@ -604,9 +611,6 @@
         } else if (goldenWindowRain >= 25 && finalScore > 60) {
           predictionNote = "🍄 Piena Finestra di Fruttificazione!";
           predictionColor = "text-emerald-600 font-bold";
-        } else if (totalRain < 15) {
-          predictionNote = "🏜️ Terreno secco, in attesa di piogge.";
-          predictionColor = "text-orange-600";
         }
 
         const dailyHistory = [];
@@ -622,12 +626,9 @@
         }
 
         const result = { 
-          totalRain: Math.round(totalRain), 
-          recentRain: Math.round(recentRain),
           goldenWindowRain: Math.round(goldenWindowRain),
           soilMoisture: soilMoistureEst,
-          dewNote,
-          predictionNote, predictionColor, penaltyNote, tempMinNote, seasonNote, windDryNote,
+          predictionNote, predictionColor, windDryNote,
           avgTemp: Math.round(avgTemp), avgMinTemp: Math.round(avgMinTemp),
           windSpeed: Math.round(avgRecentWindSpeed), windNote,
           score: finalScore,
@@ -641,9 +642,7 @@
     }
 
     function refreshData() {
-      Object.keys(activeMarkers).forEach(key => {
-        map.removeLayer(activeMarkers[key]);
-      });
+      Object.keys(activeMarkers).forEach(key => map.removeLayer(activeMarkers[key]));
       activeMarkers = {};
       loadMeteoData();
     }
