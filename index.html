@@ -49,28 +49,34 @@
           <p id="status-text" class="text-[10px] text-slate-400">Tocca la mappa per censire uno spot</p>
         </div>
       </div>
-      <div class="flex items-center space-x-2">
+      <div class="flex items-center space-x-1.5 sm:space-x-2">
         
         <!-- Date Picker -->
         <div class="relative flex items-center">
-          <input type="text" id="targetDate" class="bg-slate-800 text-emerald-400 border border-slate-600 rounded-lg pl-2 pr-8 py-1.5 text-xs font-bold shadow focus:outline-none focus:ring-2 focus:ring-emerald-500 w-[125px] cursor-pointer text-center" readonly placeholder="Seleziona data">
+          <input type="text" id="targetDate" class="bg-slate-800 text-emerald-400 border border-slate-600 rounded-lg pl-2 pr-8 py-1.5 text-xs font-bold shadow focus:outline-none focus:ring-2 focus:ring-emerald-500 w-[110px] sm:w-[125px] cursor-pointer text-center" readonly placeholder="Seleziona data">
           <svg class="w-4 h-4 text-emerald-400 absolute right-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
           </svg>
         </div>
 
-        <!-- Pulsante Configurazione GitHub Token -->
+        <!-- Configurazione GitHub -->
         <button onclick="configGitHub()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-sm font-semibold shadow transition" title="Configura GitHub API">
           ⚙️
         </button>
         
-        <!-- Pulsante Radar Live -->
+        <!-- Radar Live -->
         <button onclick="toggleRadar()" id="radar-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-sm font-semibold shadow transition" title="Radar Pioggia">
           📡
         </button>
 
+        <!-- Ricarica -->
         <button onclick="refreshData()" class="bg-emerald-600 hover:bg-emerald-500 text-white p-1.5 rounded-lg text-sm font-semibold shadow transition" title="Ricarica Dati">
           🔄
+        </button>
+
+        <!-- Logout / Blocca App (Ripristinato) -->
+        <button onclick="logoutPIN()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-sm font-semibold shadow transition" title="Blocca App">
+          🔒
         </button>
       </div>
     </div>
@@ -146,6 +152,11 @@
       }
     }
 
+    function logoutPIN() {
+      localStorage.removeItem("fungicast_auth");
+      location.reload();
+    }
+
     function configGitHub() {
       const user = prompt("Nome utente GitHub:", localStorage.getItem("gh_user") || "");
       const repo = prompt("Nome repository GitHub (es. fungoradar):", localStorage.getItem("gh_repo") || "");
@@ -163,7 +174,6 @@
       map = L.map('map', { zoomControl: false }).setView([42.5, 12.5], 7);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
 
-      // EVENTO TAP/CLICK PER CENSIRE NUOVO SPOT AUTOMATICO
       map.on('contextmenu click', async function(e) {
         const lat = parseFloat(e.latlng.lat.toFixed(4));
         const lon = parseFloat(e.latlng.lng.toFixed(4));
@@ -209,7 +219,6 @@
       loadMeteoData();
     }
 
-    // FUNZIONE COMMIT NUOVO SPOT SU GITHUB
     async function commitNewSpotToGitHub(newSpot) {
       const ghUser = localStorage.getItem("gh_user");
       const ghRepo = localStorage.getItem("gh_repo");
@@ -236,7 +245,7 @@
         if (lastIndex === -1) throw new Error("Struttura comuni_italia.js non valida.");
 
         const favProp = newSpot.isFavorite ? `, isFavorite: true` : ``;
-        const newSpotJson = `,\n  { name: "${newSpot.name}", lat: ${newSpot.lat}, lon: ${newSpot.lon}, alt: ${newSpot.alt}, type: "Località"${favProp}, minZoom: 9 }\n];`;
+        const newSpotJson = `,\n  { name: "${newSpot.name}", lat: ${newSpot.lat}, lon:${newSpot.lon}, alt: ${newSpot.alt}, type: "Località"${favProp}, minZoom: 9 }\n];`;
         const updatedJsText = currentJsText.substring(0, lastIndex) + newSpotJson;
 
         const updatedBase64 = btoa(unescape(encodeURIComponent(updatedJsText)));
@@ -267,7 +276,6 @@
       }
     }
 
-    // TOGGLE PREFERITO PER SPOT ESISTENTI CON AUTO-COMMIT GITHUB
     async function toggleFavoriteSpot(spotName, lat, lon) {
       const ghUser = localStorage.getItem("gh_user");
       const ghRepo = localStorage.getItem("gh_repo");
@@ -290,7 +298,6 @@
         const contentBase64 = fileData.content.replace(/\n/g, '');
         let currentJsText = decodeURIComponent(escape(atob(contentBase64)));
 
-        // Modifica lo stato isFavorite nel testo del file JS
         const locPattern = new RegExp(`name:\\s*"${spotName}"[^}]*}`);
         const match = currentJsText.match(locPattern);
 
@@ -397,11 +404,10 @@
 
           const size = loc.type === "Provincia" ? 34 : 30;
 
-          // DISEGNO DELL'ICONA: STELLINA PER I PREFERITI (isFavorite: true) O CERCHIO STANDARD
           let iconHtml = '';
           if (loc.isFavorite) {
             iconHtml = `
-              <div style="position: relative; width: ${size+6}px; height: ${size+6}px; display: flex; align-items: center; justify-content: center;">
+              <div style="position: relative; width: ${size+6}px; height:${size+6}px; display: flex; align-items: center; justify-content: center;">
                 <svg viewBox="0 0 24 24" style="position: absolute; width: 100%; height: 100%; fill: ${color}; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.6));">
                   <path d="M12 1.728l3.09 6.261 6.91 1.004-5 4.873 1.18 6.883-6.18-3.25-6.18 3.25 1.18-6.883-5-4.873 6.91-1.004z"/>
                 </svg>
@@ -409,7 +415,7 @@
               </div>
             `;
           } else {
-            iconHtml = `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #ffffff; font-weight: bold; font-size: 10px; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0px 1px 2px rgba(0,0,0,0.8);">${data.score}%</div>`;
+            iconHtml = `<div style="background-color: ${color}; width: ${size}px; height:${size}px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #ffffff; font-weight: bold; font-size: 10px; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0px 1px 2px rgba(0,0,0,0.8);">${data.score}%</div>`;
           }
 
           const markerIcon = L.divIcon({
@@ -424,27 +430,26 @@
           const marker = L.marker([loc.lat, loc.lon], { icon: markerIcon }).addTo(map).bindPopup(`
             <div class="text-slate-900 p-1 max-w-[250px]">
               <h3 class="font-bold text-sm border-b pb-1 mb-2 flex items-center justify-between">
-                <span>${loc.name} ${loc.isFavorite ? '⭐' : ''}</span>
+                <span>${loc.name}${loc.isFavorite ? '⭐' : ''}</span>
                 <span class="text-[10px] text-slate-500 font-normal">(${loc.type} - ⛰️ ${loc.alt}m)</span>
               </h3>
               <div class="bg-slate-100 p-2 rounded-lg mb-2 text-center relative">
                 <div class="text-xs text-slate-600">Probabilità Calcolata</div>
-                <div class="text-xl font-black" style="color:${color}">${data.score}% (${labelText})</div>
-                <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>
-                ${data.seasonNote ? `<div class="text-[9px] mt-1 text-purple-700 font-bold bg-purple-100 p-1 rounded">${data.seasonNote}</div>` : ''}
+                <div class="text-xl font-black" style="color:${color}">${data.score}\% (${labelText})</div>
+                <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>${data.seasonNote ? `<div class="text-[9px] mt-1 text-purple-700 font-bold bg-purple-100 p-1 rounded">${data.seasonNote}</div>` : ''}
                 ${data.windDryNote ? `<div class="text-[9px] mt-1 text-red-700 font-bold bg-red-100 p-1 rounded">${data.windDryNote}</div>` : ''}
               </div>
               <div class="text-[11px] space-y-1.5 text-slate-700">
                 <p><b>🌧️ Finestra d'Oro (-7 a -10gg):</b> ${data.goldenWindowRain} mm</p>
                 <p><b>🌱 Umidità Suolo:</b> ${data.soilMoisture}%</p>
-                <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C (Min: ${data.avgMinTemp}°C)</p>
-                <p><b>💨 Vento:</b> ${data.windSpeed} km/h - ${data.windNote}</p>
+                <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C (Min:${data.avgMinTemp}°C)</p>
+                <p><b>💨 Vento:</b> ${data.windSpeed} km/h -${data.windNote}</p>
               </div>
               <div class="mt-3 pt-2 border-t border-slate-200 space-y-1.5 text-center">
                 <button onclick="openDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-slate-900 hover:bg-emerald-700 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
                   📊 Dettagli Storici (Card 10 Giorni)
                 </button>
-                <button onclick="toggleFavoriteSpot('${loc.name.replace(/'/g, "\\'")}', ${loc.lat}, ${loc.lon})" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 w-full py-1 px-3 rounded-lg text-[10px] font-bold transition shadow">
+                <button onclick="toggleFavoriteSpot('${loc.name.replace(/'/g, "\\'")}', ${loc.lat},${loc.lon})" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 w-full py-1 px-3 rounded-lg text-[10px] font-bold transition shadow">
                   ${favText}
                 </button>
               </div>
@@ -484,170 +489,9 @@
         html += `
           <div class="p-3 rounded-xl border ${cardBg} transition flex flex-col space-y-1.5 shadow-sm">
             <div class="flex items-center justify-between border-b border-slate-700/50 pb-1.5">
-              <span class="font-bold text-slate-200 text-xs">📅 ${day.date}</span>
-              ${badgeHtml}
+              <span class="font-bold text-slate-200 text-xs">📅 ${day.date}</span>${badgeHtml}
             </div>
             <div class="grid grid-cols-3 gap-2 pt-1 text-center">
               <div class="bg-slate-900/60 p-1.5 rounded-lg border border-slate-800">
                 <div class="text-[10px] text-slate-400">Pioggia</div>
-                <div class="font-bold text-xs ${day.rain > 5 ? 'text-blue-400' : 'text-slate-300'}">🌧️ ${day.rain} mm</div>
-              </div>
-              <div class="bg-slate-900/60 p-1.5 rounded-lg border border-slate-800">
-                <div class="text-[10px] text-slate-400">Temperature</div>
-                <div class="font-bold text-xs text-slate-200">🌡️ ${day.temp}°C <span class="text-[9px] text-slate-400">(${day.tempMin}°)</span></div>
-              </div>
-              <div class="bg-slate-900/60 p-1.5 rounded-lg border border-slate-800">
-                <div class="text-[10px] text-slate-400">Vento Max</div>
-                <div class="font-bold text-xs ${day.wind > 15 ? 'text-orange-400' : 'text-slate-300'}">💨 ${day.wind} km/h</div>
-              </div>
-            </div>
-          </div>
-        `;
-      });
-
-      html += `</div>`;
-      modalBody.innerHTML = html;
-      document.getElementById('details-modal').classList.remove('hidden');
-    }
-
-    function closeDetailsModal() { document.getElementById('details-modal').classList.add('hidden'); }
-
-    async function getFungiScore(lat, lon, altitude = 300) {
-      const targetDateStr = document.getElementById('targetDate').value;
-      const cacheKey = `${lat}_${lon}_${altitude}_${targetDateStr}`;
-      if (meteoCache[cacheKey]) return meteoCache[cacheKey];
-
-      try {
-        const todayObj = new Date();
-        const offset = todayObj.getTimezoneOffset() * 60000;
-        const localTodayStr = (new Date(todayObj - offset)).toISOString().split('T')[0];
-        const isToday = (targetDateStr === localTodayStr);
-        let url;
-
-        const dailyParams = "precipitation_sum,temperature_2m_mean,temperature_2m_min,wind_speed_10m_max,wind_direction_10m_dominant";
-
-        if (isToday) {
-          url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&past_days=20&forecast_days=1&daily=${dailyParams}&timezone=Europe%2FRome`;
-        } else {
-          const tDate = new Date(targetDateStr);
-          const sDate = new Date(tDate);
-          sDate.setDate(sDate.getDate() - 20);
-          url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&start_date=${sDate.toISOString().split('T')[0]}&end_date=${targetDateStr}&daily=${dailyParams}&timezone=Europe%2FRome`;
-        }
-
-        const res = await fetch(url);
-        if (!res.ok) return null;
-        const data = await res.json();
-        if (!data || !data.daily || !data.daily.precipitation_sum) return null;
-
-        const padArray = (arr, len, fillVal) => {
-          let res = arr.map(v => v === null ? fillVal : v);
-          while(res.length < len) res.unshift(fillVal);
-          return res.slice(-len);
-        };
-
-        const timeDays = padArray(data.daily.time || [], 21, "2026-01-01");
-        const rainDays = padArray(data.daily.precipitation_sum, 21, 0);
-        const tempDays = padArray(data.daily.temperature_2m_mean, 21, 15);
-        const tempMinDays = padArray(data.daily.temperature_2m_min, 21, 10);
-        const windSpeedDays = padArray(data.daily.wind_speed_10m_max, 21, 0);
-        const windDirDays = padArray(data.daily.wind_direction_10m_dominant, 21, 0);
-
-        const totalRain = rainDays.reduce((a, b) => a + b, 0);
-        const goldenWindowRain = rainDays.slice(10, 14).reduce((a, b) => a + b, 0); 
-        const recentRain = rainDays.slice(17, 21).reduce((a, b) => a + b, 0); 
-
-        const recentTemps = tempDays.slice(-7);
-        const avgTemp = recentTemps.reduce((a, b) => a + b, 0) / recentTemps.length;
-        const recentMinTemps = tempMinDays.slice(-7);
-        const avgMinTemp = recentMinTemps.reduce((a, b) => a + b, 0) / recentMinTemps.length;
-
-        const soilMoistureEst = Math.min(100, Math.max(10, Math.round((totalRain * 0.4 + recentRain * 1.5) / 1.2)));
-
-        let goldenScore = 0;
-        if (goldenWindowRain >= 25 && goldenWindowRain <= 70) goldenScore = 100;
-        else if (goldenWindowRain > 5 && goldenWindowRain < 25) goldenScore = (goldenWindowRain - 5) * 5;
-        else if (goldenWindowRain > 70) goldenScore = Math.max(0, 100 - (goldenWindowRain - 70));
-
-        let soilScore = Math.min(100, soilMoistureEst * 1.5);
-
-        let minIdealTemp = altitude >= 1000 ? 10 : (altitude <= 500 ? 13 : 12);
-        let maxIdealTemp = altitude >= 1000 ? 17 : (altitude <= 500 ? 22 : 20);
-
-        let tempScore = 0;
-        if (avgTemp >= minIdealTemp && avgTemp <= maxIdealTemp) tempScore = 100;
-        else if (avgTemp < minIdealTemp) tempScore = Math.max(0, 100 - (minIdealTemp - avgTemp) * 20);
-        else if (avgTemp > maxIdealTemp) tempScore = Math.max(0, 100 - (avgTemp - maxIdealTemp) * 18);
-
-        let totalRainScore = 0;
-        if (totalRain >= 40 && totalRain <= 150) totalRainScore = 100;
-        else if (totalRain > 10 && totalRain < 40) totalRainScore = (totalRain - 10) * 3.3;
-
-        let combinedScore = (goldenScore * 0.45) + (soilScore * 0.20) + (tempScore * 0.20) + (totalRainScore * 0.15);
-
-        const recent3WindsSpeed = windSpeedDays.slice(-3);
-        const recent3WindsDir = windDirDays.slice(-3);
-        const avgRecentWindSpeed = recent3WindsSpeed.reduce((a, b) => a + b, 0) / recent3WindsSpeed.length;
-        const avgRecentWindDir = recent3WindsDir.reduce((a, b) => a + b, 0) / recent3WindsDir.length;
-
-        const isDryWindRecent = (avgRecentWindDir >= 315 || avgRecentWindDir <= 67);
-        let windNote = "🌬️ Vento neutro";
-        let windDryNote = "";
-
-        if (avgRecentWindSpeed > 14 && isDryWindRecent) {
-          const dryingPenalty = (altitude <= 600) ? 0.55 : 0.70;
-          combinedScore = combinedScore * dryingPenalty; 
-          windNote = "💨 Tramontana secca recente";
-          windDryNote = `⚠️ Vento secco post-pioggia: suolo superficiale disidratato (-${Math.round((1-dryingPenalty)*100)}%)`;
-        }
-
-        const finalScore = Math.min(100, Math.max(0, Math.round(combinedScore)));
-
-        let predictionNote = "Fase stazionaria / Attesa";
-        let predictionColor = "text-slate-500";
-        if (recentRain > 30 && goldenWindowRain < 20) {
-          predictionNote = "💧 Suolo appena bagnato: boom atteso tra 7-10 gg";
-          predictionColor = "text-blue-600 font-bold";
-        } else if (goldenWindowRain >= 25 && finalScore > 60) {
-          predictionNote = "🍄 Piena Finestra di Fruttificazione!";
-          predictionColor = "text-emerald-600 font-bold";
-        }
-
-        const dailyHistory = [];
-        for (let i = 11; i < 21; i++) {
-          dailyHistory.push({
-            date: timeDays[i] || `Giorno ${i}`,
-            rain: Math.round(rainDays[i] * 10) / 10,
-            temp: Math.round(tempDays[i]),
-            tempMin: Math.round(tempMinDays[i]),
-            wind: Math.round(windSpeedDays[i]),
-            isGolden: (i >= 10 && i <= 13)
-          });
-        }
-
-        const result = { 
-          goldenWindowRain: Math.round(goldenWindowRain),
-          soilMoisture: soilMoistureEst,
-          predictionNote, predictionColor, windDryNote,
-          avgTemp: Math.round(avgTemp), avgMinTemp: Math.round(avgMinTemp),
-          windSpeed: Math.round(avgRecentWindSpeed), windNote,
-          score: finalScore,
-          dailyHistory
-        };
-
-        meteoCache[cacheKey] = result;
-        return result;
-
-      } catch (e) { return null; }
-    }
-
-    function refreshData() {
-      Object.keys(activeMarkers).forEach(key => map.removeLayer(activeMarkers[key]));
-      activeMarkers = {};
-      loadMeteoData();
-    }
-
-    window.onload = verificaAccesso;
-  </script>
-</body>
-</html>
+                <div class="font-bold text-xs ${day.rain > 5 ? 'text-blue-400' : 'text-slate
