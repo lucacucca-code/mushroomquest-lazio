@@ -100,7 +100,7 @@
     </div>
   </div>
 
-  <!-- MODAL DETTAGLI (Proposta 2: Day Cards a Blocco) -->
+  <!-- MODAL DETTAGLI (Card a Blocco) -->
   <div id="details-modal" class="fixed inset-0 z-[2000] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
       <!-- Header Modal -->
@@ -263,6 +263,7 @@
       const currentZoom = map.getZoom();
       const bounds = map.getBounds();
       const statusText = document.getElementById("status-text");
+      const targetDateStr = document.getElementById('targetDate').value;
 
       if (typeof COMUNI_ITALIA === 'undefined') {
         statusText.innerText = "⚠️ Errore: comuni_italia.js non caricato";
@@ -278,10 +279,12 @@
       }
 
       await Promise.all(visibleLocs.map(async (loc) => {
+        const altitude = loc.alt || 300;
+        const cacheKey = `${loc.lat}_${loc.lon}_${altitude}_${targetDateStr}`;
         const locKey = `${loc.lat}_${loc.lon}`;
         
         if (!activeMarkers[locKey]) {
-          const data = await getFungiScore(loc.lat, loc.lon, loc.alt || 300);
+          const data = await getFungiScore(loc.lat, loc.lon, altitude);
           if (!data) return;
 
           if (data.recentRain >= 30) {
@@ -329,7 +332,7 @@
               </div>
 
               <div class="mt-3 pt-2 border-t border-slate-200 text-center">
-                <button onclick="openDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${locKey}')" class="bg-slate-900 hover:bg-emerald-700 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
+                <button onclick="openDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-slate-900 hover:bg-emerald-700 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
                   📊 Dettagli Storici (Card 10 Giorni)
                 </button>
               </div>
@@ -354,9 +357,9 @@
       }
     }
 
-    // Funzione per aprire il Modal con le Day Cards (Proposta 2)
-    function openDetailsModal(locationName, locKey) {
-      const data = meteoCache[locKey];
+    // Funzione per aprire il Modal con le Day Cards
+    function openDetailsModal(locationName, cacheKey) {
+      const data = meteoCache[cacheKey];
       if (!data || !data.dailyHistory) {
         alert("Dettagli non ancora disponibili. Riprova tra un istante.");
         return;
@@ -373,11 +376,8 @@
         <div class="space-y-2">
       `;
 
-      // Creazione delle Day Cards a blocco
       data.dailyHistory.forEach((day) => {
         const isGolden = day.isGolden;
-        
-        // Stili dinamici in base alla Finestra d'Oro
         const cardBg = isGolden 
           ? 'bg-emerald-950/40 border-emerald-500 ring-1 ring-emerald-500/50' 
           : 'bg-slate-800/50 border-slate-700/60';
@@ -475,7 +475,6 @@
 
         const totalRain = rainDays.reduce((a, b) => a + b, 0);
         
-        // Finestra d'Oro: da -7 a -10 giorni (indici 10 a 13)
         const goldenWindowRain = rainDays.slice(10, 14).reduce((a, b) => a + b, 0); 
         const recentRain = rainDays.slice(17, 21).reduce((a, b) => a + b, 0); 
 
@@ -610,7 +609,6 @@
           predictionColor = "text-orange-600";
         }
 
-        // COSTRUIAMO LO STORICO DEGLI ULTIMI 10 GIORNI SOTTO FORMA DI CARD
         const dailyHistory = [];
         for (let i = 11; i < 21; i++) {
           dailyHistory.push({
@@ -619,7 +617,7 @@
             temp: Math.round(tempDays[i]),
             tempMin: Math.round(tempMinDays[i]),
             wind: Math.round(windSpeedDays[i]),
-            isGolden: (i >= 10 && i <= 13) // Gli indici della Finestra d'Oro (-7 a -10gg)
+            isGolden: (i >= 10 && i <= 13)
           });
         }
 
