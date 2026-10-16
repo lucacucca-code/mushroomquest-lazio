@@ -135,4 +135,6 @@ const COMUNI_ITALIA = [
   { name: "Madonna di Campiglio", lat: 46.2289, lon: 10.8275, alt: 1550, type: "Località", minZoom: 9 },
   { name: "Ortisei (Val Gardena)", lat: 46.5744, lon: 11.6769, alt: 1236, type: "Comune", minZoom: 9 },
   { name: "Dobbiaco (Val Pusteria)", lat: 46.7356, lon: 12.2217, alt: 1241, type: "Comune", minZoom: 9 }
+,
+  { name: "Sante Marie", lat: 42.1208, lon: 13.1635, alt: 975, type: "Località", isFavorite: true, minZoom: 9 }
 ];
