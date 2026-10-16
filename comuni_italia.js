@@ -147,4 +147,6 @@ const COMUNI_ITALIA = [
   { name: "Faggeta oriolo", lat: 42.1607, lon: 12.1513, alt: 453, type: "Località", isFavorite: true, minZoom: 9 }
 ,
   { name: "Fregene parco avventura", lat: 41.8413, lon: 12.2135, alt: 14, type: "Località", isFavorite: true, minZoom: 9 }
+,
+  { name: "Livata osservatorio", lat: 41.9516, lon: 13.1743, alt: 1589, type: "Località", isFavorite: true, minZoom: 9 }
 ];
