@@ -66,7 +66,7 @@ const COMUNI_ITALIA = [
   { name: "Terminillo (Pian de Valli)", lat: 42.4700, lon: 12.9700, alt: 1600, type: "Località", minZoom: 9 },
   { name: "Cittaducale", lat: 42.3817, lon: 12.9922, alt: 481, type: "Comune", minZoom: 9 },
   { name: "Antrodoco", lat: 42.4844, lon: 13.0769, alt: 525, type: "Comune", minZoom: 9 },
-  { name: "Montenero Sabino", lat: 42.2803, lon: 12.8144, alt: 475, type: "Comune", minZoom: 9 },
+  { name: "Montenero Sabino", lat: 42.2803, lon: 12.8144, alt: 475, isFavorite: true, type: "Comune", minZoom: 9 },
   { name: "Amatrice", lat: 42.6289, lon: 13.2942, alt: 955, type: "Comune", minZoom: 9 },
   { name: "Leonessa", lat: 42.5658, lon: 12.9619, alt: 969, type: "Comune", minZoom: 9 },
 
