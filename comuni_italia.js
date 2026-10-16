@@ -137,4 +137,6 @@ const COMUNI_ITALIA = [
   { name: "Dobbiaco (Val Pusteria)", lat: 46.7356, lon: 12.2217, alt: 1241, type: "Comune", minZoom: 9 }
 ,
   { name: "Sante Marie", lat: 42.1208, lon: 13.1635, alt: 975, type: "Località", isFavorite: true, minZoom: 9 }
+,
+  { name: "Amelia", lat: 42.5536, lon: 12.4146, alt: 320, type: "Località", minZoom: 9 }
 ];
