@@ -145,4 +145,6 @@ const COMUNI_ITALIA = [
   { name: "Livata faggeta mucche", lat: 41.9396, lon: 13.1336, alt: 1326, type: "Località", isFavorite: true, minZoom: 9 }
 ,
   { name: "Faggeta oriolo", lat: 42.1607, lon: 12.1513, alt: 453, type: "Località", isFavorite: true, minZoom: 9 }
+,
+  { name: "Fregene parco avventura", lat: 41.8413, lon: 12.2135, alt: 14, type: "Località", isFavorite: true, minZoom: 9 }
 ];
