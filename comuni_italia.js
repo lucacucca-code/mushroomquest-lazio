@@ -141,4 +141,6 @@ const COMUNI_ITALIA = [
   { name: "Amelia", lat: 42.5536, lon: 12.4146, alt: 320, type: "Località", minZoom: 9 }
 ,
   { name: "Amelia", lat: 42.5552, lon: 12.418, alt: 325, type: "Località", isFavorite: true, minZoom: 9 }
+,
+  { name: "Livata faggeta mucche", lat: 41.9396, lon: 13.1336, alt: 1326, type: "Località", isFavorite: true, minZoom: 9 }
 ];
