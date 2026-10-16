@@ -74,7 +74,7 @@
           🔄
         </button>
 
-        <!-- Logout / Blocca App (Ripristinato) -->
+        <!-- Logout / Blocca App -->
         <button onclick="logoutPIN()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-sm font-semibold shadow transition" title="Blocca App">
           🔒
         </button>
@@ -99,6 +99,34 @@
     </div>
   </div>
 
+  <!-- MODAL AGGIUNGI SPOT (Mobile Friendly) -->
+  <div id="add-spot-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h3 class="font-bold text-sm text-emerald-400">📍 Censisci Nuovo Spot</h3>
+        <button onclick="closeAddSpotModal()" class="text-slate-400 hover:text-white font-bold text-sm">✕</button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1">Nome dello Spot</label>
+          <input type="text" id="new-spot-name" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Es. Faggeta Alta">
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Altitudine (m slm)</label>
+          <input type="number" id="new-spot-alt" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="400">
+        </div>
+        <div class="flex items-center space-x-2 pt-1">
+          <input type="checkbox" id="new-spot-fav" class="w-4 h-4 accent-emerald-500 rounded">
+          <label for="new-spot-fav" class="text-slate-300 font-medium">Contrassegna come Preferito ⭐</label>
+        </div>
+      </div>
+      <div class="flex space-x-2 pt-2">
+        <button onclick="closeAddSpotModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-xl font-bold transition">Annulla</button>
+        <button onclick="confirmAddSpot()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-xl font-bold transition shadow">Salva su GitHub</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Map Container -->
   <div id="map" class="z-0"></div>
 
@@ -106,6 +134,17 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
+    // --- FUNZIONE DI AGGIORNAMENTO DEFINITA SUBITO PER EVITARE REFERENCE ERROR ---
+    function refreshData() {
+      if (typeof map !== 'undefined' && map) {
+        Object.keys(activeMarkers).forEach(key => map.removeLayer(activeMarkers[key]));
+        activeMarkers = {};
+        loadMeteoData();
+      } else {
+        location.reload();
+      }
+    }
+
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(err => console.log('SW errore:', err));
     }
@@ -116,6 +155,8 @@
     let meteoCache = {};
     let radarLayer = null;
     let isRadarActive = false;
+    let pendingLat = null;
+    let pendingLon = null;
 
     function initCustomCalendar() {
       try {
@@ -174,49 +215,63 @@
       map = L.map('map', { zoomControl: false }).setView([42.5, 12.5], 7);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
 
-      map.on('contextmenu click', async function(e) {
-        const lat = parseFloat(e.latlng.lat.toFixed(4));
-        const lon = parseFloat(e.latlng.lng.toFixed(4));
+      map.on('click', async function(e) {
+        pendingLat = parseFloat(e.latlng.lat.toFixed(4));
+        pendingLon = parseFloat(e.latlng.lng.toFixed(4));
         const statusText = document.getElementById("status-text");
 
-        statusText.innerText = "🔍 Rilevamento toponimo e altitudine...";
+        statusText.innerText = "🔍 Rilevamento automatico dati...";
 
         try {
-          const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1`);
+          const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pendingLat}&lon=${pendingLon}&zoom=14&addressdetails=1`);
           const geoData = await geoRes.json();
           let autoName = geoData.display_name ? (geoData.address.wood || geoData.address.suburb || geoData.address.village || geoData.address.town || "Spot Boscoso") : "Nuovo Spot";
 
-          const eleRes = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`);
+          const eleRes = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${pendingLat}&longitude=${pendingLon}`);
           const eleData = await eleRes.json();
           const autoAlt = (eleData && eleData.elevation && eleData.elevation.length > 0) ? Math.round(eleData.elevation[0]) : 400;
 
           statusText.innerText = "Tocca la mappa per censire uno spot";
 
-          const spotName = prompt(`📍 Spot Rilevato!\n\nCoordinate: ${lat}, ${lon}\nAltitudine:${autoAlt}m slm\n\nNome proposto (puoi modificarlo):`, autoName);
-          if (!spotName) return;
-
-          const isFav = confirm("⭐ Vuoi contrassegnare questo spot come PREFERITO (Icona a Stella)?");
-
-          const newSpotObj = {
-            name: spotName,
-            lat: lat,
-            lon: lon,
-            alt: autoAlt,
-            type: "Località",
-            isFavorite: isFav,
-            minZoom: 9
-          };
-
-          await commitNewSpotToGitHub(newSpotObj);
+          document.getElementById('new-spot-name').value = autoName;
+          document.getElementById('new-spot-alt').value = autoAlt;
+          document.getElementById('new-spot-fav').checked = false;
+          document.getElementById('add-spot-modal').classList.remove('hidden');
 
         } catch (err) {
-          alert("Errore nel rilevamento automatico dati: " + err.message);
           statusText.innerText = "Tocca la mappa per censire uno spot";
+          document.getElementById('new-spot-name').value = "Spot Boscoso";
+          document.getElementById('new-spot-alt').value = 400;
+          document.getElementById('add-spot-modal').classList.remove('hidden');
         }
       });
 
       map.on('moveend zoomend', loadMeteoData);
       loadMeteoData();
+    }
+
+    function closeAddSpotModal() {
+      document.getElementById('add-spot-modal').classList.add('hidden');
+    }
+
+    async function confirmAddSpot() {
+      const name = document.getElementById('new-spot-name').value.trim() || "Spot Boscoso";
+      const alt = parseInt(document.getElementById('new-spot-alt').value) || 400;
+      const isFavorite = document.getElementById('new-spot-fav').checked;
+
+      closeAddSpotModal();
+
+      const newSpotObj = {
+        name: name,
+        lat: pendingLat,
+        lon: pendingLon,
+        alt: alt,
+        type: "Località",
+        isFavorite: isFavorite,
+        minZoom: 9
+      };
+
+      await commitNewSpotToGitHub(newSpotObj);
     }
 
     async function commitNewSpotToGitHub(newSpot) {
@@ -245,7 +300,7 @@
         if (lastIndex === -1) throw new Error("Struttura comuni_italia.js non valida.");
 
         const favProp = newSpot.isFavorite ? `, isFavorite: true` : ``;
-        const newSpotJson = `,\n  { name: "${newSpot.name}", lat: ${newSpot.lat}, lon:${newSpot.lon}, alt: ${newSpot.alt}, type: "Località"${favProp}, minZoom: 9 }\n];`;
+        const newSpotJson = `,\n  { name: "${newSpot.name}", lat: ${newSpot.lat}, lon: ${newSpot.lon}, alt: ${newSpot.alt}, type: "Località"${favProp}, minZoom: 9 }\n];`;
         const updatedJsText = currentJsText.substring(0, lastIndex) + newSpotJson;
 
         const updatedBase64 = btoa(unescape(encodeURIComponent(updatedJsText)));
@@ -264,11 +319,11 @@
         });
 
         if (putRes.ok) {
-          alert(`🚀 Spot "${newSpot.name}" (${newSpot.alt}m slm) salvato e committato su GitHub! La mappa si ricaricherà.`);
+          alert(`🚀 Spot "${newSpot.name}" (${newSpot.alt}m slm) salvato su GitHub!`);
           location.reload();
         } else {
           const errData = await putRes.json();
-          alert("❌ Errore durante il commit su GitHub: " + (errData.message || "Verifica i permessi del token."));
+          alert("❌ Errore GitHub: " + (errData.message || "Verifica il token."));
         }
 
       } catch (err) {
@@ -282,7 +337,7 @@
       const ghToken = localStorage.getItem("gh_token");
 
       if (!ghUser || !ghRepo || !ghToken) {
-        alert("⚠️ Per salvare la modifica su GitHub configura prima l'ingranaggio ⚙️ in alto.");
+        alert("⚠️ Configura prima l'ingranaggio ⚙️ in alto.");
         configGitHub();
         return;
       }
@@ -292,7 +347,7 @@
 
       try {
         const getFileRes = await fetch(url, { headers: { 'Authorization': `token ${ghToken}` } });
-        if (!getFileRes.ok) throw new Error("Impossibile leggere comuni_italia.js da GitHub.");
+        if (!getFileRes.ok) throw new Error("Impossibile leggere comuni_italia.js.");
         const fileData = await getFileRes.json();
 
         const contentBase64 = fileData.content.replace(/\n/g, '');
@@ -319,24 +374,24 @@
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              message: `⭐ Toggle favorite spot: ${spotName}`,
+              message: `⭐ Toggle favorite: ${spotName}`,
               content: updatedBase64,
               sha: fileData.sha
             })
           });
 
           if (putRes.ok) {
-            alert(`⭐ Stato preferito aggiornato per "${spotName}"!`);
+            alert(`⭐ Preferito aggiornato per "${spotName}"!`);
             location.reload();
           } else {
-            alert("❌ Errore durante il commit su GitHub.");
+            alert("❌ Errore commit GitHub.");
           }
         } else {
-          alert("❌ Spot non trovato nel file comuni_italia.js.");
+          alert("❌ Spot non trovato.");
         }
 
       } catch (err) {
-        alert("❌ Errore aggiornamento preferito: " + err.message);
+        alert("❌ Errore: " + err.message);
       }
     }
 
@@ -407,7 +462,7 @@
           let iconHtml = '';
           if (loc.isFavorite) {
             iconHtml = `
-              <div style="position: relative; width: ${size+6}px; height:${size+6}px; display: flex; align-items: center; justify-content: center;">
+              <div style="position: relative; width: ${size+6}px; height: ${size+6}px; display: flex; align-items: center; justify-content: center;">
                 <svg viewBox="0 0 24 24" style="position: absolute; width: 100%; height: 100%; fill: ${color}; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.6));">
                   <path d="M12 1.728l3.09 6.261 6.91 1.004-5 4.873 1.18 6.883-6.18-3.25-6.18 3.25 1.18-6.883-5-4.873 6.91-1.004z"/>
                 </svg>
@@ -415,7 +470,7 @@
               </div>
             `;
           } else {
-            iconHtml = `<div style="background-color: ${color}; width: ${size}px; height:${size}px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #ffffff; font-weight: bold; font-size: 10px; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0px 1px 2px rgba(0,0,0,0.8);">${data.score}%</div>`;
+            iconHtml = `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #ffffff; font-weight: bold; font-size: 10px; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0px 1px 2px rgba(0,0,0,0.8);">${data.score}%</div>`;
           }
 
           const markerIcon = L.divIcon({
@@ -430,26 +485,27 @@
           const marker = L.marker([loc.lat, loc.lon], { icon: markerIcon }).addTo(map).bindPopup(`
             <div class="text-slate-900 p-1 max-w-[250px]">
               <h3 class="font-bold text-sm border-b pb-1 mb-2 flex items-center justify-between">
-                <span>${loc.name}${loc.isFavorite ? '⭐' : ''}</span>
+                <span>${loc.name} ${loc.isFavorite ? '⭐' : ''}</span>
                 <span class="text-[10px] text-slate-500 font-normal">(${loc.type} - ⛰️ ${loc.alt}m)</span>
               </h3>
               <div class="bg-slate-100 p-2 rounded-lg mb-2 text-center relative">
                 <div class="text-xs text-slate-600">Probabilità Calcolata</div>
-                <div class="text-xl font-black" style="color:${color}">${data.score}\% (${labelText})</div>
-                <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>${data.seasonNote ? `<div class="text-[9px] mt-1 text-purple-700 font-bold bg-purple-100 p-1 rounded">${data.seasonNote}</div>` : ''}
+                <div class="text-xl font-black" style="color:${color}">${data.score}% (${labelText})</div>
+                <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>
+                ${data.seasonNote ? `<div class="text-[9px] mt-1 text-purple-700 font-bold bg-purple-100 p-1 rounded">${data.seasonNote}</div>` : ''}
                 ${data.windDryNote ? `<div class="text-[9px] mt-1 text-red-700 font-bold bg-red-100 p-1 rounded">${data.windDryNote}</div>` : ''}
               </div>
               <div class="text-[11px] space-y-1.5 text-slate-700">
                 <p><b>🌧️ Finestra d'Oro (-7 a -10gg):</b> ${data.goldenWindowRain} mm</p>
                 <p><b>🌱 Umidità Suolo:</b> ${data.soilMoisture}%</p>
-                <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C (Min:${data.avgMinTemp}°C)</p>
-                <p><b>💨 Vento:</b> ${data.windSpeed} km/h -${data.windNote}</p>
+                <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C (Min: ${data.avgMinTemp}°C)</p>
+                <p><b>💨 Vento:</b> ${data.windSpeed} km/h - ${data.windNote}</p>
               </div>
               <div class="mt-3 pt-2 border-t border-slate-200 space-y-1.5 text-center">
                 <button onclick="openDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-slate-900 hover:bg-emerald-700 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
                   📊 Dettagli Storici (Card 10 Giorni)
                 </button>
-                <button onclick="toggleFavoriteSpot('${loc.name.replace(/'/g, "\\'")}', ${loc.lat},${loc.lon})" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 w-full py-1 px-3 rounded-lg text-[10px] font-bold transition shadow">
+                <button onclick="toggleFavoriteSpot('${loc.name.replace(/'/g, "\\'")}', ${loc.lat}, ${loc.lon})" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 w-full py-1 px-3 rounded-lg text-[10px] font-bold transition shadow">
                   ${favText}
                 </button>
               </div>
@@ -489,9 +545,161 @@
         html += `
           <div class="p-3 rounded-xl border ${cardBg} transition flex flex-col space-y-1.5 shadow-sm">
             <div class="flex items-center justify-between border-b border-slate-700/50 pb-1.5">
-              <span class="font-bold text-slate-200 text-xs">📅 ${day.date}</span>${badgeHtml}
+              <span class="font-bold text-slate-200 text-xs">📅 ${day.date}</span>
+              ${badgeHtml}
             </div>
             <div class="grid grid-cols-3 gap-2 pt-1 text-center">
               <div class="bg-slate-900/60 p-1.5 rounded-lg border border-slate-800">
                 <div class="text-[10px] text-slate-400">Pioggia</div>
-                <div class="font-bold text-xs ${day.rain > 5 ? 'text-blue-400' : 'text-slate
+                <div class="font-bold text-xs ${day.rain > 5 ? 'text-blue-400' : 'text-slate-300'}">🌧️ ${day.rain} mm</div>
+              </div>
+              <div class="bg-slate-900/60 p-1.5 rounded-lg border border-slate-800">
+                <div class="text-[10px] text-slate-400">Temperature</div>
+                <div class="font-bold text-xs text-slate-200">🌡️ ${day.temp}°C <span class="text-[9px] text-slate-400">(${day.tempMin}°)</span></div>
+              </div>
+              <div class="bg-slate-900/60 p-1.5 rounded-lg border border-slate-800">
+                <div class="text-[10px] text-slate-400">Vento Max</div>
+                <div class="font-bold text-xs ${day.wind > 15 ? 'text-orange-400' : 'text-slate-300'}">💨 ${day.wind} km/h</div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      modalBody.innerHTML = html;
+      document.getElementById('details-modal').classList.remove('hidden');
+    }
+
+    function closeDetailsModal() { document.getElementById('details-modal').classList.add('hidden'); }
+
+    async function getFungiScore(lat, lon, altitude = 300) {
+      const targetDateStr = document.getElementById('targetDate').value;
+      const cacheKey = `${lat}_${lon}_${altitude}_${targetDateStr}`;
+      if (meteoCache[cacheKey]) return meteoCache[cacheKey];
+
+      try {
+        const todayObj = new Date();
+        const offset = todayObj.getTimezoneOffset() * 60000;
+        const localTodayStr = (new Date(todayObj - offset)).toISOString().split('T')[0];
+        const isToday = (targetDateStr === localTodayStr);
+        let url;
+
+        const dailyParams = "precipitation_sum,temperature_2m_mean,temperature_2m_min,wind_speed_10m_max,wind_direction_10m_dominant";
+
+        if (isToday) {
+          url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&past_days=20&forecast_days=1&daily=${dailyParams}&timezone=Europe%2FRome`;
+        } else {
+          const tDate = new Date(targetDateStr);
+          const sDate = new Date(tDate);
+          sDate.setDate(sDate.getDate() - 20);
+          url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&start_date=${sDate.toISOString().split('T')[0]}&end_date=${targetDateStr}&daily=${dailyParams}&timezone=Europe%2FRome`;
+        }
+
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (!data || !data.daily || !data.daily.precipitation_sum) return null;
+
+        const padArray = (arr, len, fillVal) => {
+          let res = arr.map(v => v === null ? fillVal : v);
+          while(res.length < len) res.unshift(fillVal);
+          return res.slice(-len);
+        };
+
+        const timeDays = padArray(data.daily.time || [], 21, "2026-01-01");
+        const rainDays = padArray(data.daily.precipitation_sum, 21, 0);
+        const tempDays = padArray(data.daily.temperature_2m_mean, 21, 15);
+        const tempMinDays = padArray(data.daily.temperature_2m_min, 21, 10);
+        const windSpeedDays = padArray(data.daily.wind_speed_10m_max, 21, 0);
+        const windDirDays = padArray(data.daily.wind_direction_10m_dominant, 21, 0);
+
+        const totalRain = rainDays.reduce((a, b) => a + b, 0);
+        const goldenWindowRain = rainDays.slice(10, 14).reduce((a, b) => a + b, 0); 
+        const recentRain = rainDays.slice(17, 21).reduce((a, b) => a + b, 0); 
+
+        const recentTemps = tempDays.slice(-7);
+        const avgTemp = recentTemps.reduce((a, b) => a + b, 0) / recentTemps.length;
+        const recentMinTemps = tempMinDays.slice(-7);
+        const avgMinTemp = recentMinTemps.reduce((a, b) => a + b, 0) / recentMinTemps.length;
+
+        const soilMoistureEst = Math.min(100, Math.max(10, Math.round((totalRain * 0.4 + recentRain * 1.5) / 1.2)));
+
+        let goldenScore = 0;
+        if (goldenWindowRain >= 25 && goldenWindowRain <= 70) goldenScore = 100;
+        else if (goldenWindowRain > 5 && goldenWindowRain < 25) goldenScore = (goldenWindowRain - 5) * 5;
+        else if (goldenWindowRain > 70) goldenScore = Math.max(0, 100 - (goldenWindowRain - 70));
+
+        let soilScore = Math.min(100, soilMoistureEst * 1.5);
+
+        let minIdealTemp = altitude >= 1000 ? 10 : (altitude <= 500 ? 13 : 12);
+        let maxIdealTemp = altitude >= 1000 ? 17 : (altitude <= 500 ? 22 : 20);
+
+        let tempScore = 0;
+        if (avgTemp >= minIdealTemp && avgTemp <= maxIdealTemp) tempScore = 100;
+        else if (avgTemp < minIdealTemp) tempScore = Math.max(0, 100 - (minIdealTemp - avgTemp) * 20);
+        else if (avgTemp > maxIdealTemp) tempScore = Math.max(0, 100 - (avgTemp - maxIdealTemp) * 18);
+
+        let totalRainScore = 0;
+        if (totalRain >= 40 && totalRain <= 150) totalRainScore = 100;
+        else if (totalRain > 10 && totalRain < 40) totalRainScore = (totalRain - 10) * 3.3;
+
+        let combinedScore = (goldenScore * 0.45) + (soilScore * 0.20) + (tempScore * 0.20) + (totalRainScore * 0.15);
+
+        const recent3WindsSpeed = windSpeedDays.slice(-3);
+        const recent3WindsDir = windDirDays.slice(-3);
+        const avgRecentWindSpeed = recent3WindsSpeed.reduce((a, b) => a + b, 0) / recent3WindsSpeed.length;
+        const avgRecentWindDir = recent3WindsDir.reduce((a, b) => a + b, 0) / recent3WindsDir.length;
+
+        const isDryWindRecent = (avgRecentWindDir >= 315 || avgRecentWindDir <= 67);
+        let windNote = "🌬️ Vento neutro";
+        let windDryNote = "";
+
+        if (avgRecentWindSpeed > 14 && isDryWindRecent) {
+          const dryingPenalty = (altitude <= 600) ? 0.55 : 0.70;
+          combinedScore = combinedScore * dryingPenalty; 
+          windNote = "💨 Tramontana secca recente";
+          windDryNote = `⚠️ Vento secco post-pioggia: suolo superficiale disidratato (-${Math.round((1-dryingPenalty)*100)}%)`;
+        }
+
+        const finalScore = Math.min(100, Math.max(0, Math.round(combinedScore)));
+
+        let predictionNote = "Fase stazionaria / Attesa";
+        let predictionColor = "text-slate-500";
+        if (recentRain > 30 && goldenWindowRain < 20) {
+          predictionNote = "💧 Suolo appena bagnato: boom atteso tra 7-10 gg";
+          predictionColor = "text-blue-600 font-bold";
+        } else if (goldenWindowRain >= 25 && finalScore > 60) {
+          predictionNote = "🍄 Piena Finestra di Fruttificazione!";
+          predictionColor = "text-emerald-600 font-bold";
+        }
+
+        const dailyHistory = [];
+        for (let i = 11; i < 21; i++) {
+          dailyHistory.push({
+            date: timeDays[i] || `Giorno ${i}`,
+            rain: Math.round(rainDays[i] * 10) / 10,
+            temp: Math.round(tempDays[i]),
+            tempMin: Math.round(tempMinDays[i]),
+            wind: Math.round(windSpeedDays[i]),
+            isGolden: (i >= 10 && i <= 13)
+          });
+        }
+
+        const result = { 
+          goldenWindowRain: Math.round(goldenWindowRain),
+          soilMoisture: soilMoistureEst,
+          predictionNote, predictionColor, windDryNote,
+          avgTemp: Math.round(avgTemp), avgMinTemp: Math.round(avgMinTemp),
+          windSpeed: Math.round(avgRecentWindSpeed), windNote,
+          score: finalScore,
+          dailyHistory
+        };
+
+        meteoCache[cacheKey] = result;
+        return result;
+
+      } catch (e) { return null; }
+    }
+
+    window.onload = verificaAccess
