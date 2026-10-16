@@ -134,7 +134,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // --- FUNZIONE DI AGGIORNAMENTO DEFINITA SUBITO PER EVITARE REFERENCE ERROR ---
+    // --- FUNZIONI DI UTILITÀ DICHIARATE SUBITO (GLOBALI) ---
     function refreshData() {
       if (typeof map !== 'undefined' && map) {
         Object.keys(activeMarkers).forEach(key => map.removeLayer(activeMarkers[key]));
@@ -143,6 +143,32 @@
       } else {
         location.reload();
       }
+    }
+
+    function logoutPIN() {
+      localStorage.removeItem("fungicast_auth");
+      location.reload();
+    }
+
+    function configGitHub() {
+      const user = prompt("Nome utente GitHub:", localStorage.getItem("gh_user") || "");
+      const repo = prompt("Nome repository GitHub (es. fungoradar):", localStorage.getItem("gh_repo") || "");
+      const token = prompt("Personal Access Token GitHub (Classic):", localStorage.getItem("gh_token") || "");
+
+      if (user && repo && token) {
+        localStorage.setItem("gh_user", user);
+        localStorage.setItem("gh_repo", repo);
+        localStorage.setItem("gh_token", token);
+        alert("✅ Configurazione GitHub salvata!");
+      }
+    }
+
+    function closeAddSpotModal() {
+      document.getElementById('add-spot-modal').classList.add('hidden');
+    }
+
+    function closeDetailsModal() { 
+      document.getElementById('details-modal').classList.add('hidden'); 
     }
 
     if ('serviceWorker' in navigator) {
@@ -193,24 +219,6 @@
       }
     }
 
-    function logoutPIN() {
-      localStorage.removeItem("fungicast_auth");
-      location.reload();
-    }
-
-    function configGitHub() {
-      const user = prompt("Nome utente GitHub:", localStorage.getItem("gh_user") || "");
-      const repo = prompt("Nome repository GitHub (es. fungoradar):", localStorage.getItem("gh_repo") || "");
-      const token = prompt("Personal Access Token GitHub (Classic):", localStorage.getItem("gh_token") || "");
-
-      if (user && repo && token) {
-        localStorage.setItem("gh_user", user);
-        localStorage.setItem("gh_repo", repo);
-        localStorage.setItem("gh_token", token);
-        alert("✅ Configurazione GitHub salvata!");
-      }
-    }
-
     function initMap() {
       map = L.map('map', { zoomControl: false }).setView([42.5, 12.5], 7);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
@@ -248,10 +256,6 @@
 
       map.on('moveend zoomend', loadMeteoData);
       loadMeteoData();
-    }
-
-    function closeAddSpotModal() {
-      document.getElementById('add-spot-modal').classList.add('hidden');
     }
 
     async function confirmAddSpot() {
@@ -571,8 +575,6 @@
       document.getElementById('details-modal').classList.remove('hidden');
     }
 
-    function closeDetailsModal() { document.getElementById('details-modal').classList.add('hidden'); }
-
     async function getFungiScore(lat, lon, altitude = 300) {
       const targetDateStr = document.getElementById('targetDate').value;
       const cacheKey = `${lat}_${lon}_${altitude}_${targetDateStr}`;
@@ -702,4 +704,7 @@
       } catch (e) { return null; }
     }
 
-    window.onload = verificaAccess
+    window.onload = verificaAccesso;
+  </script>
+</body>
+</html>
