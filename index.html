@@ -399,6 +399,7 @@
       }
     }
 
+    // --- FUNZIONE RADAR AGGIORNATA CON HOST CORRETTO E PATH DINAMICO ---
     async function toggleRadar() {
       const btn = document.getElementById('radar-btn');
       const statusText = document.getElementById("status-text");
@@ -415,8 +416,11 @@
           const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
           const data = await res.json();
           if (data && data.radar && data.radar.past && data.radar.past.length > 0) {
-            const latestTimestamp = data.radar.past[data.radar.past.length - 1].time;
-            radarLayer = L.tileLayer(`https://tile.rainviewer.com/v2/radar/${latestTimestamp}/256/{z}/{x}/{y}/4/1_1.png`, {
+            const latestFrame = data.radar.past[data.radar.past.length - 1];
+            const host = data.host || 'https://tilecache.rainviewer.com';
+            const path = latestFrame.path;
+
+            radarLayer = L.tileLayer(`${host}${path}/256/{z}/{x}/{y}/4/1_1.png`, {
               opacity: 0.75, 
               zIndex: 500,
               attribution: '© RainViewer'
