@@ -153,4 +153,6 @@ const COMUNI_ITALIA = [
   { name: "Malga lavazé", lat: 46.4547, lon: 10.963, alt: 1647, type: "Località", isFavorite: true, minZoom: 9 }
 ,
   { name: "Allumiere faggeta", lat: 42.1539, lon: 11.9123, alt: 615, type: "Località", isFavorite: true, minZoom: 9 }
+,
+  { name: "Lido di Ostia", lat: 41.6665, lon: 12.2927, alt: 400, type: "Località", minZoom: 9 }
 ];
