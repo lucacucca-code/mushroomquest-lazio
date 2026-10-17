@@ -144,6 +144,24 @@
       }
     }
 
+    // --- AGGIORNAMENTO BASSISSIMO LIVE PER SINGOLO SPOT (BYPASS CACHE) ---
+    async function refreshSingleSpot(lat, lon, altitude, cacheKey, locKey) {
+      const statusText = document.getElementById("status-text");
+      statusText.innerText = "🔄 Aggiornamento live in corso...";
+
+      // Cancella la cache specifica di questo spot
+      delete meteoCache[cacheKey];
+
+      if (activeMarkers[locKey]) {
+        map.removeLayer(activeMarkers[locKey]);
+        delete activeMarkers[locKey];
+      }
+
+      // Ricarica la mappa aggiornando il marker
+      await loadMeteoData();
+      statusText.innerText = "✅ Dati meteo aggiornati per lo spot!";
+    }
+
     function logoutPIN() {
       localStorage.removeItem("fungicast_auth");
       location.reload();
@@ -519,6 +537,10 @@
                 <button onclick="openDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-slate-900 hover:bg-emerald-700 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
                   📊 Dettagli Storici (Card 10 Giorni)
                 </button>
+                <!-- TASTO AGGIORNA API LIVE PER SINGOLO SPOT -->
+                <button onclick="refreshSingleSpot(${loc.lat}, ${loc.lon}, ${altitude}, '${cacheKey}', '${locKey}')" class="bg-blue-600 hover:bg-blue-500 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow flex items-center justify-center space-x-1">
+                  <span>🔄 Aggiorna Dati Meteo Live</span>
+                </button>
                 <button onclick="toggleFavoriteSpot('${loc.name.replace(/'/g, "\\'")}', ${loc.lat}, ${loc.lon})" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 w-full py-1 px-3 rounded-lg text-[10px] font-bold transition shadow">
                   ${favText}
                 </button>
@@ -658,16 +680,14 @@
 
         let combinedScore = (goldenScore * 0.45) + (soilScore * 0.20) + (tempScore * 0.20) + (totalRainScore * 0.15);
 
-        // --- NUOVA LOGICA: BILANCIO IDRICO E VENTO SECCO CUMULATIVO POST-PIOGGIA ---
+        // BILANCIO IDRICO E VENTO SECCO CUMULATIVO POST-PIOGGIA
         let dryWindDaysCount = 0;
-        // Analizziamo i giorni dal dopo-pioggia utile fino ad oggi (indici da 14 a 20)
         const postRainWinds = windSpeedDays.slice(14, 21);
         const postRainDirs = windDirDays.slice(14, 21);
         
         for(let k = 0; k < postRainWinds.length; k++) {
           const speed = postRainWinds[k];
           const dir = postRainDirs[k];
-          // Vento da nord/nord-est (Tramontana / Grecale) superiore a 12 km/h asciuga fortemente il suolo
           if (speed > 12 && (dir >= 315 || dir <= 67)) {
             dryWindDaysCount++;
           }
@@ -682,7 +702,6 @@
           windNote = `💨 Vento secco persistente (${dryWindDaysCount} giorni)`;
           windDryNote = `⚠️ Siccità da vento prolungato (${dryWindDaysCount}gg post-pioggia): suolo arido (-${Math.round((1-dryingPenalty)*100)}%)`;
         } else {
-          // Controllo vento recente di oggi/ieri
           const recent3WindsSpeed = windSpeedDays.slice(-3);
           const recent3WindsDir = windDirDays.slice(-3);
           const avgRecentWindSpeed = recent3WindsSpeed.reduce((a, b) => a + b, 0) / recent3WindsSpeed.length;
