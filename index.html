@@ -39,7 +39,7 @@
 </head>
 <body class="bg-slate-900 text-slate-100 flex flex-col h-screen overflow-hidden">
 
-  <!-- Header Overlay Ottimizzato Mobile (Compatto e senza overflow) -->
+  <!-- Header Overlay Ottimizzato Mobile -->
   <div class="absolute top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-4 z-[1000] bg-slate-900/95 backdrop-blur-md border border-slate-700/50 p-2 sm:p-4 rounded-2xl shadow-xl">
     <div class="flex items-center justify-between gap-1 sm:gap-2">
       <div class="flex items-center space-x-2 min-w-0">
@@ -99,7 +99,7 @@
     </div>
   </div>
 
-  <!-- MODAL AGGIUNGI SPOT (Mobile Friendly) -->
+  <!-- MODAL AGGIUNGI SPOT -->
   <div id="add-spot-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -134,7 +134,6 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // --- FUNZIONI DI UTILITÀ GLOBALI ---
     function refreshData() {
       if (typeof map !== 'undefined' && map) {
         Object.keys(activeMarkers).forEach(key => map.removeLayer(activeMarkers[key]));
@@ -399,7 +398,6 @@
       }
     }
 
-    // --- FUNZIONE RADAR AGGIORNATA (maxNativeZoom: 7 + Palette 2) ---
     async function toggleRadar() {
       const btn = document.getElementById('radar-btn');
       const statusText = document.getElementById("status-text");
@@ -420,7 +418,6 @@
             const host = data.host || 'https://tilecache.rainviewer.com';
             const path = latestFrame.path;
 
-            // Uso della palette 2 e maxNativeZoom: 7 per evitare l'errore di zoom non supportato
             radarLayer = L.tileLayer(`${host}${path}/256/{z}/{x}/{y}/2/1_1.png`, {
               opacity: 0.75, 
               zIndex: 500,
@@ -661,20 +658,45 @@
 
         let combinedScore = (goldenScore * 0.45) + (soilScore * 0.20) + (tempScore * 0.20) + (totalRainScore * 0.15);
 
-        const recent3WindsSpeed = windSpeedDays.slice(-3);
-        const recent3WindsDir = windDirDays.slice(-3);
-        const avgRecentWindSpeed = recent3WindsSpeed.reduce((a, b) => a + b, 0) / recent3WindsSpeed.length;
-        const avgRecentWindDir = recent3WindsDir.reduce((a, b) => a + b, 0) / recent3WindsDir.length;
+        // --- NUOVA LOGICA: BILANCIO IDRICO E VENTO SECCO CUMULATIVO POST-PIOGGIA ---
+        let dryWindDaysCount = 0;
+        // Analizziamo i giorni dal dopo-pioggia utile fino ad oggi (indici da 14 a 20)
+        const postRainWinds = windSpeedDays.slice(14, 21);
+        const postRainDirs = windDirDays.slice(14, 21);
+        
+        for(let k = 0; k < postRainWinds.length; k++) {
+          const speed = postRainWinds[k];
+          const dir = postRainDirs[k];
+          // Vento da nord/nord-est (Tramontana / Grecale) superiore a 12 km/h asciuga fortemente il suolo
+          if (speed > 12 && (dir >= 315 || dir <= 67)) {
+            dryWindDaysCount++;
+          }
+        }
 
-        const isDryWindRecent = (avgRecentWindDir >= 315 || avgRecentWindDir <= 67);
         let windNote = "🌬️ Vento neutro";
         let windDryNote = "";
 
-        if (avgRecentWindSpeed > 14 && isDryWindRecent) {
-          const dryingPenalty = (altitude <= 600) ? 0.55 : 0.70;
-          combinedScore = combinedScore * dryingPenalty; 
-          windNote = "💨 Tramontana secca recente";
-          windDryNote = `⚠️ Vento secco post-pioggia: suolo superficiale disidratato (-${Math.round((1-dryingPenalty)*100)}%)`;
+        if (dryWindDaysCount >= 2) {
+          const dryingPenalty = Math.max(0.4, 1.0 - (dryWindDaysCount * 0.12));
+          combinedScore = combinedScore * dryingPenalty;
+          windNote = `💨 Vento secco persistente (${dryWindDaysCount} giorni)`;
+          windDryNote = `⚠️ Siccità da vento prolungato (${dryWindDaysCount}gg post-pioggia): suolo arido (-${Math.round((1-dryingPenalty)*100)}%)`;
+        } else {
+          // Controllo vento recente di oggi/ieri
+          const recent3WindsSpeed = windSpeedDays.slice(-3);
+          const recent3WindsDir = windDirDays.slice(-3);
+          const avgRecentWindSpeed = recent3WindsSpeed.reduce((a, b) => a + b, 0) / recent3WindsSpeed.length;
+          const avgRecentWindDir = recent3WindsDir.reduce((a, b) => a + b, 0) / recent3WindsDir.length;
+          
+          if (avgRecentWindSpeed > 14 && (avgRecentWindDir >= 315 || avgRecentWindDir <= 67)) {
+            const dryingPenalty = (altitude <= 600) ? 0.60 : 0.75;
+            combinedScore = combinedScore * dryingPenalty;
+            windNote = "💨 Tramontana secca recente";
+            windDryNote = `⚠️ Vento secco recente: suolo superficiale disidratato (-${Math.round((1-dryingPenalty)*100)}%)`;
+          } else if (avgRecentWindSpeed <= 12) {
+            combinedScore = Math.min(100, combinedScore * 1.08);
+            windNote = "🍃 Vento debole protetto (+8%)";
+          }
         }
 
         const finalScore = Math.min(100, Math.max(0, Math.round(combinedScore)));
@@ -687,6 +709,9 @@
         } else if (goldenWindowRain >= 25 && finalScore > 60) {
           predictionNote = "🍄 Piena Finestra di Fruttificazione!";
           predictionColor = "text-emerald-600 font-bold";
+        } else if (dryWindDaysCount >= 3 || totalRain < 15) {
+          predictionNote = "🏜️ Terreno arido per vento/siccità.";
+          predictionColor = "text-orange-600";
         }
 
         const dailyHistory = [];
@@ -700,6 +725,9 @@
             isGolden: (i >= 10 && i <= 13)
           });
         }
+
+        const recent3WindsSpeed = windSpeedDays.slice(-3);
+        const avgRecentWindSpeed = recent3WindsSpeed.reduce((a, b) => a + b, 0) / recent3WindsSpeed.length;
 
         const result = { 
           goldenWindowRain: Math.round(goldenWindowRain),
