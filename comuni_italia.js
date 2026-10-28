@@ -157,4 +157,6 @@ const COMUNI_ITALIA = [
   { name: "Lido di Ostia", lat: 41.6665, lon: 12.2927, alt: 400, type: "Località", minZoom: 9 }
 ,
   { name: "Bellegra", lat: 41.8842, lon: 13.029, alt: 721, type: "Località", minZoom: 9 }
+,
+  { name: "Guadagnolo", lat: 41.9124, lon: 12.9331, alt: 1128, type: "Località", minZoom: 9 }
 ];
