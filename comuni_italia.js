@@ -159,4 +159,6 @@ const COMUNI_ITALIA = [
   { name: "Bellegra", lat: 41.8842, lon: 13.029, alt: 721, type: "Località", minZoom: 9 }
 ,
   { name: "Guadagnolo", lat: 41.9124, lon: 12.9331, alt: 1128, type: "Località", minZoom: 9 }
+,
+  { name: "Arcinazzo Romano", lat: 41.8774, lon: 13.1137, alt: 713, type: "Località", minZoom: 9 }
 ];
