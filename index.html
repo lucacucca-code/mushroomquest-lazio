@@ -115,19 +115,32 @@
     </div>
   </div>
 
-  <!-- MODAL TOP 5 SPOT PIÙ PROBABILI -->
+  <!-- MODAL TOP 5 SPOT PIÙ PROBABILI (Con Slider Raggio e Refresh) -->
   <div id="top5-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
       <div class="p-4 border-b border-slate-800 flex items-center justify-between">
         <div>
-          <h3 class="font-bold text-base text-emerald-400">🏆 Top 5 Spot Più Probabili</h3>
-          <p class="text-xs text-slate-400">I 5 boschi con indice di fruttificazione maggiore</p>
+          <h3 class="font-bold text-base text-emerald-400">🏆 Top 5 Spot dalla Vista Mappa</h3>
+          <p class="text-xs text-slate-400">Basato sul centro attuale della mappa</p>
         </div>
         <button onclick="closeTop5Modal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg p-1.5 text-sm font-bold">✕</button>
       </div>
-      <div id="top5-body" class="p-4 overflow-y-auto space-y-2.5 text-xs">
-        <div class="text-center text-slate-400 py-6">⏳ Calcolo in corso sui dati visibili...</div>
+      
+      <!-- Controlli Dinamici Raggio e Refresh -->
+      <div class="p-4 border-b border-slate-800 bg-slate-950/40 space-y-2">
+        <div class="flex items-center justify-between text-xs text-slate-300">
+          <span>Raggio di ricerca: <strong id="radius-val" class="text-emerald-400">20</strong> km</span>
+          <button onclick="openTop5Modal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1 shadow">
+            <span>🔄 Aggiorna / Refresh</span>
+          </button>
+        </div>
+        <input type="range" id="top5-radius-slider" min="1" max="50" value="20" oninput="document.getElementById('radius-val').innerText = this.value" onchange="openTop5Modal()" class="w-full accent-emerald-500 cursor-pointer">
       </div>
+
+      <div id="top5-body" class="p-4 overflow-y-auto space-y-2.5 text-xs">
+        <div class="text-center text-slate-400 py-6">⏳ Calcolo in corso nel raggio selezionato...</div>
+      </div>
+      
       <div class="p-3 border-t border-slate-800 bg-slate-950/50 text-right">
         <button onclick="closeTop5Modal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition">Chiudi</button>
       </div>
@@ -314,45 +327,49 @@
       document.getElementById("status-text").innerText = `📍 Posizionato su: ${name.split(',')[0]}`;
     }
 
-    // --- FUNZIONE TOP 5 SPOT PIÙ PROBABILI ---
+    // --- FUNZIONE TOP 5 SPOT DALLA VISTA CENTRO MAPPA (Con Raggio & Refresh) ---
     async function openTop5Modal() {
       document.getElementById('top5-modal').classList.remove('hidden');
       const top5Body = document.getElementById('top5-body');
-      top5Body.innerHTML = '<div class="text-center text-slate-400 py-6">⏳ Analisi meteo e calcolo punteggi in corso...</div>';
+      top5Body.innerHTML = '<div class="text-center text-slate-400 py-6">⏳ Analisi meteo nel raggio selezionato...</div>';
 
-      if (typeof COMUNI_ITALIA === 'undefined') {
-        top5Body.innerHTML = '<div class="text-red-400 text-center py-4">Database comuni non disponibile.</div>';
+      if (typeof COMUNI_ITALIA === 'undefined' || !map) {
+        top5Body.innerHTML = '<div class="text-red-400 text-center py-4">Database o mappa non disponibili.</div>';
         return;
       }
 
-      // Prendi tutti i comuni/spot o un sottoinsieme rilevante caricato
+      const center = map.getCenter();
+      const radiusKm = parseInt(document.getElementById('top5-radius-slider').value) || 20;
       let scoredSpots = [];
-      const targetDateStr = document.getElementById('targetDate').value;
 
-      // Per non sovraccaricare, valutiamo gli spot attualmente visibili o un campione se sono troppi
       for (let loc of COMUNI_ITALIA) {
-        const altitude = loc.alt || 300;
-        const habitat = loc.habitat || (altitude >= 1000 ? "Faggeta Pura / Mista" : (altitude >= 600 ? "Castagneto" : "Cerro / Querceto"));
-        const data = await getFungiScore(loc.lat, loc.lon, altitude, habitat);
-        if (data) {
-          scoredSpots.push({
-            name: loc.name,
-            lat: loc.lat,
-            lon: loc.lon,
-            alt: altitude,
-            habitat: habitat,
-            score: data.score,
-            topSpecies: data.topSpecies[0] ? data.topSpecies[0].name : "ND"
-          });
+        const distMeters = map.distance([center.lat, center.lng], [loc.lat, loc.lon]);
+        const distKm = distMeters / 1000;
+
+        if (distKm <= radiusKm) {
+          const altitude = loc.alt || 300;
+          const habitat = loc.habitat || (altitude >= 1000 ? "Faggeta Pura / Mista" : (altitude >= 600 ? "Castagneto" : "Cerro / Querceto"));
+          const data = await getFungiScore(loc.lat, loc.lon, altitude, habitat);
+          if (data) {
+            scoredSpots.push({
+              name: loc.name,
+              lat: loc.lat,
+              lon: loc.lon,
+              alt: altitude,
+              habitat: habitat,
+              score: data.score,
+              dist: Math.round(distKm),
+              topSpecies: data.topSpecies[0] ? data.topSpecies[0].name : "ND"
+            });
+          }
         }
       }
 
-      // Ordina per punteggio decrescente
       scoredSpots.sort((a, b) => b.score - a.score);
       const top5 = scoredSpots.slice(0, 5);
 
       if (top5.length === 0) {
-        top5Body.innerHTML = '<div class="text-orange-400 text-center py-4">Nessun dato disponibile per il calcolo.</div>';
+        top5Body.innerHTML = `<div class="text-orange-400 text-center py-4">Nessun spot trovato nel raggio di ${radiusKm} km dal centro mappa. Prova ad aumentare il raggio con la barra.</div>`;
         return;
       }
 
@@ -366,7 +383,7 @@
               <div class="font-bold text-xs text-white flex items-center space-x-1.5">
                 <span>#${index + 1}</span>
                 <span class="text-emerald-400">${spot.name}</span>
-                <span class="text-[10px] text-slate-400">(${spot.alt}m)</span>
+                <span class="text-[10px] text-slate-400">(${spot.alt}m - 📍 ${spot.dist} km)</span>
               </div>
               <div class="text-[10px] text-slate-300">🌳 ${spot.habitat}</div>
               <div class="text-[10px] text-emerald-300 font-semibold">🍄 Top: ${spot.topSpecies}</div>
