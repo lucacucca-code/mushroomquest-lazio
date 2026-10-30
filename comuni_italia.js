@@ -171,4 +171,6 @@ const COMUNI_ITALIA = [
   { name: "Capalbio", lat: 42.454, lon: 11.4216, alt: 185, type: "Località", minZoom: 9 }
 ,
   { name: "Monteflavio", lat: 42.1067, lon: 12.8312, alt: 785, type: "Località", minZoom: 9 }
+,
+  { name: "Castel di Tora", lat: 42.2152, lon: 12.9672, alt: 562, type: "Località", isFavorite: true, minZoom: 9 }
 ];
