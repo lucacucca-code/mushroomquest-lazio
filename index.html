@@ -59,8 +59,8 @@
           </svg>
         </div>
 
-        <!-- Configurazione GitHub & Pulisci Cache -->
-        <button onclick="configGitHub()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-xs sm:text-sm font-semibold shadow transition" title="Configura GitHub & Pulisci Cache">
+        <!-- Ingranaggio (Apre Modal Impostazioni) -->
+        <button onclick="openSettingsModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-xs sm:text-sm font-semibold shadow transition" title="Impostazioni & Cache">
           ⚙️
         </button>
         
@@ -82,13 +82,36 @@
     </div>
   </div>
 
-  <!-- MODAL DETTAGLI STORICI -->
+  <!-- MODAL IMPOSTAZIONI & GITHUB (Sostituisce il prompt numerico) -->
+  <div id="settings-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h3 class="font-bold text-sm text-emerald-400">⚙️ Impostazioni & GitHub</h3>
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white font-bold text-sm">✕</button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <button onclick="configGitHub()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 py-2.5 px-3 rounded-xl font-bold transition text-left flex items-center justify-between">
+          <span>🔑 Configura Credenziali GitHub</span>
+          <span>➔</span>
+        </button>
+        <button onclick="forceReloadComuniCache()" class="w-full bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/50 py-2.5 px-3 rounded-xl font-bold transition text-left flex items-center justify-between">
+          <span>🧹 Pulisci Cache PWA e Ricarica Comuni</span>
+          <span>🔄</span>
+        </button>
+      </div>
+      <div class="pt-2 text-right">
+        <button onclick="closeSettingsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-xs font-bold transition">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DETTAGLI STORICI (Ultimi 20 Giorni) -->
   <div id="details-modal" class="fixed inset-0 z-[2000] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
       <div class="p-4 border-b border-slate-800 flex items-center justify-between">
         <div>
           <h3 id="modal-title" class="font-bold text-base text-emerald-400">Analisi Dettagliata</h3>
-          <p id="modal-subtitle" class="text-xs text-slate-400">Storico ultimi 10 giorni</p>
+          <p id="modal-subtitle" class="text-xs text-slate-400">Storico ultimi 20 giorni (-12 a -7 gg Finestra d'Oro)</p>
         </div>
         <button onclick="closeDetailsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg p-1.5 text-sm font-bold">✕</button>
       </div>
@@ -193,26 +216,31 @@
       });
     }
 
-    function configGitHub() {
-      const action = prompt("⚙️ Configurazione GitHub & Cache:\n1 - Configura credenziali (Token/Repo)\n2 - 🧹 Pulisci Cache PWA e ricarica comuni aggiornati (Mantiene le credenziali)", "1");
-      
-      if (action === "1") {
-        const user = prompt("Nome utente GitHub:", localStorage.getItem("gh_user") || "");
-        const repo = prompt("Nome repository GitHub (es. fungoradar):", localStorage.getItem("gh_repo") || "");
-        const token = prompt("Personal Access Token GitHub (Classic):", localStorage.getItem("gh_token") || "");
+    // Gestione Modale Impostazioni (Sostituisce il prompt numerico)
+    function openSettingsModal() {
+      document.getElementById('settings-modal').classList.remove('hidden');
+    }
 
-        if (user && repo && token) {
-          localStorage.setItem("gh_user", user);
-          localStorage.setItem("gh_repo", repo);
-          localStorage.setItem("gh_token", token);
-          alert("✅ Configurazione GitHub salvata!");
-        }
-      } else if (action === "2") {
-        forceReloadComuniCache();
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    function configGitHub() {
+      closeSettingsModal();
+      const user = prompt("Nome utente GitHub:", localStorage.getItem("gh_user") || "");
+      const repo = prompt("Nome repository GitHub (es. fungoradar):", localStorage.getItem("gh_repo") || "");
+      const token = prompt("Personal Access Token GitHub (Classic):", localStorage.getItem("gh_token") || "");
+
+      if (user && repo && token) {
+        localStorage.setItem("gh_user", user);
+        localStorage.setItem("gh_repo", repo);
+        localStorage.setItem("gh_token", token);
+        alert("✅ Configurazione GitHub salvata!");
       }
     }
 
     async function forceReloadComuniCache() {
+      closeSettingsModal();
       if ('serviceWorker' in navigator) {
         const regs = await navigator.serviceWorker.getRegistrations();
         for (let reg of regs) { await reg.unregister(); }
@@ -288,7 +316,7 @@
       }
     }
 
-    // --- FUNZIONE DI RILEVAMENTO ESSENZE TRAMITE OPENSTREETMAP (Nominatim Extratags) ---
+    // Rilevamento essenze tramite OpenStreetMap (Nominatim Extratags)
     async function fetchHabitatFromOSM(lat, lon, alt) {
       try {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1&extratags=1`);
@@ -296,12 +324,10 @@
         
         if (data && data.extratags) {
           const tags = data.extratags;
-          // Se OpenStreetMap ha specificato una specie o genere botanico
           if (tags.species || tags['species:it'] || tags.genus) {
             const sp = tags['species:it'] || tags.species || tags.genus;
             return `Bosco di ${sp}`;
           }
-          // Se specifica il tipo di foglia / ciclo vegetativo
           if (tags.leaf_type === 'broadleaved' && tags.leaf_cycle === 'deciduous') {
             return alt >= 900 ? "Faggeta Pura / Mista" : "Cerro / Querceto";
           }
@@ -313,7 +339,6 @@
           }
         }
         
-        // Fallback intelligente basato sull'altitudine se OSM non ha tag forestali specifici
         if (alt >= 1000) return "Faggeta Pura / Mista";
         if (alt >= 600) return "Castagneto";
         return "Cerro / Querceto";
@@ -345,7 +370,6 @@
           const eleData = await eleRes.json();
           const autoAlt = (eleData && eleData.elevation && eleData.elevation.length > 0) ? Math.round(eleData.elevation[0]) : 400;
 
-          // Chiamata OpenStreetMap per le essenze botaniche
           const detectedHabitat = await fetchHabitatFromOSM(pendingLat, pendingLon, autoAlt);
 
           statusText.innerText = "Tocca la mappa per censire uno spot";
@@ -416,8 +440,8 @@
       const ghToken = localStorage.getItem("gh_token");
 
       if (!ghUser || !ghRepo || !ghToken) {
-        alert("⚠️ Per salvare su GitHub configura prima Token, User e Repo cliccando sull'icona ingranaggio ⚙️ in alto.");
-        configGitHub();
+        alert("⚠️ Per salvare su GitHub configura prima Token, User e Repo dal menu ingranaggio ⚙️.");
+        openSettingsModal();
         return;
       }
 
@@ -474,8 +498,8 @@
       const ghToken = localStorage.getItem("gh_token");
 
       if (!ghUser || !ghRepo || !ghToken) {
-        alert("⚠️ Configura prima l'ingranaggio ⚙️ in alto.");
-        configGitHub();
+        alert("⚠️ Configura prima le credenziali GitHub dal menu ingranaggio ⚙️.");
+        openSettingsModal();
         return;
       }
 
@@ -573,6 +597,47 @@
       }
     }
 
+    // --- ALGORITMO PREDITTIVO SPECIE FUNGINE (TOP 3) ---
+    function getTopSpecies(habitat, avgTemp, soilMoisture, goldenRain) {
+      const speciesList = [
+        { name: "Boletus aereus (Porcino Nero)", habitats: ["Cerro / Querceto", "Castagneto", "Macchia Mediterranea"], minT: 17, maxT: 25, minRain: 30 },
+        { name: "Boletus edulis (Porcino Bianco)", habitats: ["Faggeta Pura / Mista", "Pineta / Conifere"], minT: 12, maxT: 19, minRain: 35 },
+        { name: "Boletus aestivalis (Porcino Estivo)", habitats: ["Castagneto", "Bosco Misto", "Cerro / Querceto"], minT: 16, maxT: 23, minRain: 25 },
+        { name: "Cantharellus cibarius (Finferlo)", habitats: ["Faggeta Pura / Mista", "Castagneto", "Bosco Misto"], minT: 14, maxT: 21, minRain: 40 },
+        { name: "Amanita caesarea (Ovolo Reale)", habitats: ["Cerro / Querceto", "Castagneto"], minT: 19, maxT: 26, minRain: 25 },
+        { name: "Russula virescens (Colombina Verde)", habitats: ["Querceto", "Castagneto", "Bosco Misto"], minT: 18, maxT: 25, minRain: 20 },
+        { name: "Russula cyanoxantha (Colombina)", habitats: ["Faggeta Pura / Mista", "Bosco Misto"], minT: 13, maxT: 20, minRain: 25 },
+        { name: "Lactarius deliciosus (Sanguinello)", habitats: ["Pineta / Conifere"], minT: 12, maxT: 19, minRain: 25 },
+        { name: "Leccinum lepidum (Leccino)", habitats: ["Macchia Mediterranea", "Querceto"], minT: 15, maxT: 22, minRain: 30 },
+        { name: "Hygrophorus russula (Lardaiolo)", habitats: ["Castagneto", "Cerro / Querceto"], minT: 10, maxT: 16, minRain: 30 },
+        { name: "Clitocybe geotropa (Trombetta)", habitats: ["Bosco Misto", "Prati / Margini"], minT: 12, maxT: 18, minRain: 25 },
+        { name: "Tricholoma terreum (Moretta)", habitats: ["Pineta / Conifere"], minT: 8, maxT: 15, minRain: 20 }
+      ];
+
+      let scored = speciesList.map(sp => {
+        let score = 50;
+        let habitatMatch = sp.habitats.some(h => habitat.toLowerCase().includes(h.toLowerCase().split('/')[0].trim()));
+        if (habitatMatch) score += 35;
+        else score += 10;
+
+        if (avgTemp >= sp.minT && avgTemp <= sp.maxT) {
+          score += 25;
+        } else {
+          let diff = Math.min(Math.abs(avgTemp - sp.minT), Math.abs(avgTemp - sp.maxT));
+          score -= diff * 5;
+        }
+
+        if (goldenRain >= sp.minRain) score += 20;
+        else score += (goldenRain / sp.minRain) * 15;
+
+        score = Math.min(98, Math.max(10, Math.round(score)));
+        return { name: sp.name, score };
+      });
+
+      scored.sort((a, b) => b.score - a.score);
+      return scored.slice(0, 3);
+    }
+
     async function loadMeteoData() {
       const currentZoom = map.getZoom();
       const bounds = map.getBounds();
@@ -597,7 +662,7 @@
         const locKey = `${loc.lat}_${loc.lon}`;
         
         if (!activeMarkers[locKey]) {
-          const data = await getFungiScore(loc.lat, loc.lon, altitude);
+          const data = await getFungiScore(loc.lat, loc.lon, altitude, habitat);
           if (!data) return;
 
           let color = '#dc2626'; let labelText = "Molto Basso";
@@ -631,8 +696,11 @@
 
           const favText = loc.isFavorite ? "⭐ Rimuovi dai Preferiti" : "☆ Aggiungi ai Preferiti ⭐";
 
+          // Formattazione Top 3 Specie per il Popup
+          let speciesHtml = data.topSpecies.map((sp, idx) => `<li class="text-[10px] text-slate-800"><b>${idx+1}.</b> ${sp.name} <span class="text-emerald-700 font-bold">(${sp.score}%)</span></li>`).join('');
+
           const marker = L.marker([loc.lat, loc.lon], { icon: markerIcon }).addTo(map).bindPopup(`
-            <div class="text-slate-900 p-1 max-w-[260px]">
+            <div class="text-slate-900 p-1 max-w-[270px]">
               <h3 class="font-bold text-sm border-b pb-1 mb-2 flex items-center justify-between">
                 <span>${loc.name} ${loc.isFavorite ? '⭐' : ''}</span>
                 <span class="text-[10px] text-slate-500 font-normal">(${loc.type} - ⛰️ ${loc.alt}m)</span>
@@ -643,16 +711,20 @@
                 <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>
                 ${data.windDryNote ? `<div class="text-[9px] mt-1 text-red-700 font-bold bg-red-100 p-1 rounded">${data.windDryNote}</div>` : ''}
               </div>
+              <div class="bg-emerald-50 border border-emerald-200 p-1.5 rounded-lg mb-2">
+                <div class="text-[10px] font-bold text-emerald-900 mb-0.5">🍄 Top 3 Specie Probabili:</div>
+                <ul class="space-y-0.5">${speciesHtml}</ul>
+              </div>
               <div class="text-[11px] space-y-1.5 text-slate-700">
                 <p><b>🌳 Essenze:</b> ${habitat}</p>
-                <p><b>🌧️ Finestra d'Oro (-7 a -10gg):</b> ${data.goldenWindowRain} mm</p>
+                <p><b>🌧️ Finestra d'Oro (-12 a -7gg):</b> ${data.goldenWindowRain} mm</p>
                 <p><b>🌱 Umidità Suolo:</b> ${data.soilMoisture}%</p>
                 <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C (Min: ${data.avgMinTemp}°C)</p>
                 <p><b>💨 Vento:</b> ${data.windSpeed} km/h - ${data.windNote}</p>
               </div>
               <div class="mt-3 pt-2 border-t border-slate-200 space-y-1.5 text-center">
                 <button onclick="openDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-slate-900 hover:bg-emerald-700 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
-                  📊 Dettagli Storici (Card 10 Giorni)
+                  📊 Dettagli Storici (20 Giorni)
                 </button>
                 <button onclick="refreshSingleSpot(${loc.lat}, ${loc.lon}, ${altitude}, '${cacheKey}', '${locKey}')" class="bg-blue-600 hover:bg-blue-500 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
                   🔄 Aggiorna Meteo Live
@@ -710,8 +782,8 @@
       const ghToken = localStorage.getItem("gh_token");
 
       if (!ghUser || !ghRepo || !ghToken) {
-        alert("⚠️ Configura prima le credenziali GitHub con l'ingranaggio ⚙️.");
-        configGitHub();
+        alert("⚠️ Configura prima le credenziali GitHub dal menu ingranaggio ⚙️.");
+        openSettingsModal();
         return;
       }
 
@@ -768,20 +840,21 @@
       }
     }
 
+    // Storico esteso a 20 giorni con Finestra d'Oro (-12 a -7 giorni)
     function openDetailsModal(locationName, cacheKey) {
       const data = meteoCache[cacheKey];
       if (!data || !data.dailyHistory) return;
 
-      document.getElementById('modal-title').innerText = `📊 Card Storiche: ${locationName}`;
-      document.getElementById('modal-subtitle').innerText = `Punteggio Totale: ${data.score}% | Dati Ultimi 10 Giorni`;
+      document.getElementById('modal-title').innerText = `📊 Card Storiche (20 Giorni): ${locationName}`;
+      document.getElementById('modal-subtitle').innerText = `Punteggio Totale: ${data.score}% | Finestra d'Oro (-12 a -7gg)`;
 
       const modalBody = document.getElementById('modal-body');
-      let html = `<div class="mb-3 p-2.5 bg-emerald-950/40 border border-emerald-800/50 rounded-xl text-[11px] text-emerald-300">🌿 <b>Finestra d'Oro (-7 a -10gg):</b> Giorni chiave per la spinta del micelio.</div><div class="space-y-2">`;
+      let html = `<div class="mb-3 p-2.5 bg-emerald-950/40 border border-emerald-800/50 rounded-xl text-[11px] text-emerald-300">🌿 <b>Finestra d'Oro (-12 a -7gg):</b> Giorni chiave evidenziati per la spinta del micelio.</div><div class="space-y-2">`;
 
       data.dailyHistory.forEach((day) => {
         const isGolden = day.isGolden;
         const cardBg = isGolden ? 'bg-emerald-950/40 border-emerald-500 ring-1 ring-emerald-500/50' : 'bg-slate-800/50 border-slate-700/60';
-        const badgeHtml = isGolden ? '<span class="bg-emerald-600 text-white text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">🌿 Finestra d\'Oro</span>' : '<span class="text-slate-400 text-[10px]">Giornata Standard</span>';
+        const badgeHtml = isGolden ? '<span class="bg-emerald-600 text-white text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">🌿 Finestra d\'Oro (-12/-7gg)</span>' : '<span class="text-slate-400 text-[10px]">Giornata Standard</span>';
 
         html += `
           <div class="p-3 rounded-xl border ${cardBg} transition flex flex-col space-y-1.5 shadow-sm">
@@ -812,7 +885,7 @@
       document.getElementById('details-modal').classList.remove('hidden');
     }
 
-    async function getFungiScore(lat, lon, altitude = 300) {
+    async function getFungiScore(lat, lon, altitude = 300, habitat = "Bosco Misto") {
       const targetDateStr = document.getElementById('targetDate').value;
       const cacheKey = `${lat}_${lon}_${altitude}_${targetDateStr}`;
       if (meteoCache[cacheKey]) return meteoCache[cacheKey];
@@ -854,7 +927,10 @@
         const windDirDays = padArray(data.daily.wind_direction_10m_dominant, 21, 0);
 
         const totalRain = rainDays.reduce((a, b) => a + b, 0);
-        const goldenWindowRain = rainDays.slice(10, 14).reduce((a, b) => a + b, 0); 
+        
+        // --- FINETRA D'ORO AGGIORNATA (-12 a -7 giorni da oggi) ---
+        // Indice 20 = Oggi. -7 giorni = Indice 13. -12 giorni = Indice 8.
+        const goldenWindowRain = rainDays.slice(8, 14).reduce((a, b) => a + b, 0); 
         const recentRain = rainDays.slice(17, 21).reduce((a, b) => a + b, 0); 
 
         const recentTemps = tempDays.slice(-7);
@@ -885,6 +961,7 @@
 
         let combinedScore = (goldenScore * 0.45) + (soilScore * 0.20) + (tempScore * 0.20) + (totalRainScore * 0.15);
 
+        // BILANCIO IDRICO E VENTO SECCO CUMULATIVO POST-PIOGGIA
         let dryWindDaysCount = 0;
         const postRainWinds = windSpeedDays.slice(14, 21);
         const postRainDirs = windDirDays.slice(14, 21);
@@ -937,15 +1014,19 @@
           predictionColor = "text-orange-600";
         }
 
+        // Calcolo delle Top 3 Specie Fungine per questo spot
+        const topSpecies = getTopSpecies(habitat, avgTemp, soilMoistureEst, goldenWindowRain);
+
+        // Storico completo dei 20 giorni per la modale di dettaglio
         const dailyHistory = [];
-        for (let i = 11; i < 21; i++) {
+        for (let i = 0; i < timeDays.length; i++) {
           dailyHistory.push({
             date: timeDays[i] || `Giorno ${i}`,
             rain: Math.round(rainDays[i] * 10) / 10,
             temp: Math.round(tempDays[i]),
             tempMin: Math.round(tempMinDays[i]),
             wind: Math.round(windSpeedDays[i]),
-            isGolden: (i >= 10 && i <= 13)
+            isGolden: (i >= 8 && i <= 13) // Finestra d'oro tra -12 e -7 giorni
           });
         }
 
@@ -959,6 +1040,7 @@
           avgTemp: Math.round(avgTemp), avgMinTemp: Math.round(avgMinTemp),
           windSpeed: Math.round(avgRecentWindSpeed), windNote,
           score: finalScore,
+          topSpecies,
           dailyHistory
         };
 
