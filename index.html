@@ -235,6 +235,78 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
+    // --- CODA DI COMMIT AUTOMATICO A GITHUB (Ogni 1 Minuto) ---
+    let pendingCommitsQueue = [];
+
+    function queueSpotUpdateForGitHub(spotName, newHabitat, newGeology) {
+      let existing = pendingCommitsQueue.find(item => item.name === spotName);
+      if (existing) {
+        existing.habitat = newHabitat;
+        existing.geology = newGeology;
+      } else {
+        pendingCommitsQueue.push({ name: spotName, habitat: newHabitat, geology: newGeology });
+      }
+    }
+
+    // Worker in background ogni 60 secondi per il commit automatico
+    setInterval(async () => {
+      if (pendingCommitsQueue.length === 0) return;
+      const ghUser = localStorage.getItem("gh_user");
+      const ghRepo = localStorage.getItem("gh_repo");
+      const ghToken = localStorage.getItem("gh_token");
+      if (!ghUser || !ghRepo || !ghToken) return;
+
+      console.log(`🚀 Sincronizzazione automatica GitHub: ${pendingCommitsQueue.length} spot arricchiti.`);
+      try {
+        const path = "comuni_italia.js";
+        const url = `https://api.github.com/repos/${ghUser}/${ghRepo}/contents/${path}`;
+        const getRes = await fetch(url, { headers: { 'Authorization': `token ${ghToken}` } });
+        if (!getRes.ok) return;
+        const fileData = await getRes.json();
+        let jsText = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, ''))));
+
+        let updatedCount = 0;
+        pendingCommitsQueue.forEach(item => {
+          const locPattern = new RegExp(`name:\\s*"${item.name}"[^}]*}`);
+          const match = jsText.match(locPattern);
+          if (match) {
+            let block = match[0];
+            if (block.includes("habitat:")) {
+              block = block.replace(/habitat:\s*"[^"]*"/, `habitat: "${item.habitat}"`);
+            } else {
+              block = block.replace("type:", `habitat: "${item.habitat}", type:`);
+            }
+            if (block.includes("geology:")) {
+              block = block.replace(/geology:\s*"[^"]*"/, `geology: "${item.geology}"`);
+            } else {
+              block = block.replace("type:", `geology: "${item.geology}", type:`);
+            }
+            jsText = jsText.replace(match[0], block);
+            updatedCount++;
+          }
+        });
+
+        if (updatedCount > 0) {
+          const updatedBase64 = btoa(unescape(encodeURIComponent(jsText)));
+          const putRes = await fetch(url, {
+            method: "PUT",
+            headers: { 'Authorization': `token ${ghToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: `🤖 Auto-sync: arricchiti ${updatedCount} spot (OSM/Geologia/Aspect)`,
+              content: updatedBase64,
+              sha: fileData.sha
+            })
+          });
+          if (putRes.ok) {
+            console.log("✅ Commit automatico completato con successo!");
+            pendingCommitsQueue = [];
+          }
+        }
+      } catch (err) {
+        console.error("❌ Errore sync GitHub automatico:", err);
+      }
+    }, 60000);
+
     function refreshData() {
       if (typeof map !== 'undefined' && map) {
         Object.keys(activeMarkers).forEach(key => map.removeLayer(activeMarkers[key]));
@@ -281,7 +353,7 @@
       });
     }
 
-    // --- FUNZIONI DI RICERCA TIPO MAPS ---
+    // Ricerca Luogo Stile Maps
     function openSearchModal() {
       document.getElementById('search-modal').classList.remove('hidden');
       document.getElementById('search-query-input').focus();
@@ -327,7 +399,7 @@
       document.getElementById("status-text").innerText = `📍 Posizionato su: ${name.split(',')[0]}`;
     }
 
-    // --- FUNZIONE TOP 5 SPOT DALLA VISTA CENTRO MAPPA (Con Raggio & Refresh) ---
+    // Top 5 Spot con raggio e refresh
     async function openTop5Modal() {
       document.getElementById('top5-modal').classList.remove('hidden');
       const top5Body = document.getElementById('top5-body');
@@ -349,7 +421,8 @@
         if (distKm <= radiusKm) {
           const altitude = loc.alt || 300;
           const habitat = loc.habitat || (altitude >= 1000 ? "Faggeta Pura / Mista" : (altitude >= 600 ? "Castagneto" : "Cerro / Querceto"));
-          const data = await getFungiScore(loc.lat, loc.lon, altitude, habitat);
+          const geology = loc.geology || (altitude > 900 ? "Calcareo / Roccioso" : "Siliceo / Arenario");
+          const data = await getFungiScore(loc.lat, loc.lon, altitude, habitat, geology);
           if (data) {
             scoredSpots.push({
               name: loc.name,
@@ -369,7 +442,7 @@
       const top5 = scoredSpots.slice(0, 5);
 
       if (top5.length === 0) {
-        top5Body.innerHTML = `<div class="text-orange-400 text-center py-4">Nessun spot trovato nel raggio di ${radiusKm} km dal centro mappa. Prova ad aumentare il raggio con la barra.</div>`;
+        top5Body.innerHTML = `<div class="text-orange-400 text-center py-4">Nessun spot trovato nel raggio di ${radiusKm} km. Aumenta il raggio.</div>`;
         return;
       }
 
@@ -405,14 +478,8 @@
       document.getElementById("status-text").innerText = `🎯 Spot selezionato: ${name}`;
     }
 
-    // Gestione Modale Impostazioni
-    function openSettingsModal() {
-      document.getElementById('settings-modal').classList.remove('hidden');
-    }
-
-    function closeSettingsModal() {
-      document.getElementById('settings-modal').classList.add('hidden');
-    }
+    function openSettingsModal() { document.getElementById('settings-modal').classList.remove('hidden'); }
+    function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
 
     function configGitHub() {
       closeSettingsModal();
@@ -438,26 +505,14 @@
         const keys = await caches.keys();
         for (let key of keys) { await caches.delete(key); }
       }
-      alert("🧹 Cache ripulita con successo! Le credenziali GitHub sono salve. Ricarico la pagina...");
+      alert("🧹 Cache ripulita! Credenziali salve. Ricarico...");
       window.location.href = window.location.pathname + "?v=" + new Date().getTime();
     }
 
-    function logoutPIN() {
-      localStorage.removeItem("fungicast_auth");
-      location.reload();
-    }
-
-    function closeAddSpotModal() {
-      document.getElementById('add-spot-modal').classList.add('hidden');
-    }
-
-    function closeTop5Modal() {
-      document.getElementById('top5-modal').classList.add('hidden');
-    }
-
-    function closeDetailsModal() { 
-      document.getElementById('details-modal').classList.add('hidden'); 
-    }
+    function logoutPIN() { localStorage.removeItem("fungicast_auth"); location.reload(); }
+    function closeAddSpotModal() { document.getElementById('add-spot-modal').classList.add('hidden'); }
+    function closeTop5Modal() { document.getElementById('top5-modal').classList.add('hidden'); }
+    function closeDetailsModal() { document.getElementById('details-modal').classList.add('hidden'); }
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(err => console.log('SW errore:', err));
@@ -509,38 +564,62 @@
       }
     }
 
-    // Rilevamento essenze tramite OpenStreetMap (Nominatim Extratags)
-    async function fetchHabitatFromOSM(lat, lon, alt) {
+    // --- RILEVAMENTO AVANZATO OSM (Essenze + Geologia + Aspect) ---
+    async function fetchSpotEnvironmentData(lat, lon, alt, existingHabitat, existingGeology) {
+      let habitat = existingHabitat;
+      let geology = existingGeology || (alt > 900 ? "Calcareo / Roccioso" : "Siliceo / Arenario");
+      let aspectInfo = { aspect: 0, aspectStr: "Nord", modifier: 1.0 };
+
       try {
+        // 1. Chiamata OSM Nominatim con extratags per botanica e litologia
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1&extratags=1`);
         const data = await res.json();
         
         if (data && data.extratags) {
           const tags = data.extratags;
-          if (tags.species || tags['species:it'] || tags.genus) {
-            const sp = tags['species:it'] || tags.species || tags.genus;
-            return `Bosco di ${sp}`;
+          if (!habitat || habitat === "Bosco Misto") {
+            if (tags.species || tags['species:it'] || tags.genus) {
+              const sp = tags['species:it'] || tags.species || tags.genus;
+              habitat = `Bosco di ${sp}`;
+            } else if (tags.leaf_type === 'broadleaved' && tags.leaf_cycle === 'deciduous') {
+              habitat = alt >= 900 ? "Faggeta Pura / Mista" : "Cerro / Querceto";
+            } else if (tags.leaf_type === 'needleleaved') {
+              habitat = "Pineta / Conifere";
+            }
           }
-          if (tags.leaf_type === 'broadleaved' && tags.leaf_cycle === 'deciduous') {
-            return alt >= 900 ? "Faggeta Pura / Mista" : "Cerro / Querceto";
-          }
-          if (tags.leaf_type === 'needleleaved') {
-            return "Pineta / Conifere";
-          }
-          if (tags.wood || tags.natural === 'wood' || tags.landuse === 'forest') {
-            return "Bosco Misto";
+          if (tags.geological || tags.rock) {
+            geology = tags.geological || tags.rock;
           }
         }
-        
-        if (alt >= 1000) return "Faggeta Pura / Mista";
-        if (alt >= 600) return "Castagneto";
-        return "Cerro / Querceto";
+
+        if (!habitat) {
+          habitat = alt >= 1000 ? "Faggeta Pura / Mista" : (alt >= 600 ? "Castagneto" : "Cerro / Querceto");
+        }
+
+        // 2. Calcolo dell'Esposizione (Aspect) tramite Open-Meteo multi-coordinate
+        const elRes = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat},${lat+0.002},${lat-0.002},${lat},${lat}&longitude=${lon},${lon},${lon},${lon+0.002},${lon-0.002}`);
+        const elData = await elRes.json();
+        if (elData && elData.elevation && elData.elevation.length >= 5) {
+          const [c, n, s, e, w] = elData.elevation;
+          const dzdx = e - w;
+          const dzdy = n - s;
+          let aspect = Math.atan2(-dzdy, dzdx) * (180 / Math.PI);
+          if (aspect < 0) aspect += 360;
+
+          let aspectStr = "Nord (Ombriva)";
+          if (aspect >= 315 || aspect < 45) aspectStr = "Nord (Ombriva)";
+          else if (aspect >= 45 && aspect < 135) aspectStr = "Est (Mattino)";
+          else if (aspect >= 135 && aspect < 225) aspectStr = "Sud (Aprico)";
+          else aspectStr = "Ovest (Pomeriggio)";
+
+          aspectInfo = { aspect, aspectStr };
+        }
 
       } catch (err) {
-        if (alt >= 1000) return "Faggeta Pura / Mista";
-        if (alt >= 600) return "Castagneto";
-        return "Cerro / Querceto";
+        if (!habitat) habitat = alt >= 1000 ? "Faggeta Pura / Mista" : "Cerro / Querceto";
       }
+
+      return { habitat, geology, aspectInfo };
     }
 
     function initMap() {
@@ -563,8 +642,7 @@
           const eleData = await eleRes.json();
           const autoAlt = (eleData && eleData.elevation && eleData.elevation.length > 0) ? Math.round(eleData.elevation[0]) : 400;
 
-          const detectedHabitat = await fetchHabitatFromOSM(pendingLat, pendingLon, autoAlt);
-
+          const env = await fetchSpotEnvironmentData(pendingLat, pendingLon, autoAlt, null, null);
           statusText.innerText = "Tocca la mappa per censire uno spot";
 
           document.getElementById('new-spot-name').value = autoName;
@@ -572,14 +650,14 @@
           document.getElementById('new-spot-fav').checked = false;
 
           const select = document.getElementById('new-spot-habitat-select');
-          let optionExists = Array.from(select.options).some(opt => opt.value === detectedHabitat);
+          let optionExists = Array.from(select.options).some(opt => opt.value === env.habitat);
           if (!optionExists) {
             let opt = document.createElement('option');
-            opt.value = detectedHabitat;
-            opt.innerText = "🌿 " + detectedHabitat;
+            opt.value = env.habitat;
+            opt.innerText = "🌿 " + env.habitat;
             select.insertBefore(opt, select.lastElementChild);
           }
-          select.value = detectedHabitat;
+          select.value = env.habitat;
           document.getElementById('new-spot-habitat-custom').classList.add('hidden');
           document.getElementById('add-spot-modal').classList.remove('hidden');
 
@@ -620,6 +698,7 @@
         alt: alt,
         type: "Località",
         habitat: habitat,
+        geology: alt > 900 ? "Calcareo / Roccioso" : "Siliceo / Arenario",
         isFavorite: isFavorite,
         minZoom: 9
       };
@@ -633,65 +712,7 @@
       const ghToken = localStorage.getItem("gh_token");
 
       if (!ghUser || !ghRepo || !ghToken) {
-        alert("⚠️ Per salvare su GitHub configura prima Token, User e Repo dal menu ingranaggio ⚙️.");
-        openSettingsModal();
-        return;
-      }
-
-      const path = "comuni_italia.js";
-      const url = `https://api.github.com/repos/${ghUser}/${ghRepo}/contents/${path}`;
-
-      try {
-        const getFileRes = await fetch(url, { headers: { 'Authorization': `token ${ghToken}` } });
-        if (!getFileRes.ok) throw new Error("Impossibile leggere comuni_italia.js da GitHub.");
-        const fileData = await getFileRes.json();
-
-        const contentBase64 = fileData.content.replace(/\n/g, '');
-        const currentJsText = decodeURIComponent(escape(atob(contentBase64)));
-
-        const lastIndex = currentJsText.lastIndexOf("];");
-        if (lastIndex === -1) throw new Error("Struttura comuni_italia.js non valida.");
-
-        const favProp = newSpot.isFavorite ? `, isFavorite: true` : ``;
-        const habProp = newSpot.habitat ? `, habitat: "${newSpot.habitat}"` : ``;
-        const newSpotJson = `,\n  { name: "${newSpot.name}", lat: ${newSpot.lat}, lon: ${newSpot.lon}, alt: ${newSpot.alt}, type: "Località"${habProp}${favProp}, minZoom: 9 }\n];`;
-        const updatedJsText = currentJsText.substring(0, lastIndex) + newSpotJson;
-
-        const updatedBase64 = btoa(unescape(encodeURIComponent(updatedJsText)));
-
-        const putRes = await fetch(url, {
-          method: "PUT",
-          headers: {
-            'Authorization': `token ${ghToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            message: `🤖 Auto-add spot: ${newSpot.name}`,
-            content: updatedBase64,
-            sha: fileData.sha
-          })
-        });
-
-        if (putRes.ok) {
-          alert(`🚀 Spot "${newSpot.name}" salvato su GitHub! Pulisco la cache per vederlo subito.`);
-          forceReloadComuniCache();
-        } else {
-          const errData = await putRes.json();
-          alert("❌ Errore GitHub: " + (errData.message || "Verifica il token."));
-        }
-
-      } catch (err) {
-        alert("❌ Errore salvataggio GitHub: " + err.message);
-      }
-    }
-
-    async function toggleFavoriteSpot(spotName, lat, lon) {
-      const ghUser = localStorage.getItem("gh_user");
-      const ghRepo = localStorage.getItem("gh_repo");
-      const ghToken = localStorage.getItem("gh_token");
-
-      if (!ghUser || !ghRepo || !ghToken) {
-        alert("⚠️ Configura prima le credenziali GitHub dal menu ingranaggio ⚙️.");
+        alert("⚠️ Configura prima Token, User e Repo dal menu ingranaggio ⚙️.");
         openSettingsModal();
         return;
       }
@@ -705,8 +726,60 @@
         const fileData = await getFileRes.json();
 
         const contentBase64 = fileData.content.replace(/\n/g, '');
-        let currentJsText = decodeURIComponent(escape(atob(contentBase64)));
+        const currentJsText = decodeURIComponent(escape(atob(contentBase64)));
 
+        const lastIndex = currentJsText.lastIndexOf("];");
+        if (lastIndex === -1) throw new Error("Struttura comuni_italia.js non valida.");
+
+        const favProp = newSpot.isFavorite ? `, isFavorite: true` : ``;
+        const habProp = newSpot.habitat ? `, habitat: "${newSpot.habitat}"` : ``;
+        const geoProp = newSpot.geology ? `, geology: "${newSpot.geology}"` : ``;
+        const newSpotJson = `,\n  { name: "${newSpot.name}", lat: ${newSpot.lat}, lon: ${newSpot.lon}, alt: ${newSpot.alt}, type: "Località"${habProp}${geoProp}${favProp}, minZoom: 9 }\n];`;
+        const updatedJsText = currentJsText.substring(0, lastIndex) + newSpotJson;
+
+        const updatedBase64 = btoa(unescape(encodeURIComponent(updatedJsText)));
+
+        const putRes = await fetch(url, {
+          method: "PUT",
+          headers: { 'Authorization': `token ${ghToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: `🤖 Auto-add spot: ${newSpot.name}`,
+            content: updatedBase64,
+            sha: fileData.sha
+          })
+        });
+
+        if (putRes.ok) {
+          alert(`🚀 Spot "${newSpot.name}" salvato su GitHub! Pulisco la cache.`);
+          forceReloadComuniCache();
+        } else {
+          alert("❌ Errore GitHub.");
+        }
+      } catch (err) {
+        alert("❌ Errore: " + err.message);
+      }
+    }
+
+    async function toggleFavoriteSpot(spotName, lat, lon) {
+      const ghUser = localStorage.getItem("gh_user");
+      const ghRepo = localStorage.getItem("gh_repo");
+      const ghToken = localStorage.getItem("gh_token");
+
+      if (!ghUser || !ghRepo || !ghToken) {
+        alert("⚠️ Configura prima le credenziali GitHub.");
+        openSettingsModal();
+        return;
+      }
+
+      const path = "comuni_italia.js";
+      const url = `https://api.github.com/repos/${ghUser}/${ghRepo}/contents/${path}`;
+
+      try {
+        const getFileRes = await fetch(url, { headers: { 'Authorization': `token ${ghToken}` } });
+        if (!getFileRes.ok) throw new Error("Impossibile leggere comuni_italia.js.");
+        const fileData = await getFileRes.json();
+
+        let currentJsText = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, ''))));
         const locPattern = new RegExp(`name:\\s*"${spotName}"[^}]*}`);
         const match = currentJsText.match(locPattern);
 
@@ -718,32 +791,19 @@
             block = block.replace("type:", "isFavorite: true, type:");
           }
           currentJsText = currentJsText.replace(match[0], block);
-
           const updatedBase64 = btoa(unescape(encodeURIComponent(currentJsText)));
 
           const putRes = await fetch(url, {
             method: "PUT",
-            headers: {
-              'Authorization': `token ${ghToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              message: `⭐ Toggle favorite: ${spotName}`,
-              content: updatedBase64,
-              sha: fileData.sha
-            })
+            headers: { 'Authorization': `token ${ghToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: `⭐ Toggle favorite: ${spotName}`, content: updatedBase64, sha: fileData.sha })
           });
 
           if (putRes.ok) {
             alert(`⭐ Preferito aggiornato per "${spotName}"!`);
             forceReloadComuniCache();
-          } else {
-            alert("❌ Errore commit GitHub.");
           }
-        } else {
-          alert("❌ Spot non trovato.");
         }
-
       } catch (err) {
         alert("❌ Errore: " + err.message);
       }
@@ -766,15 +826,8 @@
           const data = await res.json();
           if (data && data.radar && data.radar.past && data.radar.past.length > 0) {
             const latestFrame = data.radar.past[data.radar.past.length - 1];
-            const host = data.host || 'https://tilecache.rainviewer.com';
-            const path = latestFrame.path;
-
-            radarLayer = L.tileLayer(`${host}${path}/256/{z}/{x}/{y}/2/1_1.png`, {
-              opacity: 0.75, 
-              zIndex: 500,
-              maxNativeZoom: 7,
-              maxZoom: 18,
-              attribution: 'Weather data by RainViewer (rainviewer.com)'
+            radarLayer = L.tileLayer(`${data.host || 'https://tilecache.rainviewer.com'}${latestFrame.path}/256/{z}/{x}/{y}/2/1_1.png`, {
+              opacity: 0.75, zIndex: 500, maxNativeZoom: 7, maxZoom: 18, attribution: 'Weather data by RainViewer'
             }).addTo(map);
 
             isRadarActive = true;
@@ -784,13 +837,11 @@
           } else {
             statusText.innerText = "⚠️ Nessun dato radar disponibile";
           }
-        } catch(e) { 
-          statusText.innerText = "Errore caricamento radar"; 
-        }
+        } catch(e) { statusText.innerText = "Errore caricamento radar"; }
       }
     }
 
-    // Algoritmo Predittivo Specie Fungine con Filtro Stretto Habitat
+    // Algoritmo Specie con Filtro Stretto Habitat
     function getTopSpecies(habitat, avgTemp, soilMoisture, goldenRain) {
       const speciesList = [
         { name: "Boletus aereus (Porcino Nero)", habitats: ["cerro", "querceto", "castagneto", "macchia"], strict: false, minT: 17, maxT: 25, minRain: 30 },
@@ -808,10 +859,8 @@
       ];
 
       let scored = [];
-
       speciesList.forEach(sp => {
         let habitatMatch = sp.habitats.some(h => habitat.toLowerCase().includes(h));
-        
         if (sp.strict && !habitatMatch) return;
 
         let score = 50;
@@ -851,16 +900,26 @@
         return currentZoom >= loc.minZoom && bounds.contains([loc.lat, loc.lon]);
       });
 
-      if (!isRadarActive) statusText.innerText = `🍄 Caricamento ${visibleLocs.length} aree...`;
+      if (!isRadarActive) statusText.innerText = `🍄 Caricamento ${visibleLocs.length} aree (Lazy Loading)...`;
 
       await Promise.all(visibleLocs.map(async (loc) => {
         const altitude = loc.alt || 300;
-        const habitat = loc.habitat || (altitude >= 1000 ? "Faggeta Pura / Mista" : (altitude >= 600 ? "Castagneto" : "Cerro / Querceto"));
+        
+        // Lazy loading: Arricchiamo il punto se mancano habitat dettagliati o geologia
+        let env = await fetchSpotEnvironmentData(loc.lat, loc.lon, altitude, loc.habitat, loc.geology);
+        
+        // Se abbiamo trovato dati nuovi rispetto al database statico, li accodiamo per il commit di 1 minuto
+        if (env.habitat !== loc.habitat || env.geology !== loc.geology) {
+          loc.habitat = env.habitat;
+          loc.geology = env.geology;
+          queueSpotUpdateForGitHub(loc.name, env.habitat, env.geology);
+        }
+
         const cacheKey = `${loc.lat}_${loc.lon}_${altitude}_${targetDateStr}`;
         const locKey = `${loc.lat}_${loc.lon}`;
         
         if (!activeMarkers[locKey]) {
-          const data = await getFungiScore(loc.lat, loc.lon, altitude, habitat);
+          const data = await getFungiScore(loc.lat, loc.lon, altitude, env.habitat, env.geology, env.aspectInfo);
           if (!data) return;
 
           let color = '#dc2626'; let labelText = "Molto Basso";
@@ -870,28 +929,16 @@
           else if (data.score > 80) { color = '#34d399'; labelText = "Eccellente"; }
 
           const size = loc.type === "Provincia" ? 34 : 30;
+          let iconHtml = loc.isFavorite ? `
+            <div style="position: relative; width: ${size+6}px; height: ${size+6}px; display: flex; align-items: center; justify-content: center;">
+              <svg viewBox="0 0 24 24" style="position: absolute; width: 100%; height: 100%; fill: ${color}; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.6));">
+                <path d="M12 1.728l3.09 6.261 6.91 1.004-5 4.873 1.18 6.883-6.18-3.25-6.18 3.25 1.18-6.883-5-4.873 6.91-1.004z"/>
+              </svg>
+              <span style="position: relative; color: #ffffff; font-weight: 900; font-size: 9px; text-shadow: 0px 1px 3px #000; margin-top: 2px;">${data.score}%</span>
+            </div>
+          ` : `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #ffffff; font-weight: bold; font-size: 10px; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0px 1px 2px rgba(0,0,0,0.8);">${data.score}%</div>`;
 
-          let iconHtml = '';
-          if (loc.isFavorite) {
-            iconHtml = `
-              <div style="position: relative; width: ${size+6}px; height: ${size+6}px; display: flex; align-items: center; justify-content: center;">
-                <svg viewBox="0 0 24 24" style="position: absolute; width: 100%; height: 100%; fill: ${color}; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.6));">
-                  <path d="M12 1.728l3.09 6.261 6.91 1.004-5 4.873 1.18 6.883-6.18-3.25-6.18 3.25 1.18-6.883-5-4.873 6.91-1.004z"/>
-                </svg>
-                <span style="position: relative; color: #ffffff; font-weight: 900; font-size: 9px; text-shadow: 0px 1px 3px #000; margin-top: 2px;">${data.score}%</span>
-              </div>
-            `;
-          } else {
-            iconHtml = `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #ffffff; font-weight: bold; font-size: 10px; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0px 1px 2px rgba(0,0,0,0.8);">${data.score}%</div>`;
-          }
-
-          const markerIcon = L.divIcon({
-            className: '',
-            html: iconHtml,
-            iconSize: [size+6, size+6],
-            iconAnchor: [(size+6)/2, (size+6)/2]
-          });
-
+          const markerIcon = L.divIcon({ className: '', html: iconHtml, iconSize: [size+6, size+6], iconAnchor: [(size+6)/2, (size+6)/2] });
           const favText = loc.isFavorite ? "⭐ Rimuovi dai Preferiti" : "☆ Aggiungi ai Preferiti ⭐";
           let speciesHtml = data.topSpecies.map((sp, idx) => `<li class="text-[10px] text-slate-800"><b>${idx+1}.</b> ${sp.name} <span class="text-emerald-700 font-bold">(${sp.score}%)</span></li>`).join('');
 
@@ -912,11 +959,12 @@
                 <ul class="space-y-0.5">${speciesHtml}</ul>
               </div>
               <div class="text-[11px] space-y-1.5 text-slate-700">
-                <p><b>🌳 Essenze:</b> ${habitat}</p>
+                <p><b>🌳 Essenze:</b> ${env.habitat}</p>
+                <p><b>🪨 Substrato:</b> ${env.geology}</p>
+                <p><b>☀️ Esposizione:</b> ${env.aspectInfo.aspectStr}</p>
                 <p><b>🌧️ Finestra d'Oro (-12 a -7gg):</b> ${data.goldenWindowRain} mm</p>
                 <p><b>🌱 Umidità Suolo:</b> ${data.soilMoisture}%</p>
-                <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C (Min: ${data.avgMinTemp}°C)</p>
-                <p><b>💨 Vento:</b> ${data.windSpeed} km/h - ${data.windNote}</p>
+                <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C</p>
               </div>
               <div class="mt-3 pt-2 border-t border-slate-200 space-y-1.5 text-center">
                 <button onclick="openDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-slate-900 hover:bg-emerald-700 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
@@ -924,9 +972,6 @@
                 </button>
                 <button onclick="refreshSingleSpot(${loc.lat}, ${loc.lon}, ${altitude}, '${cacheKey}', '${locKey}')" class="bg-blue-600 hover:bg-blue-500 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
                   🔄 Aggiorna Meteo Live
-                </button>
-                <button onclick="promptEditHabitat('${loc.name.replace(/'/g, "\\'")}', '${habitat}')" class="bg-purple-100 hover:bg-purple-200 text-purple-900 border border-purple-300 w-full py-1 px-3 rounded-lg text-[10px] font-bold transition shadow">
-                  🌳 Modifica Essenze / Habitat
                 </button>
                 <button onclick="toggleFavoriteSpot('${loc.name.replace(/'/g, "\\'")}', ${loc.lat}, ${loc.lon})" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 w-full py-1 px-3 rounded-lg text-[10px] font-bold transition shadow">
                   ${favText}
@@ -948,92 +993,6 @@
       });
 
       if (!isRadarActive) statusText.innerText = `🍄 ${visibleLocs.length} aree visibili`;
-    }
-
-    async function promptEditHabitat(spotName, currentHabitat) {
-      let choice = prompt(`Modifica essenze per "${spotName}"\nAttuale: ${currentHabitat}\n\nScegli o scrivi il nome personalizzato:`, currentHabitat);
-      if (!choice) return;
-
-      let newHabitat = choice;
-      if (choice === "1") newHabitat = "Faggeta Pura / Mista";
-      else if (choice === "2") newHabitat = "Castagneto";
-      else if (choice === "3") newHabitat = "Cerro / Querceto";
-      else if (choice === "4") newHabitat = "Pineta / Conifere";
-      else if (choice === "5") newHabitat = "Bosco Misto";
-      else if (choice === "6") newHabitat = "Macchia Mediterranea";
-      else {
-        let customList = JSON.parse(localStorage.getItem('user_custom_essences') || '[]');
-        if (!customList.includes(choice)) {
-          customList.push(choice);
-          localStorage.setItem('user_custom_essences', JSON.stringify(customList));
-        }
-      }
-
-      await commitHabitatToGitHub(spotName, newHabitat);
-    }
-
-    async function commitHabitatToGitHub(spotName, newHabitat) {
-      const ghUser = localStorage.getItem("gh_user");
-      const ghRepo = localStorage.getItem("gh_repo");
-      const ghToken = localStorage.getItem("gh_token");
-
-      if (!ghUser || !ghRepo || !ghToken) {
-        alert("⚠️ Configura prima le credenziali GitHub dal menu ingranaggio ⚙️.");
-        openSettingsModal();
-        return;
-      }
-
-      const path = "comuni_italia.js";
-      const url = `https://api.github.com/repos/${ghUser}/${ghRepo}/contents/${path}`;
-
-      try {
-        const getFileRes = await fetch(url, { headers: { 'Authorization': `token ${ghToken}` } });
-        if (!getFileRes.ok) throw new Error("Impossibile leggere comuni_italia.js.");
-        const fileData = await getFileRes.json();
-
-        const contentBase64 = fileData.content.replace(/\n/g, '');
-        let currentJsText = decodeURIComponent(escape(atob(contentBase64)));
-
-        const locPattern = new RegExp(`name:\\s*"${spotName}"[^}]*}`);
-        const match = currentJsText.match(locPattern);
-
-        if (match) {
-          let block = match[0];
-          if (block.includes("habitat:")) {
-            block = block.replace(/habitat:\s*"[^"]*"/, `habitat: "${newHabitat}"`);
-          } else {
-            block = block.replace("type:", `habitat: "${newHabitat}", type:`);
-          }
-          currentJsText = currentJsText.replace(match[0], block);
-
-          const updatedBase64 = btoa(unescape(encodeURIComponent(currentJsText)));
-
-          const putRes = await fetch(url, {
-            method: "PUT",
-            headers: {
-              'Authorization': `token ${ghToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              message: `🌳 Aggiornato habitat per ${spotName}: ${newHabitat}`,
-              content: updatedBase64,
-              sha: fileData.sha
-            })
-          });
-
-          if (putRes.ok) {
-            alert(`🌳 Habitat aggiornato con successo per "${spotName}"! Pulisco la cache per applicare le modifiche.`);
-            forceReloadComuniCache();
-          } else {
-            alert("❌ Errore commit GitHub.");
-          }
-        } else {
-          alert("❌ Spot non trovato nel file dei comuni.");
-        }
-
-      } catch (err) {
-        alert("❌ Errore: " + err.message);
-      }
     }
 
     function openDetailsModal(locationName, cacheKey) {
@@ -1080,7 +1039,7 @@
       document.getElementById('details-modal').classList.remove('hidden');
     }
 
-    async function getFungiScore(lat, lon, altitude = 300, habitat = "Bosco Misto") {
+    async function getFungiScore(lat, lon, altitude = 300, habitat = "Bosco Misto", geology = "Siliceo", aspectInfo = { aspect: 0, aspectStr: "Nord" }) {
       const targetDateStr = document.getElementById('targetDate').value;
       const cacheKey = `${lat}_${lon}_${altitude}_${targetDateStr}`;
       if (meteoCache[cacheKey]) return meteoCache[cacheKey];
@@ -1153,41 +1112,36 @@
 
         let combinedScore = (goldenScore * 0.45) + (soilScore * 0.20) + (tempScore * 0.20) + (totalRainScore * 0.15);
 
+        // --- APPLICAZIONE DELL'ESPOSIZIONE (ASPECT) AL PUNTEGGIO GENERALE ---
+        let aspectModifier = 1.0;
+        if (avgTemp > 18) {
+          // Periodo caldo: premiamo i versanti a Nord (freschi, trattengono umidità), penalizziamo il Sud
+          if (aspectInfo.aspect >= 315 || aspectInfo.aspect < 45) aspectModifier = 1.12;
+          else if (aspectInfo.aspect >= 135 && aspectInfo.aspect <= 225) aspectModifier = 0.88;
+        } else if (avgTemp < 13) {
+          // Periodo freddo: premiamo i versanti a Sud (più caldi, stimolano la crescita)
+          if (aspectInfo.aspect >= 135 && aspectInfo.aspect <= 225) aspectModifier = 1.10;
+          else if (aspectInfo.aspect >= 315 || aspectInfo.aspect < 45) aspectModifier = 0.90;
+        }
+        combinedScore *= aspectModifier;
+
         let dryWindDaysCount = 0;
         const postRainWinds = windSpeedDays.slice(14, 21);
         const postRainDirs = windDirDays.slice(14, 21);
         
         for(let k = 0; k < postRainWinds.length; k++) {
-          const speed = postRainWinds[k];
-          const dir = postRainDirs[k];
-          if (speed > 12 && (dir >= 315 || dir <= 67)) {
+          if (postRainWinds[k] > 12 && (postRainDirs[k] >= 315 || postRainDirs[k] <= 67)) {
             dryWindDaysCount++;
           }
         }
 
         let windNote = "🌬️ Vento neutro";
         let windDryNote = "";
-
         if (dryWindDaysCount >= 2) {
           const dryingPenalty = Math.max(0.4, 1.0 - (dryWindDaysCount * 0.12));
           combinedScore = combinedScore * dryingPenalty;
           windNote = `💨 Vento secco persistente (${dryWindDaysCount} giorni)`;
-          windDryNote = `⚠️ Siccità da vento prolungato (${dryWindDaysCount}gg post-pioggia): suolo arido (-${Math.round((1-dryingPenalty)*100)}%)`;
-        } else {
-          const recent3WindsSpeed = windSpeedDays.slice(-3);
-          const recent3WindsDir = windDirDays.slice(-3);
-          const avgRecentWindSpeed = recent3WindsSpeed.reduce((a, b) => a + b, 0) / recent3WindsSpeed.length;
-          const avgRecentWindDir = recent3WindsDir.reduce((a, b) => a + b, 0) / recent3WindsDir.length;
-          
-          if (avgRecentWindSpeed > 14 && (avgRecentWindDir >= 315 || avgRecentWindDir <= 67)) {
-            const dryingPenalty = (altitude <= 600) ? 0.60 : 0.75;
-            combinedScore = combinedScore * dryingPenalty;
-            windNote = "💨 Tramontana secca recente";
-            windDryNote = `⚠️ Vento secco recente: suolo superficiale disidratato (-${Math.round((1-dryingPenalty)*100)}%)`;
-          } else if (avgRecentWindSpeed <= 12) {
-            combinedScore = Math.min(100, combinedScore * 1.08);
-            windNote = "🍃 Vento debole protetto (+8%)";
-          }
+          windDryNote = `⚠️ Siccità da vento prolungato (${dryWindDaysCount}gg post-pioggia): suolo arido`;
         }
 
         const finalScore = Math.min(100, Math.max(0, Math.round(combinedScore)));
@@ -1200,9 +1154,6 @@
         } else if (goldenWindowRain >= 25 && finalScore > 60) {
           predictionNote = "🍄 Piena Finestra di Fruttificazione!";
           predictionColor = "text-emerald-600 font-bold";
-        } else if (dryWindDaysCount >= 3 || totalRain < 15) {
-          predictionNote = "🏜️ Terreno arido per vento/siccità.";
-          predictionColor = "text-orange-600";
         }
 
         const topSpecies = getTopSpecies(habitat, avgTemp, soilMoistureEst, goldenWindowRain);
@@ -1219,15 +1170,12 @@
           });
         }
 
-        const recent3WindsSpeed = windSpeedDays.slice(-3);
-        const avgRecentWindSpeed = recent3WindsSpeed.reduce((a, b) => a + b, 0) / recent3WindsSpeed.length;
-
         const result = { 
           goldenWindowRain: Math.round(goldenWindowRain),
           soilMoisture: soilMoistureEst,
           predictionNote, predictionColor, windDryNote,
           avgTemp: Math.round(avgTemp), avgMinTemp: Math.round(avgMinTemp),
-          windSpeed: Math.round(avgRecentWindSpeed), windNote,
+          windSpeed: Math.round(windSpeedDays[20]), windNote,
           score: finalScore,
           topSpecies,
           dailyHistory
