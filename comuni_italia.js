@@ -163,4 +163,6 @@ const COMUNI_ITALIA = [
   { name: "Arcinazzo Romano", lat: 41.8774, lon: 13.1137, alt: 713, type: "Località", minZoom: 9 }
 ,
   { name: "Castagneto di San Polo", lat: 42.0166, lon: 12.8475, alt: 762, type: "Località", isFavorite: true, minZoom: 9 }
+,
+  { name: "Olevano Romano", lat: 41.8309, lon: 13.0287, alt: 279, type: "Località", minZoom: 9 }
 ];
