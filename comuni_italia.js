@@ -169,4 +169,6 @@ const COMUNI_ITALIA = [
   { name: "Cerreto Laziale", lat: 41.9478, lon: 12.9843, alt: 605, type: "Località", minZoom: 9 }
 ,
   { name: "Capalbio", lat: 42.454, lon: 11.4216, alt: 185, type: "Località", minZoom: 9 }
+,
+  { name: "Monteflavio", lat: 42.1067, lon: 12.8312, alt: 785, type: "Località", minZoom: 9 }
 ];
