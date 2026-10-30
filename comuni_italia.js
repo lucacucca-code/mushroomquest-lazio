@@ -181,4 +181,6 @@ const COMUNI_ITALIA = [
   { name: "Monte Porzio Catone", lat: 41.8073, lon: 12.7195, alt: 620, type: "Località", habitat: "Castagneto", minZoom: 9 }
 ,
   { name: "Val carene", lat: 42.786, lon: 10.3057, alt: 67, type: "Località", habitat: "Macchia Mediterranea", isFavorite: true, minZoom: 9 }
+,
+  { name: "Loc i Marmi", lat: 42.7814, lon: 10.3092, alt: 202, type: "Località", habitat: "Macchia Mediterranea", minZoom: 9 }
 ];
