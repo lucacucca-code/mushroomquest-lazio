@@ -179,4 +179,6 @@ const COMUNI_ITALIA = [
   { name: "Ceccano castagneto", lat: 41.5493, lon: 13.293, alt: 640, type: "Località", habitat: "Castagneto", minZoom: 9 }
 ,
   { name: "Monte Porzio Catone", lat: 41.8073, lon: 12.7195, alt: 620, type: "Località", habitat: "Castagneto", minZoom: 9 }
+,
+  { name: "Val carene", lat: 42.786, lon: 10.3057, alt: 67, type: "Località", habitat: "Macchia Mediterranea", isFavorite: true, minZoom: 9 }
 ];
