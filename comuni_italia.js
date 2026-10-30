@@ -175,4 +175,6 @@ const COMUNI_ITALIA = [
   { name: "Castel di Tora", lat: 42.2152, lon: 12.9672, alt: 562, type: "Località", isFavorite: true, minZoom: 9 }
 ,
   { name: "Tagliacozzo", lat: 42.0697, lon: 13.2531, alt: 739, type: "Località", habitat: "Castagneto", minZoom: 9 }
+,
+  { name: "Ceccano castagneto", lat: 41.5493, lon: 13.293, alt: 640, type: "Località", habitat: "Castagneto", minZoom: 9 }
 ];
