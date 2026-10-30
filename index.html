@@ -600,38 +600,44 @@
     // --- ALGORITMO PREDITTIVO SPECIE FUNGINE (TOP 3) ---
     function getTopSpecies(habitat, avgTemp, soilMoisture, goldenRain) {
       const speciesList = [
-        { name: "Boletus aereus (Porcino Nero)", habitats: ["Cerro / Querceto", "Castagneto", "Macchia Mediterranea"], minT: 17, maxT: 25, minRain: 30 },
-        { name: "Boletus edulis (Porcino Bianco)", habitats: ["Faggeta Pura / Mista", "Pineta / Conifere"], minT: 12, maxT: 19, minRain: 35 },
-        { name: "Boletus aestivalis (Porcino Estivo)", habitats: ["Castagneto", "Bosco Misto", "Cerro / Querceto"], minT: 16, maxT: 23, minRain: 25 },
-        { name: "Cantharellus cibarius (Finferlo)", habitats: ["Faggeta Pura / Mista", "Castagneto", "Bosco Misto"], minT: 14, maxT: 21, minRain: 40 },
-        { name: "Amanita caesarea (Ovolo Reale)", habitats: ["Cerro / Querceto", "Castagneto"], minT: 19, maxT: 26, minRain: 25 },
-        { name: "Russula virescens (Colombina Verde)", habitats: ["Querceto", "Castagneto", "Bosco Misto"], minT: 18, maxT: 25, minRain: 20 },
-        { name: "Russula cyanoxantha (Colombina)", habitats: ["Faggeta Pura / Mista", "Bosco Misto"], minT: 13, maxT: 20, minRain: 25 },
-        { name: "Lactarius deliciosus (Sanguinello)", habitats: ["Pineta / Conifere"], minT: 12, maxT: 19, minRain: 25 },
-        { name: "Leccinum lepidum (Leccino)", habitats: ["Macchia Mediterranea", "Querceto"], minT: 15, maxT: 22, minRain: 30 },
-        { name: "Hygrophorus russula (Lardaiolo)", habitats: ["Castagneto", "Cerro / Querceto"], minT: 10, maxT: 16, minRain: 30 },
-        { name: "Clitocybe geotropa (Trombetta)", habitats: ["Bosco Misto", "Prati / Margini"], minT: 12, maxT: 18, minRain: 25 },
-        { name: "Tricholoma terreum (Moretta)", habitats: ["Pineta / Conifere"], minT: 8, maxT: 15, minRain: 20 }
+        { name: "Boletus aereus (Porcino Nero)", habitats: ["cerro", "querceto", "castagneto", "macchia"], strict: false, minT: 17, maxT: 25, minRain: 30 },
+        { name: "Boletus edulis (Porcino Bianco)", habitats: ["faggeta", "pineta", "conifere"], strict: false, minT: 12, maxT: 19, minRain: 35 },
+        { name: "Boletus aestivalis (Porcino Estivo)", habitats: ["castagneto", "bosco misto", "cerro", "querceto"], strict: false, minT: 16, maxT: 23, minRain: 25 },
+        { name: "Cantharellus cibarius (Finferlo)", habitats: ["faggeta", "castagneto", "bosco misto"], strict: false, minT: 14, maxT: 21, minRain: 40 },
+        { name: "Amanita caesarea (Ovolo Reale)", habitats: ["cerro", "querceto", "castagneto"], strict: false, minT: 19, maxT: 26, minRain: 25 },
+        { name: "Russula virescens (Colombina Verde)", habitats: ["querceto", "castagneto", "bosco misto"], strict: false, minT: 18, maxT: 25, minRain: 20 },
+        { name: "Russula cyanoxantha (Colombina)", habitats: ["faggeta", "bosco misto", "cerro"], strict: false, minT: 13, maxT: 20, minRain: 25 },
+        { name: "Lactarius deliciosus (Sanguinello)", habitats: ["pineta", "conifere"], strict: true, minT: 12, maxT: 19, minRain: 25 },
+        { name: "Leccinum lepidum (Leccino)", habitats: ["macchia", "querceto", "lecceta"], strict: true, minT: 15, maxT: 22, minRain: 30 },
+        { name: "Hygrophorus russula (Lardaiolo)", habitats: ["castagneto", "cerro", "querceto"], strict: false, minT: 10, maxT: 16, minRain: 30 },
+        { name: "Clitocybe geotropa (Trombetta)", habitats: ["bosco misto", "prati", "margini", "querceto"], strict: false, minT: 12, maxT: 18, minRain: 25 },
+        { name: "Tricholoma terreum (Moretta)", habitats: ["pineta", "conifere"], strict: true, minT: 8, maxT: 15, minRain: 20 }
       ];
 
-      let scored = speciesList.map(sp => {
+      let scored = [];
+
+      speciesList.forEach(sp => {
+        let habitatMatch = sp.habitats.some(h => habitat.toLowerCase().includes(h));
+        
+        // Se la specie è a habitat stretto e non c'è corrispondenza, viene scartata totalmente
+        if (sp.strict && !habitatMatch) return;
+
         let score = 50;
-        let habitatMatch = sp.habitats.some(h => habitat.toLowerCase().includes(h.toLowerCase().split('/')[0].trim()));
         if (habitatMatch) score += 35;
-        else score += 10;
+        else score += 5; // Penalizzazione forte per specie non strette ma fuori dal loro habitat ideale
 
         if (avgTemp >= sp.minT && avgTemp <= sp.maxT) {
           score += 25;
         } else {
           let diff = Math.min(Math.abs(avgTemp - sp.minT), Math.abs(avgTemp - sp.maxT));
-          score -= diff * 5;
+          score -= diff * 6;
         }
 
         if (goldenRain >= sp.minRain) score += 20;
         else score += (goldenRain / sp.minRain) * 15;
 
-        score = Math.min(98, Math.max(10, Math.round(score)));
-        return { name: sp.name, score };
+        score = Math.min(98, Math.max(5, Math.round(score)));
+        scored.push({ name: sp.name, score });
       });
 
       scored.sort((a, b) => b.score - a.score);
