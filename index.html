@@ -53,14 +53,24 @@
         
         <!-- Date Picker -->
         <div class="relative flex items-center">
-          <input type="text" id="targetDate" class="bg-slate-800 text-emerald-400 border border-slate-600 rounded-lg pl-1.5 pr-6 py-1 text-[11px] sm:text-xs font-bold shadow focus:outline-none focus:ring-2 focus:ring-emerald-500 w-[95px] sm:w-[115px] cursor-pointer text-center" readonly placeholder="Data">
+          <input type="text" id="targetDate" class="bg-slate-800 text-emerald-400 border border-slate-600 rounded-lg pl-1.5 pr-6 py-1 text-[11px] sm:text-xs font-bold shadow focus:outline-none focus:ring-2 focus:ring-emerald-500 w-[85px] sm:w-[110px] cursor-pointer text-center" readonly placeholder="Data">
           <svg class="w-3.5 h-3.5 text-emerald-400 absolute right-1.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
           </svg>
         </div>
 
-        <!-- Ingranaggio (Apre Modal Impostazioni) -->
-        <button onclick="openSettingsModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-xs sm:text-sm font-semibold shadow transition" title="Impostazioni & Cache">
+        <!-- Cerca Luogo (Stile Maps) -->
+        <button onclick="openSearchModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-xs sm:text-sm font-semibold shadow transition" title="Cerca Luogo">
+          🔍
+        </button>
+
+        <!-- Top 5 Spot Migliori -->
+        <button onclick="openTop5Modal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-emerald-400 p-1.5 rounded-lg text-xs sm:text-sm font-semibold shadow transition" title="Top 5 Spot Più Probabili">
+          🏆
+        </button>
+
+        <!-- Ingranaggio (Impostazioni & Cache) -->
+        <button onclick="openSettingsModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-xs sm:text-sm font-semibold shadow transition" title="Impostazioni">
           ⚙️
         </button>
         
@@ -82,7 +92,49 @@
     </div>
   </div>
 
-  <!-- MODAL IMPOSTAZIONI & GITHUB (Sostituisce il prompt numerico) -->
+  <!-- MODAL CERCA LUOGO (Stile Maps) -->
+  <div id="search-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h3 class="font-bold text-sm text-emerald-400">🔍 Cerca Località o Bosco</h3>
+        <button onclick="closeSearchModal()" class="text-slate-400 hover:text-white font-bold text-sm">✕</button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1">Nome del posto (es. Allumiere, Monte Cimino...)</label>
+          <div class="flex space-x-2">
+            <input type="text" id="search-query-input" onkeydown="if(event.key==='Enter') executeMapSearch()" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Cerca...">
+            <button onclick="executeMapSearch()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl font-bold transition">Vai</button>
+          </div>
+        </div>
+        <div id="search-results-box" class="max-h-40 overflow-y-auto space-y-1"></div>
+      </div>
+      <div class="pt-2 text-right">
+        <button onclick="closeSearchModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-xs font-bold transition">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL TOP 5 SPOT PIÙ PROBABILI -->
+  <div id="top5-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-base text-emerald-400">🏆 Top 5 Spot Più Probabili</h3>
+          <p class="text-xs text-slate-400">I 5 boschi con indice di fruttificazione maggiore</p>
+        </div>
+        <button onclick="closeTop5Modal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg p-1.5 text-sm font-bold">✕</button>
+      </div>
+      <div id="top5-body" class="p-4 overflow-y-auto space-y-2.5 text-xs">
+        <div class="text-center text-slate-400 py-6">⏳ Calcolo in corso sui dati visibili...</div>
+      </div>
+      <div class="p-3 border-t border-slate-800 bg-slate-950/50 text-right">
+        <button onclick="closeTop5Modal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL IMPOSTAZIONI & GITHUB -->
   <div id="settings-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -216,7 +268,127 @@
       });
     }
 
-    // Gestione Modale Impostazioni (Sostituisce il prompt numerico)
+    // --- FUNZIONI DI RICERCA TIPO MAPS ---
+    function openSearchModal() {
+      document.getElementById('search-modal').classList.remove('hidden');
+      document.getElementById('search-query-input').focus();
+    }
+
+    function closeSearchModal() {
+      document.getElementById('search-modal').classList.add('hidden');
+    }
+
+    async function executeMapSearch() {
+      const query = document.getElementById('search-query-input').value.trim();
+      const resultsBox = document.getElementById('search-results-box');
+      if (!query) return;
+
+      resultsBox.innerHTML = '<div class="text-slate-400 text-center py-2">Ricerca in corso...</div>';
+
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=it&limit=5`);
+        const data = await res.json();
+
+        if (data && data.length > 0) {
+          let html = '';
+          data.forEach(place => {
+            html += `
+              <div onclick="selectSearchPlace(${place.lat}, ${place.lon}, '${place.display_name.replace(/'/g, "\\'")}')" class="bg-slate-800 hover:bg-slate-700 p-2 rounded-xl cursor-pointer border border-slate-700 transition">
+                <div class="font-bold text-emerald-400">${place.display_name.split(',')[0]}</div>
+                <div class="text-[10px] text-slate-400 truncate">${place.display_name}</div>
+              </div>
+            `;
+          });
+          resultsBox.innerHTML = html;
+        } else {
+          resultsBox.innerHTML = '<div class="text-orange-400 text-center py-2">Nessun luogo trovato.</div>';
+        }
+      } catch (err) {
+        resultsBox.innerHTML = '<div class="text-red-400 text-center py-2">Errore di connessione alla ricerca.</div>';
+      }
+    }
+
+    function selectSearchPlace(lat, lon, name) {
+      closeSearchModal();
+      map.setView([parseFloat(lat), parseFloat(lon)], 12);
+      document.getElementById("status-text").innerText = `📍 Posizionato su: ${name.split(',')[0]}`;
+    }
+
+    // --- FUNZIONE TOP 5 SPOT PIÙ PROBABILI ---
+    async function openTop5Modal() {
+      document.getElementById('top5-modal').classList.remove('hidden');
+      const top5Body = document.getElementById('top5-body');
+      top5Body.innerHTML = '<div class="text-center text-slate-400 py-6">⏳ Analisi meteo e calcolo punteggi in corso...</div>';
+
+      if (typeof COMUNI_ITALIA === 'undefined') {
+        top5Body.innerHTML = '<div class="text-red-400 text-center py-4">Database comuni non disponibile.</div>';
+        return;
+      }
+
+      // Prendi tutti i comuni/spot o un sottoinsieme rilevante caricato
+      let scoredSpots = [];
+      const targetDateStr = document.getElementById('targetDate').value;
+
+      // Per non sovraccaricare, valutiamo gli spot attualmente visibili o un campione se sono troppi
+      for (let loc of COMUNI_ITALIA) {
+        const altitude = loc.alt || 300;
+        const habitat = loc.habitat || (altitude >= 1000 ? "Faggeta Pura / Mista" : (altitude >= 600 ? "Castagneto" : "Cerro / Querceto"));
+        const data = await getFungiScore(loc.lat, loc.lon, altitude, habitat);
+        if (data) {
+          scoredSpots.push({
+            name: loc.name,
+            lat: loc.lat,
+            lon: loc.lon,
+            alt: altitude,
+            habitat: habitat,
+            score: data.score,
+            topSpecies: data.topSpecies[0] ? data.topSpecies[0].name : "ND"
+          });
+        }
+      }
+
+      // Ordina per punteggio decrescente
+      scoredSpots.sort((a, b) => b.score - a.score);
+      const top5 = scoredSpots.slice(0, 5);
+
+      if (top5.length === 0) {
+        top5Body.innerHTML = '<div class="text-orange-400 text-center py-4">Nessun dato disponibile per il calcolo.</div>';
+        return;
+      }
+
+      let html = '<div class="space-y-2.5">';
+      top5.forEach((spot, index) => {
+        let badgeColor = spot.score > 80 ? 'text-emerald-400 border-emerald-500 bg-emerald-950/30' : (spot.score > 60 ? 'text-green-400 border-green-600 bg-green-950/35' : 'text-amber-400 border-amber-600 bg-amber-950/30');
+        
+        html += `
+          <div onclick="flyToSpot(${spot.lat}, ${spot.lon}, '${spot.name.replace(/'/g, "\\'")}')" class="p-3 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 rounded-xl cursor-pointer transition flex items-center justify-between shadow">
+            <div class="space-y-0.5">
+              <div class="font-bold text-xs text-white flex items-center space-x-1.5">
+                <span>#${index + 1}</span>
+                <span class="text-emerald-400">${spot.name}</span>
+                <span class="text-[10px] text-slate-400">(${spot.alt}m)</span>
+              </div>
+              <div class="text-[10px] text-slate-300">🌳 ${spot.habitat}</div>
+              <div class="text-[10px] text-emerald-300 font-semibold">🍄 Top: ${spot.topSpecies}</div>
+            </div>
+            <div class="px-2.5 py-1.5 rounded-lg border font-black text-sm text-center ${badgeColor}">
+              ${spot.score}%
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+
+      top5Body.innerHTML = html;
+    }
+
+    function flyToSpot(lat, lon, name) {
+      closeTop5Modal();
+      map.setView([lat, lon], 13);
+      document.getElementById("status-text").innerText = `🎯 Spot selezionato: ${name}`;
+    }
+
+    // Gestione Modale Impostazioni
     function openSettingsModal() {
       document.getElementById('settings-modal').classList.remove('hidden');
     }
@@ -260,6 +432,10 @@
 
     function closeAddSpotModal() {
       document.getElementById('add-spot-modal').classList.add('hidden');
+    }
+
+    function closeTop5Modal() {
+      document.getElementById('top5-modal').classList.add('hidden');
     }
 
     function closeDetailsModal() { 
@@ -597,7 +773,7 @@
       }
     }
 
-    // --- ALGORITMO PREDITTIVO SPECIE FUNGINE (TOP 3) ---
+    // Algoritmo Predittivo Specie Fungine con Filtro Stretto Habitat
     function getTopSpecies(habitat, avgTemp, soilMoisture, goldenRain) {
       const speciesList = [
         { name: "Boletus aereus (Porcino Nero)", habitats: ["cerro", "querceto", "castagneto", "macchia"], strict: false, minT: 17, maxT: 25, minRain: 30 },
@@ -619,12 +795,11 @@
       speciesList.forEach(sp => {
         let habitatMatch = sp.habitats.some(h => habitat.toLowerCase().includes(h));
         
-        // Se la specie è a habitat stretto e non c'è corrispondenza, viene scartata totalmente
         if (sp.strict && !habitatMatch) return;
 
         let score = 50;
         if (habitatMatch) score += 35;
-        else score += 5; // Penalizzazione forte per specie non strette ma fuori dal loro habitat ideale
+        else score += 5;
 
         if (avgTemp >= sp.minT && avgTemp <= sp.maxT) {
           score += 25;
@@ -701,8 +876,6 @@
           });
 
           const favText = loc.isFavorite ? "⭐ Rimuovi dai Preferiti" : "☆ Aggiungi ai Preferiti ⭐";
-
-          // Formattazione Top 3 Specie per il Popup
           let speciesHtml = data.topSpecies.map((sp, idx) => `<li class="text-[10px] text-slate-800"><b>${idx+1}.</b> ${sp.name} <span class="text-emerald-700 font-bold">(${sp.score}%)</span></li>`).join('');
 
           const marker = L.marker([loc.lat, loc.lon], { icon: markerIcon }).addTo(map).bindPopup(`
@@ -846,7 +1019,6 @@
       }
     }
 
-    // Storico esteso a 20 giorni con Finestra d'Oro (-12 a -7 giorni)
     function openDetailsModal(locationName, cacheKey) {
       const data = meteoCache[cacheKey];
       if (!data || !data.dailyHistory) return;
@@ -933,9 +1105,6 @@
         const windDirDays = padArray(data.daily.wind_direction_10m_dominant, 21, 0);
 
         const totalRain = rainDays.reduce((a, b) => a + b, 0);
-        
-        // --- FINETRA D'ORO AGGIORNATA (-12 a -7 giorni da oggi) ---
-        // Indice 20 = Oggi. -7 giorni = Indice 13. -12 giorni = Indice 8.
         const goldenWindowRain = rainDays.slice(8, 14).reduce((a, b) => a + b, 0); 
         const recentRain = rainDays.slice(17, 21).reduce((a, b) => a + b, 0); 
 
@@ -967,7 +1136,6 @@
 
         let combinedScore = (goldenScore * 0.45) + (soilScore * 0.20) + (tempScore * 0.20) + (totalRainScore * 0.15);
 
-        // BILANCIO IDRICO E VENTO SECCO CUMULATIVO POST-PIOGGIA
         let dryWindDaysCount = 0;
         const postRainWinds = windSpeedDays.slice(14, 21);
         const postRainDirs = windDirDays.slice(14, 21);
@@ -1020,10 +1188,8 @@
           predictionColor = "text-orange-600";
         }
 
-        // Calcolo delle Top 3 Specie Fungine per questo spot
         const topSpecies = getTopSpecies(habitat, avgTemp, soilMoistureEst, goldenWindowRain);
 
-        // Storico completo dei 20 giorni per la modale di dettaglio
         const dailyHistory = [];
         for (let i = 0; i < timeDays.length; i++) {
           dailyHistory.push({
@@ -1032,7 +1198,7 @@
             temp: Math.round(tempDays[i]),
             tempMin: Math.round(tempMinDays[i]),
             wind: Math.round(windSpeedDays[i]),
-            isGolden: (i >= 8 && i <= 13) // Finestra d'oro tra -12 e -7 giorni
+            isGolden: (i >= 8 && i <= 13)
           });
         }
 
