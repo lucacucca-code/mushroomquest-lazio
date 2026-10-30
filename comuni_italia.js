@@ -177,4 +177,6 @@ const COMUNI_ITALIA = [
   { name: "Tagliacozzo", lat: 42.0697, lon: 13.2531, alt: 739, type: "Località", habitat: "Castagneto", minZoom: 9 }
 ,
   { name: "Ceccano castagneto", lat: 41.5493, lon: 13.293, alt: 640, type: "Località", habitat: "Castagneto", minZoom: 9 }
+,
+  { name: "Monte Porzio Catone", lat: 41.8073, lon: 12.7195, alt: 620, type: "Località", habitat: "Castagneto", minZoom: 9 }
 ];
