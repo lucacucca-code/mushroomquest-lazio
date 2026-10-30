@@ -167,4 +167,6 @@ const COMUNI_ITALIA = [
   { name: "Olevano Romano", lat: 41.8309, lon: 13.0287, alt: 279, type: "Località", minZoom: 9 }
 ,
   { name: "Cerreto Laziale", lat: 41.9478, lon: 12.9843, alt: 605, type: "Località", minZoom: 9 }
+,
+  { name: "Capalbio", lat: 42.454, lon: 11.4216, alt: 185, type: "Località", minZoom: 9 }
 ];
