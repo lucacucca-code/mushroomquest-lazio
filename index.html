@@ -92,7 +92,7 @@
     </div>
   </div>
 
-  <!-- MODAL CERCA LUOGO (Stile Maps) -->
+  <!-- MODAL CERCA LUOGO -->
   <div id="search-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -115,7 +115,7 @@
     </div>
   </div>
 
-  <!-- MODAL TOP 5 SPOT PIÙ PROBABILI (Con Slider Raggio e Refresh) -->
+  <!-- MODAL TOP 5 SPOT -->
   <div id="top5-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
       <div class="p-4 border-b border-slate-800 flex items-center justify-between">
@@ -125,8 +125,6 @@
         </div>
         <button onclick="closeTop5Modal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg p-1.5 text-sm font-bold">✕</button>
       </div>
-      
-      <!-- Controlli Dinamici Raggio e Refresh -->
       <div class="p-4 border-b border-slate-800 bg-slate-950/40 space-y-2">
         <div class="flex items-center justify-between text-xs text-slate-300">
           <span>Raggio di ricerca: <strong id="radius-val" class="text-emerald-400">20</strong> km</span>
@@ -136,13 +134,28 @@
         </div>
         <input type="range" id="top5-radius-slider" min="1" max="50" value="20" oninput="document.getElementById('radius-val').innerText = this.value" onchange="openTop5Modal()" class="w-full accent-emerald-500 cursor-pointer">
       </div>
-
       <div id="top5-body" class="p-4 overflow-y-auto space-y-2.5 text-xs">
         <div class="text-center text-slate-400 py-6">⏳ Calcolo in corso nel raggio selezionato...</div>
       </div>
-      
       <div class="p-3 border-t border-slate-800 bg-slate-950/50 text-right">
         <button onclick="closeTop5Modal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL SPIEGAZIONE CALCOLO % (NUOVO) -->
+  <div id="calc-details-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div>
+          <h3 id="calc-modal-title" class="font-bold text-base text-emerald-400">🧠 Spiegazione Calcolo %</h3>
+          <p id="calc-modal-subtitle" class="text-xs text-slate-400">Analisi dettagliata dei fattori algoritmici</p>
+        </div>
+        <button onclick="closeCalcDetailsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg p-1.5 text-sm font-bold">✕</button>
+      </div>
+      <div id="calc-modal-body" class="p-4 overflow-y-auto space-y-3 text-xs"></div>
+      <div class="p-3 border-t border-slate-800 bg-slate-950/50 text-right">
+        <button onclick="closeCalcDetailsModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition">Chiudi</button>
       </div>
     </div>
   </div>
@@ -248,7 +261,6 @@
       }
     }
 
-    // Worker in background ogni 60 secondi per il commit automatico
     setInterval(async () => {
       if (pendingCommitsQueue.length === 0) return;
       const ghUser = localStorage.getItem("gh_user");
@@ -298,7 +310,7 @@
             })
           });
           if (putRes.ok) {
-            console.log("✅ Commit automatico completato con successo!");
+            console.log("✅ Commit automatico completato!");
             pendingCommitsQueue = [];
           }
         }
@@ -353,27 +365,20 @@
       });
     }
 
-    // Ricerca Luogo Stile Maps
     function openSearchModal() {
       document.getElementById('search-modal').classList.remove('hidden');
       document.getElementById('search-query-input').focus();
     }
-
-    function closeSearchModal() {
-      document.getElementById('search-modal').classList.add('hidden');
-    }
+    function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
 
     async function executeMapSearch() {
       const query = document.getElementById('search-query-input').value.trim();
       const resultsBox = document.getElementById('search-results-box');
       if (!query) return;
-
       resultsBox.innerHTML = '<div class="text-slate-400 text-center py-2">Ricerca in corso...</div>';
-
       try {
         const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=it&limit=5`);
         const data = await res.json();
-
         if (data && data.length > 0) {
           let html = '';
           data.forEach(place => {
@@ -389,7 +394,7 @@
           resultsBox.innerHTML = '<div class="text-orange-400 text-center py-2">Nessun luogo trovato.</div>';
         }
       } catch (err) {
-        resultsBox.innerHTML = '<div class="text-red-400 text-center py-2">Errore di connessione alla ricerca.</div>';
+        resultsBox.innerHTML = '<div class="text-red-400 text-center py-2">Errore di connessione.</div>';
       }
     }
 
@@ -399,7 +404,6 @@
       document.getElementById("status-text").innerText = `📍 Posizionato su: ${name.split(',')[0]}`;
     }
 
-    // Top 5 Spot con raggio e refresh
     async function openTop5Modal() {
       document.getElementById('top5-modal').classList.remove('hidden');
       const top5Body = document.getElementById('top5-body');
@@ -422,7 +426,7 @@
           const altitude = loc.alt || 300;
           const habitat = loc.habitat || (altitude >= 1000 ? "Faggeta Pura / Mista" : (altitude >= 600 ? "Castagneto" : "Cerro / Querceto"));
           const geology = loc.geology || (altitude > 900 ? "Calcareo / Roccioso" : "Siliceo / Arenario");
-          const data = await getFungiScore(loc.lat, loc.lon, altitude, habitat, geology);
+          const data = await getFungiScore(loc.lat, loc.lon, altitude, habitat, geology, { aspect: 0 });
           if (data) {
             scoredSpots.push({
               name: loc.name,
@@ -449,7 +453,6 @@
       let html = '<div class="space-y-2.5">';
       top5.forEach((spot, index) => {
         let badgeColor = spot.score > 80 ? 'text-emerald-400 border-emerald-500 bg-emerald-950/30' : (spot.score > 60 ? 'text-green-400 border-green-600 bg-green-950/35' : 'text-amber-400 border-amber-600 bg-amber-950/30');
-        
         html += `
           <div onclick="flyToSpot(${spot.lat}, ${spot.lon}, '${spot.name.replace(/'/g, "\\'")}')" class="p-3 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 rounded-xl cursor-pointer transition flex items-center justify-between shadow">
             <div class="space-y-0.5">
@@ -468,7 +471,6 @@
         `;
       });
       html += '</div>';
-
       top5Body.innerHTML = html;
     }
 
@@ -480,6 +482,7 @@
 
     function openSettingsModal() { document.getElementById('settings-modal').classList.remove('hidden'); }
     function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
+    function closeCalcDetailsModal() { document.getElementById('calc-details-modal').classList.add('hidden'); }
 
     function configGitHub() {
       closeSettingsModal();
@@ -564,14 +567,13 @@
       }
     }
 
-    // --- RILEVAMENTO AVANZATO OSM (Essenze + Geologia + Aspect) ---
+    // --- RILEVAMENTO AVANZATO OSM + ASPECT CORRETTO ---
     async function fetchSpotEnvironmentData(lat, lon, alt, existingHabitat, existingGeology) {
       let habitat = existingHabitat;
       let geology = existingGeology || (alt > 900 ? "Calcareo / Roccioso" : "Siliceo / Arenario");
-      let aspectInfo = { aspect: 0, aspectStr: "Nord", modifier: 1.0 };
+      let aspectInfo = { aspect: 180, aspectStr: "Sud (Aprico)" };
 
       try {
-        // 1. Chiamata OSM Nominatim con extratags per botanica e litologia
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1&extratags=1`);
         const data = await res.json();
         
@@ -596,8 +598,9 @@
           habitat = alt >= 1000 ? "Faggeta Pura / Mista" : (alt >= 600 ? "Castagneto" : "Cerro / Querceto");
         }
 
-        // 2. Calcolo dell'Esposizione (Aspect) tramite Open-Meteo multi-coordinate
-        const elRes = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat},${lat+0.002},${lat-0.002},${lat},${lat}&longitude=${lon},${lon},${lon},${lon+0.002},${lon-0.002}`);
+        // Chiamata elevazione per esposizione (offset di ~150 metri: 0.0015 gradi circa)
+        const d = 0.0015;
+        const elRes = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat},${lat+d},${lat-d},${lat},${lat}&longitude=${lon},${lon},${lon},${lon+d},${lon-d}`);
         const elData = await elRes.json();
         if (elData && elData.elevation && elData.elevation.length >= 5) {
           const [c, n, s, e, w] = elData.elevation;
@@ -607,14 +610,13 @@
           if (aspect < 0) aspect += 360;
 
           let aspectStr = "Nord (Ombriva)";
-          if (aspect >= 315 || aspect < 45) aspectStr = "Nord (Ombriva)";
+          if (aspect >= 315 || aspect < 45) aspectStr = "Nord (Ombriva - Fresco)";
           else if (aspect >= 45 && aspect < 135) aspectStr = "Est (Mattino)";
-          else if (aspect >= 135 && aspect < 225) aspectStr = "Sud (Aprico)";
+          else if (aspect >= 135 && aspect < 225) aspectStr = "Sud (Aprico - Caldo)";
           else aspectStr = "Ovest (Pomeriggio)";
 
           aspectInfo = { aspect, aspectStr };
         }
-
       } catch (err) {
         if (!habitat) habitat = alt >= 1000 ? "Faggeta Pura / Mista" : "Cerro / Querceto";
       }
@@ -742,11 +744,7 @@
         const putRes = await fetch(url, {
           method: "PUT",
           headers: { 'Authorization': `token ${ghToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: `🤖 Auto-add spot: ${newSpot.name}`,
-            content: updatedBase64,
-            sha: fileData.sha
-          })
+          body: JSON.stringify({ message: `🤖 Auto-add spot: ${newSpot.name}`, content: updatedBase64, sha: fileData.sha })
         });
 
         if (putRes.ok) {
@@ -841,7 +839,6 @@
       }
     }
 
-    // Algoritmo Specie con Filtro Stretto Habitat
     function getTopSpecies(habitat, avgTemp, soilMoisture, goldenRain) {
       const speciesList = [
         { name: "Boletus aereus (Porcino Nero)", habitats: ["cerro", "querceto", "castagneto", "macchia"], strict: false, minT: 17, maxT: 25, minRain: 30 },
@@ -900,99 +897,157 @@
         return currentZoom >= loc.minZoom && bounds.contains([loc.lat, loc.lon]);
       });
 
-      if (!isRadarActive) statusText.innerText = `🍄 Caricamento ${visibleLocs.length} aree (Lazy Loading)...`;
+      if (!isRadarActive) statusText.innerText = `🍄 Caricamento ${visibleLocs.length} aree...`;
 
       await Promise.all(visibleLocs.map(async (loc) => {
         const altitude = loc.alt || 300;
+        const locKey = `${loc.lat}_${loc.lon}`;
+        const cacheKey = `${loc.lat}_${loc.lon}_${altitude}_${targetDateStr}`;
         
-        // Lazy loading: Arricchiamo il punto se mancano habitat dettagliati o geologia
+        // Se il marker è già presente sulla mappa, evitiamo di ricrearlo inutilmente (risolve lo sfarfallio)
+        if (activeMarkers[locKey]) return;
+
         let env = await fetchSpotEnvironmentData(loc.lat, loc.lon, altitude, loc.habitat, loc.geology);
-        
-        // Se abbiamo trovato dati nuovi rispetto al database statico, li accodiamo per il commit di 1 minuto
         if (env.habitat !== loc.habitat || env.geology !== loc.geology) {
           loc.habitat = env.habitat;
           loc.geology = env.geology;
           queueSpotUpdateForGitHub(loc.name, env.habitat, env.geology);
         }
 
-        const cacheKey = `${loc.lat}_${loc.lon}_${altitude}_${targetDateStr}`;
-        const locKey = `${loc.lat}_${loc.lon}`;
-        
-        if (!activeMarkers[locKey]) {
-          const data = await getFungiScore(loc.lat, loc.lon, altitude, env.habitat, env.geology, env.aspectInfo);
-          if (!data) return;
+        const data = await getFungiScore(loc.lat, loc.lon, altitude, env.habitat, env.geology, env.aspectInfo);
+        if (!data) return;
 
-          let color = '#dc2626'; let labelText = "Molto Basso";
-          if (data.score > 20 && data.score <= 40) { color = '#f97316'; labelText = "Basso"; }
-          else if (data.score > 40 && data.score <= 60) { color = '#f59e0b'; labelText = "Medio"; }
-          else if (data.score > 60 && data.score <= 80) { color = '#16a34a'; labelText = "Buono"; }
-          else if (data.score > 80) { color = '#34d399'; labelText = "Eccellente"; }
+        let color = '#dc2626'; let labelText = "Molto Basso";
+        if (data.score > 20 && data.score <= 40) { color = '#f97316'; labelText = "Basso"; }
+        else if (data.score > 40 && data.score <= 60) { color = '#f59e0b'; labelText = "Medio"; }
+        else if (data.score > 60 && data.score <= 80) { color = '#16a34a'; labelText = "Buono"; }
+        else if (data.score > 80) { color = '#34d399'; labelText = "Eccellente"; }
 
-          const size = loc.type === "Provincia" ? 34 : 30;
-          let iconHtml = loc.isFavorite ? `
-            <div style="position: relative; width: ${size+6}px; height: ${size+6}px; display: flex; align-items: center; justify-content: center;">
-              <svg viewBox="0 0 24 24" style="position: absolute; width: 100%; height: 100%; fill: ${color}; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.6));">
-                <path d="M12 1.728l3.09 6.261 6.91 1.004-5 4.873 1.18 6.883-6.18-3.25-6.18 3.25 1.18-6.883-5-4.873 6.91-1.004z"/>
-              </svg>
-              <span style="position: relative; color: #ffffff; font-weight: 900; font-size: 9px; text-shadow: 0px 1px 3px #000; margin-top: 2px;">${data.score}%</span>
+        const size = loc.type === "Provincia" ? 34 : 30;
+        let iconHtml = loc.isFavorite ? `
+          <div style="position: relative; width: ${size+6}px; height: ${size+6}px; display: flex; align-items: center; justify-content: center;">
+            <svg viewBox="0 0 24 24" style="position: absolute; width: 100%; height: 100%; fill: ${color}; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.6));">
+              <path d="M12 1.728l3.09 6.261 6.91 1.004-5 4.873 1.18 6.883-6.18-3.25-6.18 3.25 1.18-6.883-5-4.873 6.91-1.004z"/>
+            </svg>
+            <span style="position: relative; color: #ffffff; font-weight: 900; font-size: 9px; text-shadow: 0px 1px 3px #000; margin-top: 2px;">${data.score}%</span>
+          </div>
+        ` : `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #ffffff; font-weight: bold; font-size: 10px; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0px 1px 2px rgba(0,0,0,0.8);">${data.score}%</div>`;
+
+        const markerIcon = L.divIcon({ className: '', html: iconHtml, iconSize: [size+6, size+6], iconAnchor: [(size+6)/2, (size+6)/2] });
+        const favText = loc.isFavorite ? "⭐ Rimuovi dai Preferiti" : "☆ Aggiungi ai Preferiti ⭐";
+        let speciesHtml = data.topSpecies.map((sp, idx) => `<li class="text-[10px] text-slate-800"><b>${idx+1}.</b> ${sp.name} <span class="text-emerald-700 font-bold">(${sp.score}%)</span></li>`).join('');
+
+        const marker = L.marker([loc.lat, loc.lon], { icon: markerIcon }).addTo(map).bindPopup(`
+          <div class="text-slate-900 p-1 max-w-[270px]">
+            <h3 class="font-bold text-sm border-b pb-1 mb-2 flex items-center justify-between">
+              <span>${loc.name} ${loc.isFavorite ? '⭐' : ''}</span>
+              <span class="text-[10px] text-slate-500 font-normal">(${loc.type} - ⛰️ ${loc.alt}m)</span>
+            </h3>
+            <div class="bg-slate-100 p-2 rounded-lg mb-2 text-center relative">
+              <div class="text-xs text-slate-600">Probabilità Calcolata</div>
+              <div class="text-xl font-black" style="color:${color}">${data.score}% (${labelText})</div>
+              <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>
+              ${data.windDryNote ? `<div class="text-[9px] mt-1 text-red-700 font-bold bg-red-100 p-1 rounded">${data.windDryNote}</div>` : ''}
             </div>
-          ` : `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #ffffff; font-weight: bold; font-size: 10px; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0px 1px 2px rgba(0,0,0,0.8);">${data.score}%</div>`;
-
-          const markerIcon = L.divIcon({ className: '', html: iconHtml, iconSize: [size+6, size+6], iconAnchor: [(size+6)/2, (size+6)/2] });
-          const favText = loc.isFavorite ? "⭐ Rimuovi dai Preferiti" : "☆ Aggiungi ai Preferiti ⭐";
-          let speciesHtml = data.topSpecies.map((sp, idx) => `<li class="text-[10px] text-slate-800"><b>${idx+1}.</b> ${sp.name} <span class="text-emerald-700 font-bold">(${sp.score}%)</span></li>`).join('');
-
-          const marker = L.marker([loc.lat, loc.lon], { icon: markerIcon }).addTo(map).bindPopup(`
-            <div class="text-slate-900 p-1 max-w-[270px]">
-              <h3 class="font-bold text-sm border-b pb-1 mb-2 flex items-center justify-between">
-                <span>${loc.name} ${loc.isFavorite ? '⭐' : ''}</span>
-                <span class="text-[10px] text-slate-500 font-normal">(${loc.type} - ⛰️ ${loc.alt}m)</span>
-              </h3>
-              <div class="bg-slate-100 p-2 rounded-lg mb-2 text-center relative">
-                <div class="text-xs text-slate-600">Probabilità Calcolata</div>
-                <div class="text-xl font-black" style="color:${color}">${data.score}% (${labelText})</div>
-                <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>
-                ${data.windDryNote ? `<div class="text-[9px] mt-1 text-red-700 font-bold bg-red-100 p-1 rounded">${data.windDryNote}</div>` : ''}
-              </div>
-              <div class="bg-emerald-50 border border-emerald-200 p-1.5 rounded-lg mb-2">
-                <div class="text-[10px] font-bold text-emerald-900 mb-0.5">🍄 Top 3 Specie Probabili:</div>
-                <ul class="space-y-0.5">${speciesHtml}</ul>
-              </div>
-              <div class="text-[11px] space-y-1.5 text-slate-700">
-                <p><b>🌳 Essenze:</b> ${env.habitat}</p>
-                <p><b>🪨 Substrato:</b> ${env.geology}</p>
-                <p><b>☀️ Esposizione:</b> ${env.aspectInfo.aspectStr}</p>
-                <p><b>🌧️ Finestra d'Oro (-12 a -7gg):</b> ${data.goldenWindowRain} mm</p>
-                <p><b>🌱 Umidità Suolo:</b> ${data.soilMoisture}%</p>
-                <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C</p>
-              </div>
-              <div class="mt-3 pt-2 border-t border-slate-200 space-y-1.5 text-center">
-                <button onclick="openDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-slate-900 hover:bg-emerald-700 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
-                  📊 Dettagli Storici (20 Giorni)
-                </button>
-                <button onclick="refreshSingleSpot(${loc.lat}, ${loc.lon}, ${altitude}, '${cacheKey}', '${locKey}')" class="bg-blue-600 hover:bg-blue-500 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
-                  🔄 Aggiorna Meteo Live
-                </button>
-                <button onclick="toggleFavoriteSpot('${loc.name.replace(/'/g, "\\'")}', ${loc.lat}, ${loc.lon})" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 w-full py-1 px-3 rounded-lg text-[10px] font-bold transition shadow">
-                  ${favText}
-                </button>
-              </div>
+            <div class="bg-emerald-50 border border-emerald-200 p-1.5 rounded-lg mb-2">
+              <div class="text-[10px] font-bold text-emerald-900 mb-0.5">🍄 Top 3 Specie Probabili:</div>
+              <ul class="space-y-0.5">${speciesHtml}</ul>
             </div>
-          `);
+            <div class="text-[11px] space-y-1.5 text-slate-700">
+              <p><b>🌳 Essenze:</b> ${env.habitat}</p>
+              <p><b>🪨 Substrato:</b> ${env.geology}</p>
+              <p><b>☀️ Esposizione:</b> ${env.aspectInfo.aspectStr}</p>
+              <p><b>🌧️ Finestra d'Oro (-12 a -7gg):</b> ${data.goldenWindowRain} mm</p>
+              <p><b>🌱 Umidità Suolo:</b> ${data.soilMoisture}%</p>
+              <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C</p>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-200 space-y-1.5 text-center">
+              <button onclick="openCalcDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-emerald-700 hover:bg-emerald-600 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
+                🧠 Spiegazione Calcolo %
+              </button>
+              <button onclick="openDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-slate-900 hover:bg-slate-700 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
+                📊 Dettagli Storici (20 Giorni)
+              </button>
+              <button onclick="refreshSingleSpot(${loc.lat}, ${loc.lon}, ${altitude}, '${cacheKey}', '${locKey}')" class="bg-blue-600 hover:bg-blue-500 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
+                🔄 Aggiorna Meteo Live
+              </button>
+              <button onclick="toggleFavoriteSpot('${loc.name.replace(/'/g, "\\'")}', ${loc.lat}, ${loc.lon})" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 w-full py-1 px-3 rounded-lg text-[10px] font-bold transition shadow">
+                ${favText}
+              </button>
+            </div>
+          </div>
+        `);
 
-          activeMarkers[locKey] = marker;
-        }
+        activeMarkers[locKey] = marker;
       }));
 
-      Object.keys(activeMarkers).forEach(key => {
-        const [lat, lon] = key.split('_').map(Number);
-        if (!visibleLocs.some(loc => loc.lat === lat && loc.lon === lon)) {
-          map.removeLayer(activeMarkers[key]);
-          delete activeMarkers[key];
-        }
-      });
+      if (!isRadarActive) statusText.innerText = `🍄 ${Object.keys(activeMarkers).length} aree caricate`;
+    }
 
-      if (!isRadarActive) statusText.innerText = `🍄 ${visibleLocs.length} aree visibili`;
+    // --- MODALE DI SPIEGAZIONE DETTAGLIATA DEL CALCOLO % ---
+    function openCalcDetailsModal(locationName, cacheKey) {
+      const data = meteoCache[cacheKey];
+      if (!data || !data.breakdown) return;
+
+      document.getElementById('calc-modal-title').innerText = `🧠 Analisi Calcolo %: ${locationName}`;
+      document.getElementById('calc-modal-subtitle').innerText = `Punteggio Finale: ${data.score}% | Dettaglio dei fattori algoritmici`;
+
+      const b = data.breakdown;
+      let html = `
+        <div class="p-3 bg-slate-800 rounded-xl space-y-2 border border-slate-700">
+          <div class="flex justify-between font-bold text-slate-200 text-xs border-b border-slate-700 pb-1">
+            <span>Fattore Analizzato</span>
+            <span>Peso / Punteggio</span>
+          </div>
+          <div class="space-y-2 text-[11px]">
+            <div>
+              <div class="flex justify-between text-slate-300">
+                <span>🌿 Finestra d'Oro (-12 a -7gg): <b>${b.goldenRain} mm</b></span>
+                <span class="text-emerald-400 font-bold">${Math.round(b.goldenScore)}% (Peso 45%)</span>
+              </div>
+              <div class="w-full bg-slate-900 h-1.5 rounded-full mt-1 overflow-hidden">
+                <div class="bg-emerald-500 h-full" style="width: ${b.goldenScore}%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-slate-300">
+                <span>🌱 Umidità del Suolo stimata: <b>${b.soilMoisture}%</b></span>
+                <span class="text-emerald-400 font-bold">${Math.round(b.soilScore)}% (Peso 20%)</span>
+              </div>
+              <div class="w-full bg-slate-900 h-1.5 rounded-full mt-1 overflow-hidden">
+                <div class="bg-emerald-500 h-full" style="width: ${b.soilScore}%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-slate-300">
+                <span>🌡️ Temperatura Media (7gg): <b>${b.avgTemp}°C</b></span>
+                <span class="text-emerald-400 font-bold">${Math.round(b.tempScore)}% (Peso 20%)</span>
+              </div>
+              <div class="w-full bg-slate-900 h-1.5 rounded-full mt-1 overflow-hidden">
+                <div class="bg-emerald-500 h-full" style="width: ${b.tempScore}%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-slate-300">
+                <span>🌧️ Pioggia Totale (20gg): <b>${b.totalRain} mm</b></span>
+                <span class="text-emerald-400 font-bold">${Math.round(b.totalRainScore)}% (Peso 15%)</span>
+              </div>
+              <div class="w-full bg-slate-900 h-1.5 rounded-full mt-1 overflow-hidden">
+                <div class="bg-emerald-500 h-full" style="width: ${b.totalRainScore}%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 bg-slate-800 rounded-xl space-y-1.5 border border-slate-700 text-[11px]">
+          <div class="font-bold text-emerald-400">⚙️ Modificatori Ambientali & Vento:</div>
+          <p>☀️ <b>Esposizione (Aspect):</b> ${b.aspectStr} (Modificatore: x${b.aspectMultiplier})</p>
+          <p>💨 <b>Vento & Evapotraspirazione:</b> ${b.windNote} ${b.dryPenalty < 1 ? `(Penalità: -${Math.round((1-b.dryPenalty)*100)}%)` : ''}</p>
+        </div>
+      `;
+
+      document.getElementById('calc-modal-body').innerHTML = html;
+      document.getElementById('calc-details-modal').classList.remove('hidden');
     }
 
     function openDetailsModal(locationName, cacheKey) {
@@ -1039,7 +1094,7 @@
       document.getElementById('details-modal').classList.remove('hidden');
     }
 
-    async function getFungiScore(lat, lon, altitude = 300, habitat = "Bosco Misto", geology = "Siliceo", aspectInfo = { aspect: 0, aspectStr: "Nord" }) {
+    async function getFungiScore(lat, lon, altitude = 300, habitat = "Bosco Misto", geology = "Siliceo", aspectInfo = { aspect: 180, aspectStr: "Sud" }) {
       const targetDateStr = document.getElementById('targetDate').value;
       const cacheKey = `${lat}_${lon}_${altitude}_${targetDateStr}`;
       if (meteoCache[cacheKey]) return meteoCache[cacheKey];
@@ -1112,18 +1167,16 @@
 
         let combinedScore = (goldenScore * 0.45) + (soilScore * 0.20) + (tempScore * 0.20) + (totalRainScore * 0.15);
 
-        // --- APPLICAZIONE DELL'ESPOSIZIONE (ASPECT) AL PUNTEGGIO GENERALE ---
-        let aspectModifier = 1.0;
+        // Modificatore Esposizione (Aspect)
+        let aspectMultiplier = 1.0;
         if (avgTemp > 18) {
-          // Periodo caldo: premiamo i versanti a Nord (freschi, trattengono umidità), penalizziamo il Sud
-          if (aspectInfo.aspect >= 315 || aspectInfo.aspect < 45) aspectModifier = 1.12;
-          else if (aspectInfo.aspect >= 135 && aspectInfo.aspect <= 225) aspectModifier = 0.88;
+          if (aspectInfo.aspect >= 315 || aspectInfo.aspect < 45) aspectMultiplier = 1.12;
+          else if (aspectInfo.aspect >= 135 && aspectInfo.aspect <= 225) aspectMultiplier = 0.88;
         } else if (avgTemp < 13) {
-          // Periodo freddo: premiamo i versanti a Sud (più caldi, stimolano la crescita)
-          if (aspectInfo.aspect >= 135 && aspectInfo.aspect <= 225) aspectModifier = 1.10;
-          else if (aspectInfo.aspect >= 315 || aspectInfo.aspect < 45) aspectModifier = 0.90;
+          if (aspectInfo.aspect >= 135 && aspectInfo.aspect <= 225) aspectMultiplier = 1.10;
+          else if (aspectInfo.aspect >= 315 || aspectInfo.aspect < 45) aspectMultiplier = 0.90;
         }
-        combinedScore *= aspectModifier;
+        combinedScore *= aspectMultiplier;
 
         let dryWindDaysCount = 0;
         const postRainWinds = windSpeedDays.slice(14, 21);
@@ -1135,11 +1188,13 @@
           }
         }
 
-        let windNote = "🌬️ Vento neutro";
+        let windNote = "🌬️ Vento neutro protetto";
         let windDryNote = "";
+        let dryPenalty = 1.0;
+
         if (dryWindDaysCount >= 2) {
-          const dryingPenalty = Math.max(0.4, 1.0 - (dryWindDaysCount * 0.12));
-          combinedScore = combinedScore * dryingPenalty;
+          dryPenalty = Math.max(0.4, 1.0 - (dryWindDaysCount * 0.12));
+          combinedScore = combinedScore * dryPenalty;
           windNote = `💨 Vento secco persistente (${dryWindDaysCount} giorni)`;
           windDryNote = `⚠️ Siccità da vento prolungato (${dryWindDaysCount}gg post-pioggia): suolo arido`;
         }
@@ -1170,6 +1225,21 @@
           });
         }
 
+        const breakdown = {
+          goldenRain: Math.round(goldenWindowRain),
+          goldenScore: Math.round(goldenScore),
+          soilMoisture: soilMoistureEst,
+          soilScore: Math.round(soilScore),
+          avgTemp: Math.round(avgTemp),
+          tempScore: Math.round(tempScore),
+          totalRain: Math.round(totalRain),
+          totalRainScore: Math.round(totalRainScore),
+          aspectStr: aspectInfo.aspectStr,
+          aspectMultiplier: aspectMultiplier.toFixed(2),
+          windNote,
+          dryPenalty
+        };
+
         const result = { 
           goldenWindowRain: Math.round(goldenWindowRain),
           soilMoisture: soilMoistureEst,
@@ -1178,7 +1248,8 @@
           windSpeed: Math.round(windSpeedDays[20]), windNote,
           score: finalScore,
           topSpecies,
-          dailyHistory
+          dailyHistory,
+          breakdown
         };
 
         meteoCache[cacheKey] = result;
