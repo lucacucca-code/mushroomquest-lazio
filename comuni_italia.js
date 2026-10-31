@@ -76,7 +76,7 @@ const COMUNI_ITALIA = [
 
   // --- CIOCIARIA, ERNICI & RAPINESE ---
   { name: "Fiuggi", lat: 41.7919, lon: 13.2208, alt: 747, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
-  { name: "Fiuggi - Monte Scalone", lat: 41.7833, lon: 13.2167, alt: 950, type: "Località", minZoom: 11 },
+  { name: "Fiuggi - Monte Scalone", lat: 41.7833, lon: 13.2167, alt: 950, habitat: "Cerro / Querceto", geology: "Calcareo / Roccioso", type: "Località", minZoom: 11 },
   { name: "Guarcino", lat: 41.8167, lon: 13.3333, alt: 825, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Alatri", lat: 41.7333, lon: 13.3833, alt: 502, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Campocatino", lat: 41.8167, lon: 13.4333, alt: 1800, type: "Località", minZoom: 11 },
