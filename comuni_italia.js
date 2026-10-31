@@ -52,7 +52,7 @@ const COMUNI_ITALIA = [
   // --- SIMBRUINI, ANIENE & TIBURTINI ---
   { name: "Tivoli", lat: 41.9608, lon: 12.7989, alt: 235, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Subiaco", lat: 41.9256, lon: 13.0944, alt: 408, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
-  { name: "Monte Livata", lat: 41.9328, lon: 13.1603, alt: 1350, type: "Località", minZoom: 11 },
+  { name: "Monte Livata", lat: 41.9328, lon: 13.1603, alt: 1350, habitat: "Faggeta Pura / Mista", geology: "Calcareo / Roccioso", type: "Località", minZoom: 11 },
   { name: "Pisoniano", lat: 41.9078, lon: 12.9575, alt: 532, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", isFavorite: true, type: "Comune", minZoom: 11 },
   { name: "Bosco di Gattacieca", lat: 42.0478, lon: 12.6400, alt: 140, type: "Riserva", minZoom: 11 },
 
@@ -87,7 +87,7 @@ const COMUNI_ITALIA = [
   { name: "Bassiano", lat: 41.5667, lon: 13.0333, alt: 562, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Norma", lat: 41.5833, lon: 12.9667, alt: 410, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Terracina", lat: 41.2867, lon: 13.2442, alt: 22, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
-  { name: "Formia", lat: 41.2575, lon: 13.6067, alt: 19, type: "Comune", minZoom: 9 },
+  { name: "Formia", lat: 41.2575, lon: 13.6067, alt: 19, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Itri", lat: 41.2833, lon: 13.5833, alt: 170, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Campodimele", lat: 41.3500, lon: 13.5333, alt: 647, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Sperlonga", lat: 41.2583, lon: 13.4333, alt: 55, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
