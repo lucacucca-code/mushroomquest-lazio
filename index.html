@@ -39,69 +39,72 @@
 </head>
 <body class="bg-slate-900 text-slate-100 flex flex-col h-screen overflow-hidden">
 
-  <!-- Header Overlay Ottimizzato Mobile -->
-  <div class="absolute top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-4 z-[1000] bg-slate-900/95 backdrop-blur-md border border-slate-700/50 p-2 sm:p-4 rounded-2xl shadow-xl">
-    <div class="flex items-center justify-between gap-1 sm:gap-2">
-      <div class="flex items-center space-x-2 min-w-0">
-        <span class="text-xl sm:text-2xl flex-shrink-0">🍄</span>
-        <div class="min-w-0">
-          <h1 class="font-bold text-sm sm:text-lg leading-tight text-emerald-400 truncate">Fungoradar</h1>
-          <p id="status-text" class="text-[9px] sm:text-[10px] text-slate-400 truncate">Tocca la mappa per censire uno spot</p>
-        </div>
+  <!-- BARRA SUPERIORE EDGE-TO-EDGE (Nome, Data, Settings, Refresh, Logout) -->
+  <div class="absolute top-0 left-0 right-0 z-[1000] bg-slate-900/95 backdrop-blur-md border-b border-slate-700/50 px-3 py-2 flex items-center justify-between shadow-xl">
+    <div class="flex items-center space-x-2 min-w-0">
+      <span class="text-xl flex-shrink-0">🍄</span>
+      <div class="min-w-0">
+        <h1 class="font-bold text-sm leading-tight text-emerald-400 truncate">Fungoradar</h1>
+        <p id="status-text" class="text-[9px] text-slate-400 truncate">Tocca la mappa per censire uno spot</p>
       </div>
-      <div class="flex items-center space-x-1 flex-shrink-0">
-        
-        <!-- Date Picker -->
-        <div class="relative flex items-center">
-          <input type="text" id="targetDate" class="bg-slate-800 text-emerald-400 border border-slate-600 rounded-lg pl-1.5 pr-6 py-1 text-[11px] sm:text-xs font-bold shadow focus:outline-none focus:ring-2 focus:ring-emerald-500 w-[85px] sm:w-[110px] cursor-pointer text-center" readonly placeholder="Data">
-          <svg class="w-3.5 h-3.5 text-emerald-400 absolute right-1.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-          </svg>
-        </div>
-
-        <!-- Cerca Luogo (Stile Maps) -->
-        <button onclick="openSearchModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-xs sm:text-sm font-semibold shadow transition" title="Cerca Luogo">
-          🔍
-        </button>
-
-        <!-- Top 5 Spot Migliori -->
-        <button onclick="openTop5Modal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-emerald-400 p-1.5 rounded-lg text-xs sm:text-sm font-semibold shadow transition" title="Top 5 Spot Più Probabili">
-          🏆
-        </button>
-
-        <!-- Ingranaggio (Impostazioni & Cache) -->
-        <button onclick="openSettingsModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-xs sm:text-sm font-semibold shadow transition" title="Impostazioni">
-          ⚙️
-        </button>
-        
-        <!-- Radar Live -->
-        <button onclick="toggleRadar()" id="radar-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-xs sm:text-sm font-semibold shadow transition" title="Radar Pioggia">
-          📡
-        </button>
-
-        <!-- Ricarica -->
-        <button onclick="refreshData()" class="bg-emerald-600 hover:bg-emerald-500 text-white p-1.5 rounded-lg text-xs sm:text-sm font-semibold shadow transition" title="Ricarica Dati">
-          🔄
-        </button>
-
-        <!-- Logout / Blocca App -->
-        <button onclick="logoutPIN()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-xs sm:text-sm font-semibold shadow transition" title="Blocca App">
-          🔒
-        </button>
+    </div>
+    <div class="flex items-center space-x-1.5 flex-shrink-0">
+      <!-- Date Picker -->
+      <div class="relative flex items-center">
+        <input type="text" id="targetDate" class="bg-slate-800 text-emerald-400 border border-slate-600 rounded-lg pl-1.5 pr-6 py-1 text-[11px] font-bold shadow focus:outline-none focus:ring-2 focus:ring-emerald-500 w-[85px] cursor-pointer text-center" readonly placeholder="Data">
+        <svg class="w-3.5 h-3.5 text-emerald-400 absolute right-1.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
       </div>
+      <!-- Ingranaggio (Impostazioni) -->
+      <button onclick="openSettingsModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-xs font-semibold shadow transition" title="Impostazioni">
+        ⚙️
+      </button>
+      <!-- Ricarica -->
+      <button onclick="refreshData()" class="bg-emerald-600 hover:bg-emerald-500 text-white p-1.5 rounded-lg text-xs font-semibold shadow transition" title="Ricarica Dati">
+        🔄
+      </button>
+      <!-- Logout / Blocca App -->
+      <button onclick="logoutPIN()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-xs font-semibold shadow transition" title="Blocca App">
+        🔒
+      </button>
     </div>
   </div>
 
-  <!-- MODAL CERCA LUOGO -->
+  <!-- BARRA INFERIORE NAVIGAZIONALE EDGE-TO-EDGE (Cerca, Top 5, Rilievo 3D, Radar) -->
+  <div class="absolute bottom-0 left-0 right-0 z-[1000] bg-slate-900/95 backdrop-blur-md border-t border-slate-700/50 px-4 py-2 flex items-center justify-around shadow-2xl">
+    <!-- Cerca Luogo -->
+    <button onclick="openSearchModal()" class="flex flex-col items-center text-slate-300 hover:text-emerald-400 transition space-y-0.5">
+      <span class="text-lg">🔍</span>
+      <span class="text-[10px] font-semibold">Cerca</span>
+    </button>
+    <!-- Top 5 Spot -->
+    <button onclick="openTop5Modal()" class="flex flex-col items-center text-emerald-400 hover:text-emerald-300 transition space-y-0.5">
+      <span class="text-lg">🏆</span>
+      <span class="text-[10px] font-semibold">Top 5</span>
+    </button>
+    <!-- Hillshade 3D -->
+    <button onclick="toggleHillshade()" id="hillshade-btn" class="flex flex-col items-center text-slate-300 hover:text-emerald-400 transition space-y-0.5">
+      <span class="text-lg">⛰️</span>
+      <span class="text-[10px] font-semibold">Rilievo</span>
+    </button>
+    <!-- Radar Live -->
+    <button onclick="toggleRadar()" id="radar-btn" class="flex flex-col items-center text-slate-300 hover:text-emerald-400 transition space-y-0.5">
+      <span class="text-lg">📡</span>
+      <span class="text-[10px] font-semibold">Radar</span>
+    </button>
+  </div>
+
+  <!-- MODAL CERCA LUOGO (Photon / Komoot) -->
   <div id="search-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-        <h3 class="font-bold text-sm text-emerald-400">🔍 Cerca Località o Bosco</h3>
+        <h3 class="font-bold text-sm text-emerald-400">🔍 Cerca Località o Bosco (Photon)</h3>
         <button onclick="closeSearchModal()" class="text-slate-400 hover:text-white font-bold text-sm">✕</button>
       </div>
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block text-slate-400 mb-1">Nome del posto (es. Allumiere, Monte Cimino...)</label>
+          <label class="block text-slate-400 mb-1">Nome del posto (es. Faggeta, Allumiere...)</label>
           <div class="flex space-x-2">
             <input type="text" id="search-query-input" onkeydown="if(event.key==='Enter') executeMapSearch()" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Cerca...">
             <button onclick="executeMapSearch()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl font-bold transition">Vai</button>
@@ -143,7 +146,7 @@
     </div>
   </div>
 
-  <!-- MODAL SPIEGAZIONE CALCOLO % (NUOVO) -->
+  <!-- MODAL SPIEGAZIONE CALCOLO % -->
   <div id="calc-details-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
       <div class="p-4 border-b border-slate-800 flex items-center justify-between">
@@ -365,6 +368,7 @@
       });
     }
 
+    // --- RICERCA AVANZATA CON PHOTON (KOMOOT) ---
     function openSearchModal() {
       document.getElementById('search-modal').classList.remove('hidden');
       document.getElementById('search-query-input').focus();
@@ -375,17 +379,22 @@
       const query = document.getElementById('search-query-input').value.trim();
       const resultsBox = document.getElementById('search-results-box');
       if (!query) return;
-      resultsBox.innerHTML = '<div class="text-slate-400 text-center py-2">Ricerca in corso...</div>';
+      resultsBox.innerHTML = '<div class="text-slate-400 text-center py-2">Ricerca Photon in corso...</div>';
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=it&limit=5`);
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=it`);
         const data = await res.json();
-        if (data && data.length > 0) {
+        if (data && data.features && data.features.length > 0) {
           let html = '';
-          data.forEach(place => {
+          data.features.forEach(place => {
+            const name = place.properties.name || 'Località';
+            const city = place.properties.city || place.properties.county || place.properties.state || '';
+            const country = place.properties.country || '';
+            const displayName = [name, city, country].filter(Boolean).join(', ');
+            const [lon, lat] = place.geometry.coordinates;
             html += `
-              <div onclick="selectSearchPlace(${place.lat}, ${place.lon}, '${place.display_name.replace(/'/g, "\\'")}')" class="bg-slate-800 hover:bg-slate-700 p-2 rounded-xl cursor-pointer border border-slate-700 transition">
-                <div class="font-bold text-emerald-400">${place.display_name.split(',')[0]}</div>
-                <div class="text-[10px] text-slate-400 truncate">${place.display_name}</div>
+              <div onclick="selectSearchPlace(${lat}, ${lon}, '${displayName.replace(/'/g, "\\'")}')" class="bg-slate-800 hover:bg-slate-700 p-2 rounded-xl cursor-pointer border border-slate-700 transition">
+                <div class="font-bold text-emerald-400">${name}</div>
+                <div class="text-[10px] text-slate-400 truncate">${displayName}</div>
               </div>
             `;
           });
@@ -394,7 +403,7 @@
           resultsBox.innerHTML = '<div class="text-orange-400 text-center py-2">Nessun luogo trovato.</div>';
         }
       } catch (err) {
-        resultsBox.innerHTML = '<div class="text-red-400 text-center py-2">Errore di connessione.</div>';
+        resultsBox.innerHTML = '<div class="text-red-400 text-center py-2">Errore di connessione a Photon.</div>';
       }
     }
 
@@ -402,6 +411,36 @@
       closeSearchModal();
       map.setView([parseFloat(lat), parseFloat(lon)], 12);
       document.getElementById("status-text").innerText = `📍 Posizionato su: ${name.split(',')[0]}`;
+    }
+
+    // --- LIVELLO RILIEVO OMBREGGIATO 3D (AWS Terrain Tiles / Hillshade) ---
+    let hillshadeLayer = null;
+    let isHillshadeActive = false;
+
+    function toggleHillshade() {
+      const btn = document.getElementById('hillshade-btn');
+      const statusText = document.getElementById("status-text");
+
+      if (isHillshadeActive) {
+        if (hillshadeLayer) { map.removeLayer(hillshadeLayer); hillshadeLayer = null; }
+        isHillshadeActive = false;
+        btn.classList.remove('text-emerald-400');
+        btn.classList.add('text-slate-300');
+        statusText.innerText = "Rilievo 3D disattivato";
+      } else {
+        statusText.innerText = "⛰️ Attivazione Rilievo Ombreggiato 3D...";
+        hillshadeLayer = L.tileLayer('https://s3.amazonaws.com/elevation-tiles-prod/hillshade/{z}/{x}/{y}.png', {
+          opacity: 0.5,
+          zIndex: 400,
+          maxZoom: 18,
+          attribution: 'AWS Terrain Tiles / Copernicus DEM'
+        }).addTo(map);
+
+        isHillshadeActive = true;
+        btn.classList.remove('text-slate-300');
+        btn.classList.add('text-emerald-400');
+        statusText.innerText = "⛰️ Rilievo Ombreggiato 3D Attivo";
+      }
     }
 
     async function openTop5Modal() {
@@ -598,7 +637,6 @@
           habitat = alt >= 1000 ? "Faggeta Pura / Mista" : (alt >= 600 ? "Castagneto" : "Cerro / Querceto");
         }
 
-        // Chiamata elevazione per esposizione (offset di ~150 metri: 0.0015 gradi circa)
         const d = 0.0015;
         const elRes = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat},${lat+d},${lat-d},${lat},${lat}&longitude=${lon},${lon},${lon},${lon+d},${lon-d}`);
         const elData = await elRes.json();
@@ -814,8 +852,8 @@
       if (isRadarActive) {
         if (radarLayer) { map.removeLayer(radarLayer); radarLayer = null; }
         isRadarActive = false;
-        btn.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-500');
-        btn.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-600');
+        btn.classList.remove('text-emerald-400');
+        btn.classList.add('text-slate-300');
         statusText.innerText = "Radar disattivato";
       } else {
         statusText.innerText = "📡 Caricamento Radar Live...";
@@ -829,8 +867,8 @@
             }).addTo(map);
 
             isRadarActive = true;
-            btn.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-600');
-            btn.classList.add('bg-emerald-600', 'text-white', 'border-emerald-500');
+            btn.classList.remove('text-slate-300');
+            btn.classList.add('text-emerald-400');
             statusText.innerText = "📡 Radar Pioggia Attivo (Live)";
           } else {
             statusText.innerText = "⚠️ Nessun dato radar disponibile";
@@ -904,7 +942,6 @@
         const locKey = `${loc.lat}_${loc.lon}`;
         const cacheKey = `${loc.lat}_${loc.lon}_${altitude}_${targetDateStr}`;
         
-        // Se il marker è già presente sulla mappa, evitiamo di ricrearlo inutilmente (risolve lo sfarfallio)
         if (activeMarkers[locKey]) return;
 
         let env = await fetchSpotEnvironmentData(loc.lat, loc.lon, altitude, loc.habitat, loc.geology);
@@ -984,7 +1021,6 @@
       if (!isRadarActive) statusText.innerText = `🍄 ${Object.keys(activeMarkers).length} aree caricate`;
     }
 
-    // --- MODALE DI SPIEGAZIONE DETTAGLIATA DEL CALCOLO % ---
     function openCalcDetailsModal(locationName, cacheKey) {
       const data = meteoCache[cacheKey];
       if (!data || !data.breakdown) return;
@@ -1167,7 +1203,6 @@
 
         let combinedScore = (goldenScore * 0.45) + (soilScore * 0.20) + (tempScore * 0.20) + (totalRainScore * 0.15);
 
-        // Modificatore Esposizione (Aspect)
         let aspectMultiplier = 1.0;
         if (avgTemp > 18) {
           if (aspectInfo.aspect >= 315 || aspectInfo.aspect < 45) aspectMultiplier = 1.12;
