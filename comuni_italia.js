@@ -185,4 +185,6 @@ const COMUNI_ITALIA = [
   { name: "Loc i Marmi", lat: 42.7814, lon: 10.3092, alt: 202, type: "Località", habitat: "Macchia Mediterranea", minZoom: 9 }
 ,
   { name: "Castagneto Pisoniano", lat: 41.8907, lon: 12.9613, alt: 400, type: "Località", habitat: "Castagneto", geology: "Siliceo / Arenario", isFavorite: true, minZoom: 9 }
+,
+  { name: "Riparbella", lat: 43.3463, lon: 10.5418, alt: 52, type: "Località", habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", isFavorite: true, minZoom: 9 }
 ];
