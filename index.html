@@ -95,22 +95,19 @@
     </button>
   </div>
 
-  <!-- MODAL CERCA LUOGO (Photon / Komoot) -->
+  <!-- MODAL CERCA LUOGO (Con Suggerimenti Live mentre scrivi) -->
   <div id="search-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-        <h3 class="font-bold text-sm text-emerald-400">🔍 Cerca Località o Bosco (Photon)</h3>
+        <h3 class="font-bold text-sm text-emerald-400">🔍 Cerca Località o Bosco</h3>
         <button onclick="closeSearchModal()" class="text-slate-400 hover:text-white font-bold text-sm">✕</button>
       </div>
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block text-slate-400 mb-1">Nome del posto (es. Faggeta, Allumiere...)</label>
-          <div class="flex space-x-2">
-            <input type="text" id="search-query-input" onkeydown="if(event.key==='Enter') executeMapSearch()" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Cerca...">
-            <button onclick="executeMapSearch()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl font-bold transition">Vai</button>
-          </div>
+          <label class="block text-slate-400 mb-1">Inizia a scrivere il nome del posto...</label>
+          <input type="text" id="search-query-input" oninput="handleSearchInput()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Es. Faggeta, Roma, Allumiere...">
         </div>
-        <div id="search-results-box" class="max-h-40 overflow-y-auto space-y-1"></div>
+        <div id="search-results-box" class="max-h-48 overflow-y-auto space-y-1"></div>
       </div>
       <div class="pt-2 text-right">
         <button onclick="closeSearchModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-xs font-bold transition">Chiudi</button>
@@ -368,49 +365,56 @@
       });
     }
 
-    // --- RICERCA AVANZATA CON PHOTON (KOMOOT) ---
+    // --- RICERCA LIVE CON AUTOCOMPLETE (Nominatim) ---
     function openSearchModal() {
       document.getElementById('search-modal').classList.remove('hidden');
       document.getElementById('search-query-input').focus();
     }
     function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
 
-    async function executeMapSearch() {
+    let searchTimeout = null;
+    async function handleSearchInput() {
       const query = document.getElementById('search-query-input').value.trim();
       const resultsBox = document.getElementById('search-results-box');
-      if (!query) return;
-      resultsBox.innerHTML = '<div class="text-slate-400 text-center py-2">Ricerca Photon in corso...</div>';
-      try {
-        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=it`);
-        const data = await res.json();
-        if (data && data.features && data.features.length > 0) {
-          let html = '';
-          data.features.forEach(place => {
-            const name = place.properties.name || 'Località';
-            const city = place.properties.city || place.properties.county || place.properties.state || '';
-            const country = place.properties.country || '';
-            const displayName = [name, city, country].filter(Boolean).join(', ');
-            const [lon, lat] = place.geometry.coordinates;
-            html += `
-              <div onclick="selectSearchPlace(${lat}, ${lon}, '${displayName.replace(/'/g, "\\'")}')" class="bg-slate-800 hover:bg-slate-700 p-2 rounded-xl cursor-pointer border border-slate-700 transition">
-                <div class="font-bold text-emerald-400">${name}</div>
-                <div class="text-[10px] text-slate-400 truncate">${displayName}</div>
-              </div>
-            `;
-          });
-          resultsBox.innerHTML = html;
-        } else {
-          resultsBox.innerHTML = '<div class="text-orange-400 text-center py-2">Nessun luogo trovato.</div>';
-        }
-      } catch (err) {
-        resultsBox.innerHTML = '<div class="text-red-400 text-center py-2">Errore di connessione a Photon.</div>';
+
+      if (searchTimeout) clearTimeout(searchTimeout);
+
+      if (query.length < 3) {
+        resultsBox.innerHTML = '';
+        return;
       }
+
+      searchTimeout = setTimeout(async () => {
+        resultsBox.innerHTML = '<div class="text-slate-400 text-center py-2 text-xs">Ricerca suggerimenti...</div>';
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&accept-language=it`);
+          const data = await res.json();
+          if (data && data.length > 0) {
+            let html = '';
+            data.forEach(place => {
+              const name = place.name || place.display_name.split(',')[0];
+              const fullName = place.display_name;
+              html += `
+                <div onclick="selectSearchPlace(${place.lat}, ${place.lon}, '${name.replace(/'/g, "\\'")}')" class="bg-slate-800 hover:bg-slate-700 p-2 rounded-xl cursor-pointer border border-slate-700 transition">
+                  <div class="font-bold text-emerald-400 text-xs">${name}</div>
+                  <div class="text-[10px] text-slate-400 truncate">${fullName}</div>
+                </div>
+              `;
+            });
+            resultsBox.innerHTML = html;
+          } else {
+            resultsBox.innerHTML = '<div class="text-orange-400 text-center py-2 text-xs">Nessun luogo trovato.</div>';
+          }
+        } catch (err) {
+          resultsBox.innerHTML = '<div class="text-red-400 text-center py-2 text-xs">Errore di connessione.</div>';
+        }
+      }, 300);
     }
 
     function selectSearchPlace(lat, lon, name) {
       closeSearchModal();
       map.setView([parseFloat(lat), parseFloat(lon)], 12);
-      document.getElementById("status-text").innerText = `📍 Posizionato su: ${name.split(',')[0]}`;
+      document.getElementById("status-text").innerText = `📍 Posizionato su: ${name}`;
     }
 
     // --- LIVELLO RILIEVO OMBREGGIATO 3D (AWS Terrain Tiles / Hillshade) ---
