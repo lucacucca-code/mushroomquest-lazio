@@ -9,25 +9,25 @@ const COMUNI_ITALIA = [
   { name: "Terni", lat: 42.5647, lon: 12.6423, alt: 130, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Provincia", minZoom: 0 },
 
   // --- TUSCIA, VITERBESE & MONTI CIMINI ---
-  { name: "Oriolo Romano", lat: 42.1581, lon: 12.1363, alt: 430, type: "Comune", minZoom: 9 },
-  { name: "Manziana", lat: 42.1306, lon: 12.1294, alt: 355, type: "Comune", minZoom: 9 },
+  { name: "Oriolo Romano", lat: 42.1581, lon: 12.1363, alt: 430, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
+  { name: "Manziana", lat: 42.1306, lon: 12.1294, alt: 355, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Allumiere (Tolfa)", lat: 42.1561, lon: 11.9056, alt: 520, type: "Comune", minZoom: 9 },
-  { name: "Tolfa", lat: 42.1444, lon: 11.9333, alt: 342, type: "Comune", minZoom: 9 },
-  { name: "Soriano nel Cimino", lat: 42.4181, lon: 12.2333, alt: 510, type: "Comune", minZoom: 9 },
+  { name: "Tolfa", lat: 42.1444, lon: 11.9333, alt: 342, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
+  { name: "Soriano nel Cimino", lat: 42.4181, lon: 12.2333, alt: 510, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Monte Cimino", lat: 42.4289, lon: 12.2211, alt: 1053, type: "Località", minZoom: 11 },
   { name: "Faggeta del Cimino", lat: 42.4200, lon: 12.2150, alt: 950, type: "Località", minZoom: 11 },
-  { name: "Caprarola", lat: 42.3275, lon: 12.2356, alt: 520, type: "Comune", minZoom: 9 },
-  { name: "Ronciglione", lat: 42.2894, lon: 12.2197, alt: 440, type: "Comune", minZoom: 9 },
-  { name: "Sutri", lat: 42.2417, lon: 12.2250, alt: 290, type: "Comune", minZoom: 9 },
-  { name: "Vejano", lat: 42.2183, lon: 12.0967, alt: 390, type: "Comune", minZoom: 9 },
-  { name: "Barbarano Romano", lat: 42.2500, lon: 12.0667, alt: 340, type: "Comune", minZoom: 9 },
-  { name: "Blera", lat: 42.2583, lon: 12.0389, alt: 270, type: "Comune", minZoom: 9 },
+  { name: "Caprarola", lat: 42.3275, lon: 12.2356, alt: 520, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
+  { name: "Ronciglione", lat: 42.2894, lon: 12.2197, alt: 440, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
+  { name: "Sutri", lat: 42.2417, lon: 12.2250, alt: 290, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
+  { name: "Vejano", lat: 42.2183, lon: 12.0967, alt: 390, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
+  { name: "Barbarano Romano", lat: 42.2500, lon: 12.0667, alt: 340, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
+  { name: "Blera", lat: 42.2583, lon: 12.0389, alt: 270, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Bolsena", lat: 42.6333, lon: 11.8333, alt: 350, type: "Comune", minZoom: 9 },
 
   // --- LAGO DI BRACCIANO & VALLE DEL TREJA ---
-  { name: "Canale Monterano", lat: 42.1583, lon: 12.0917, alt: 370, type: "Comune", minZoom: 9 },
-  { name: "Bracciano", lat: 42.1033, lon: 12.1767, alt: 160, type: "Comune", minZoom: 9 },
-  { name: "Trevignano Romano", lat: 42.1583, lon: 12.2333, alt: 400, type: "Comune", minZoom: 9 },
+  { name: "Canale Monterano", lat: 42.1583, lon: 12.0917, alt: 370, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
+  { name: "Bracciano", lat: 42.1033, lon: 12.1767, alt: 160, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
+  { name: "Trevignano Romano", lat: 42.1583, lon: 12.2333, alt: 400, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Anguillara Sabazia", lat: 42.0833, lon: 12.2667, alt: 195, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Nepi", lat: 42.2458, lon: 12.3486, alt: 226, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Calcata", lat: 42.2472, lon: 12.4194, alt: 175, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
@@ -144,9 +144,9 @@ const COMUNI_ITALIA = [
 ,
   { name: "Livata faggeta mucche", lat: 41.9396, lon: 13.1336, alt: 1326, habitat: "Faggeta Pura / Mista", geology: "Calcareo / Roccioso", type: "Località", isFavorite: true, minZoom: 9 }
 ,
-  { name: "Faggeta oriolo", lat: 42.1607, lon: 12.1513, alt: 453, type: "Località", isFavorite: true, minZoom: 9 }
+  { name: "Faggeta oriolo", lat: 42.1607, lon: 12.1513, alt: 453, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Località", isFavorite: true, minZoom: 9 }
 ,
-  { name: "Fregene parco avventura", lat: 41.8413, lon: 12.2135, alt: 14, type: "Località", isFavorite: true, minZoom: 9 }
+  { name: "Fregene parco avventura", lat: 41.8413, lon: 12.2135, alt: 14, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Località", isFavorite: true, minZoom: 9 }
 ,
   { name: "Livata osservatorio", lat: 41.9516, lon: 13.1743, alt: 1589, habitat: "Faggeta Pura / Mista", geology: "Calcareo / Roccioso", type: "Località", isFavorite: true, minZoom: 9 }
 ,
