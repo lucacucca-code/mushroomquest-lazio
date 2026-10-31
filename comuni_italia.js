@@ -14,15 +14,15 @@ const COMUNI_ITALIA = [
   { name: "Allumiere (Tolfa)", lat: 42.1561, lon: 11.9056, alt: 520, type: "Comune", minZoom: 9 },
   { name: "Tolfa", lat: 42.1444, lon: 11.9333, alt: 342, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Soriano nel Cimino", lat: 42.4181, lon: 12.2333, alt: 510, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
-  { name: "Monte Cimino", lat: 42.4289, lon: 12.2211, alt: 1053, type: "Località", minZoom: 11 },
-  { name: "Faggeta del Cimino", lat: 42.4200, lon: 12.2150, alt: 950, type: "Località", minZoom: 11 },
+  { name: "Monte Cimino", lat: 42.4289, lon: 12.2211, alt: 1053, habitat: "Faggeta Pura / Mista", geology: "Calcareo / Roccioso", type: "Località", minZoom: 11 },
+  { name: "Faggeta del Cimino", lat: 42.4200, lon: 12.2150, alt: 950, habitat: "Cerro / Querceto", geology: "Calcareo / Roccioso", type: "Località", minZoom: 11 },
   { name: "Caprarola", lat: 42.3275, lon: 12.2356, alt: 520, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Ronciglione", lat: 42.2894, lon: 12.2197, alt: 440, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Sutri", lat: 42.2417, lon: 12.2250, alt: 290, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Vejano", lat: 42.2183, lon: 12.0967, alt: 390, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Barbarano Romano", lat: 42.2500, lon: 12.0667, alt: 340, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Blera", lat: 42.2583, lon: 12.0389, alt: 270, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
-  { name: "Bolsena", lat: 42.6333, lon: 11.8333, alt: 350, type: "Comune", minZoom: 9 },
+  { name: "Bolsena", lat: 42.6333, lon: 11.8333, alt: 350, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
 
   // --- LAGO DI BRACCIANO & VALLE DEL TREJA ---
   { name: "Canale Monterano", lat: 42.1583, lon: 12.0917, alt: 370, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
@@ -54,7 +54,7 @@ const COMUNI_ITALIA = [
   { name: "Subiaco", lat: 41.9256, lon: 13.0944, alt: 408, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Monte Livata", lat: 41.9328, lon: 13.1603, alt: 1350, habitat: "Faggeta Pura / Mista", geology: "Calcareo / Roccioso", type: "Località", minZoom: 11 },
   { name: "Pisoniano", lat: 41.9078, lon: 12.9575, alt: 532, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", isFavorite: true, type: "Comune", minZoom: 11 },
-  { name: "Bosco di Gattacieca", lat: 42.0478, lon: 12.6400, alt: 140, type: "Riserva", minZoom: 11 },
+  { name: "Bosco di Gattacieca", lat: 42.0478, lon: 12.6400, alt: 140, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Riserva", minZoom: 11 },
 
   // --- PARCO DI VEIO & AREA NORD ROMA ---
   { name: "Capena", lat: 42.1417, lon: 12.5500, alt: 160, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
@@ -103,9 +103,9 @@ const COMUNI_ITALIA = [
   // Grossetano & Monte Amiata
   { name: "Castel del Piano (Amiata)", lat: 42.8906, lon: 11.5383, alt: 626, type: "Comune", minZoom: 9 },
   { name: "Arcidosso (Amiata)", lat: 42.8756, lon: 11.5583, alt: 700, type: "Comune", minZoom: 9 },
-  { name: "Santa Fiora", lat: 42.8333, lon: 11.6333, alt: 687, type: "Comune", minZoom: 9 },
-  { name: "Roccalbegna", lat: 42.7094, lon: 11.5317, alt: 522, type: "Comune", minZoom: 9 },
-  { name: "Massa Marittima", lat: 43.0494, lon: 10.8883, alt: 380, type: "Comune", minZoom: 9 },
+  { name: "Santa Fiora", lat: 42.8333, lon: 11.6333, alt: 687, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
+  { name: "Roccalbegna", lat: 42.7094, lon: 11.5317, alt: 522, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
+  { name: "Massa Marittima", lat: 43.0494, lon: 10.8883, alt: 380, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
 
   // Aretino & Casentino / Valtiberina
   { name: "Vallombrosa (Casentinesi)", lat: 43.7317, lon: 11.5542, alt: 980, type: "Riserva", minZoom: 9 },
@@ -168,7 +168,7 @@ const COMUNI_ITALIA = [
 ,
   { name: "Cerreto Laziale", lat: 41.9478, lon: 12.9843, alt: 605, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Località", minZoom: 9 }
 ,
-  { name: "Capalbio", lat: 42.454, lon: 11.4216, alt: 185, type: "Località", minZoom: 9 }
+  { name: "Capalbio", lat: 42.454, lon: 11.4216, alt: 185, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Località", minZoom: 9 }
 ,
   { name: "Monteflavio", lat: 42.1067, lon: 12.8312, alt: 785, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Località", minZoom: 9 }
 ,
