@@ -53,7 +53,7 @@ const COMUNI_ITALIA = [
   { name: "Tivoli", lat: 41.9608, lon: 12.7989, alt: 235, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Subiaco", lat: 41.9256, lon: 13.0944, alt: 408, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Monte Livata", lat: 41.9328, lon: 13.1603, alt: 1350, type: "Località", minZoom: 11 },
-  { name: "Pisoniano", lat: 41.9078, lon: 12.9575, alt: 532, type: "Comune", minZoom: 11 },
+  { name: "Pisoniano", lat: 41.9078, lon: 12.9575, alt: 532, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 11 },
   { name: "Bosco di Gattacieca", lat: 42.0478, lon: 12.6400, alt: 140, type: "Riserva", minZoom: 11 },
 
   // --- PARCO DI VEIO & AREA NORD ROMA ---
