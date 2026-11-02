@@ -39,52 +39,61 @@
 </head>
 <body class="bg-slate-900 text-slate-100 flex flex-col h-screen overflow-hidden">
 
-  <!-- BARRA SUPERIORE EDGE-TO-EDGE -->
-  <div class="absolute top-0 left-0 right-0 z-[1000] bg-slate-900/95 backdrop-blur-md border-b border-slate-700/50 px-3 py-2 flex items-center justify-between shadow-xl">
-    <div class="flex items-center space-x-2 min-w-0">
-      <span class="text-xl flex-shrink-0">🍄</span>
+  <!-- BARRA SUPERIORE EDGE-TO-EDGE (Nome, Data, Filtro Specie, Settings, Refresh, Logout) -->
+  <div class="absolute top-0 left-0 right-0 z-[1000] bg-slate-900/95 backdrop-blur-md border-b border-slate-700/50 px-2 py-2 flex items-center justify-between shadow-xl">
+    <div class="flex items-center space-x-1.5 min-w-0">
+      <span class="text-lg flex-shrink-0">🍄</span>
       <div class="min-w-0">
-        <h1 class="font-bold text-sm leading-tight text-emerald-400 truncate">Fungoradar</h1>
-        <p id="status-text" class="text-[9px] text-slate-400 truncate">Tocca la mappa per censire uno spot</p>
+        <h1 class="font-bold text-xs leading-tight text-emerald-400 truncate">Fungoradar</h1>
+        <p id="status-text" class="text-[8px] text-slate-400 truncate">Tocca la mappa per censire uno spot</p>
       </div>
     </div>
-    <div class="flex items-center space-x-1.5 flex-shrink-0">
+    <div class="flex items-center space-x-1 flex-shrink-0">
+      <!-- Filtro Specie Dedicato -->
+      <select id="speciesFilter" onchange="onSpeciesFilterChange()" class="bg-slate-800 text-emerald-400 border border-slate-600 rounded-lg px-1 py-1 text-[10px] font-bold shadow focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer max-w-[110px] truncate">
+        <option value="ALL">🍄 Tutte (Generico)</option>
+      </select>
+
       <!-- Date Picker -->
       <div class="relative flex items-center">
-        <input type="text" id="targetDate" class="bg-slate-800 text-emerald-400 border border-slate-600 rounded-lg pl-1.5 pr-6 py-1 text-[11px] font-bold shadow focus:outline-none focus:ring-2 focus:ring-emerald-500 w-[85px] cursor-pointer text-center" readonly placeholder="Data">
-        <svg class="w-3.5 h-3.5 text-emerald-400 absolute right-1.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <input type="text" id="targetDate" class="bg-slate-800 text-emerald-400 border border-slate-600 rounded-lg pl-1.5 pr-5 py-1 text-[10px] font-bold shadow focus:outline-none focus:ring-2 focus:ring-emerald-500 w-[78px] cursor-pointer text-center" readonly placeholder="Data">
+        <svg class="w-3 h-3 text-emerald-400 absolute right-1 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
         </svg>
       </div>
       <!-- Ingranaggio (Impostazioni) -->
-      <button onclick="openSettingsModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-xs font-semibold shadow transition" title="Impostazioni">
+      <button onclick="openSettingsModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1 rounded-lg text-xs font-semibold shadow transition" title="Impostazioni">
         ⚙️
       </button>
       <!-- Ricarica -->
-      <button onclick="refreshData()" class="bg-emerald-600 hover:bg-emerald-500 text-white p-1.5 rounded-lg text-xs font-semibold shadow transition" title="Ricarica Dati">
+      <button onclick="refreshData()" class="bg-emerald-600 hover:bg-emerald-500 text-white p-1 rounded-lg text-xs font-semibold shadow transition" title="Ricarica Dati">
         🔄
       </button>
       <!-- Logout / Blocca App -->
-      <button onclick="logoutPIN()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1.5 rounded-lg text-xs font-semibold shadow transition" title="Blocca App">
+      <button onclick="logoutPIN()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 p-1 rounded-lg text-xs font-semibold shadow transition" title="Blocca App">
         🔒
       </button>
     </div>
   </div>
 
-  <!-- BARRA INFERIORE NAVIGAZIONALE EDGE-TO-EDGE -->
+  <!-- BARRA INFERIORE NAVIGAZIONALE EDGE-TO-EDGE (Cerca, Top 5, Rilievo 3D, Radar) -->
   <div class="absolute bottom-0 left-0 right-0 z-[1000] bg-slate-900/95 backdrop-blur-md border-t border-slate-700/50 px-4 py-2 flex items-center justify-around shadow-2xl">
+    <!-- Cerca Luogo -->
     <button onclick="openSearchModal()" class="flex flex-col items-center text-slate-300 hover:text-emerald-400 transition space-y-0.5">
       <span class="text-lg">🔍</span>
       <span class="text-[10px] font-semibold">Cerca</span>
     </button>
+    <!-- Top 5 Spot -->
     <button onclick="openTop5Modal()" class="flex flex-col items-center text-emerald-400 hover:text-emerald-300 transition space-y-0.5">
       <span class="text-lg">🏆</span>
       <span class="text-[10px] font-semibold">Top 5</span>
     </button>
+    <!-- Hillshade 3D -->
     <button onclick="toggleHillshade()" id="hillshade-btn" class="flex flex-col items-center text-slate-300 hover:text-emerald-400 transition space-y-0.5">
       <span class="text-lg">⛰️</span>
       <span class="text-[10px] font-semibold">Rilievo</span>
     </button>
+    <!-- Radar Live -->
     <button onclick="toggleRadar()" id="radar-btn" class="flex flex-col items-center text-slate-300 hover:text-emerald-400 transition space-y-0.5">
       <span class="text-lg">📡</span>
       <span class="text-[10px] font-semibold">Radar</span>
@@ -120,7 +129,7 @@
       <div class="p-4 border-b border-slate-800 flex items-center justify-between">
         <div>
           <h3 class="font-bold text-base text-emerald-400">🏆 Top 5 Spot dalla Vista Mappa</h3>
-          <p class="text-xs text-slate-400">Basato sul centro attuale della mappa</p>
+          <p id="top5-subtitle" class="text-xs text-slate-400">Basato sul centro attuale (Filtro: Tutte le specie)</p>
         </div>
         <button onclick="closeTop5Modal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg p-1.5 text-sm font-bold">✕</button>
       </div>
@@ -148,7 +157,7 @@
       <div class="p-4 border-b border-slate-800 flex items-center justify-between">
         <div>
           <h3 id="calc-modal-title" class="font-bold text-base text-emerald-400">🧠 Spiegazione Calcolo %</h3>
-          <p id="calc-modal-subtitle" class="text-xs text-slate-400">Analisi dettagliata dei fattori algoritmici</p>
+          <p id="calc-modal-subtitle" class="text-xs text-slate-400">Analisi dettagliata dei fattori algoritmici & habitat</p>
         </div>
         <button onclick="closeCalcDetailsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg p-1.5 text-sm font-bold">✕</button>
       </div>
@@ -182,13 +191,13 @@
     </div>
   </div>
 
-  <!-- MODAL DETTAGLI STORICI -->
+  <!-- MODAL DETTAGLI STORICI (Ultimi 20 Giorni) -->
   <div id="details-modal" class="fixed inset-0 z-[2000] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
       <div class="p-4 border-b border-slate-800 flex items-center justify-between">
         <div>
           <h3 id="modal-title" class="font-bold text-base text-emerald-400">Analisi Dettagliata</h3>
-          <p id="modal-subtitle" class="text-xs text-slate-400">Storico ultimi 20 giorni</p>
+          <p id="modal-subtitle" class="text-xs text-slate-400">Storico ultimi 20 giorni (-12 a -7 gg Finestra d'Oro)</p>
         </div>
         <button onclick="closeDetailsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg p-1.5 text-sm font-bold">✕</button>
       </div>
@@ -199,7 +208,7 @@
     </div>
   </div>
 
-  <!-- MODAL AGGIUNGI SPOT -->
+  <!-- MODAL AGGIUNGI / MODIFICA SPOT CON ESSENZE -->
   <div id="add-spot-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -216,7 +225,7 @@
           <input type="number" id="new-spot-alt" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="400">
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">🌳 Essenze / Habitat</label>
+          <label class="block text-slate-400 mb-1">🌳 Essenze / Habitat (Rilevato da OSM)</label>
           <select id="new-spot-habitat-select" onchange="checkCustomHabitat(this)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2">
             <option value="Faggeta Pura / Mista">Faggeta Pura / Mista</option>
             <option value="Castagneto">Castagneto</option>
@@ -247,6 +256,30 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
+    // --- DATABASE ESTESO SPECIE FUNGINE (Commestibili, Tossiche, Mortali) ---
+    const speciesList = [
+      { name: "Boletus aereus (Porcino Nero)", habitats: ["cerro", "querceto", "castagneto", "macchia", "bosco misto"], minT: 14, maxT: 26, minRain: 30, months: [5,6,7,8,9,10,11], type: "commestibile", desc: "Preferisce boschi caldi di latifoglie (castagno, cerro, leccio) ben esposti." },
+      { name: "Boletus edulis (Porcino Bianco / Spagnola)", habitats: ["faggeta", "pineta", "conifere", "castagneto", "bosco misto"], minT: 10, maxT: 20, minRain: 35, months: [6,7,8,9,10,11], type: "commestibile", desc: "Tipico di faggete e conifere d'alta quota o boschi freschi." },
+      { name: "Boletus aestivalis (Porcino Estivo)", habitats: ["castagneto", "bosco misto", "cerro", "querceto", "faggeta"], minT: 15, maxT: 25, minRain: 25, months: [5,6,7,8,9,10], type: "commestibile", desc: "Molto diffuso in primavera/estate in boschi misti e castagneti." },
+      { name: "Cantharellus cibarius (Finferlo / Galletto)", habitats: ["faggeta", "castagneto", "bosco misto", "conifere"], minT: 11, maxT: 22, minRain: 35, months: [5,6,7,8,9,10,11], type: "commestibile", desc: "Cresce gregario in muschio e lettiera acida di faggete e castagneti." },
+      { name: "Amanita caesarea (Ovolo Reale)", habitats: ["cerro", "querceto", "castagneto", "macchia"], minT: 18, maxT: 28, minRain: 25, months: [6,7,8,9,10], type: "commestibile", desc: "Amana i terreni calcarei caldi sotto querce e castagni." },
+      { name: "Russula virescens (Colombina Verde)", habitats: ["querceto", "castagneto", "bosco misto", "faggeta"], minT: 16, maxT: 25, minRain: 20, months: [6,7,8,9,10], type: "commestibile", desc: "Ottimo commestibile estivo-autunnale in boschi asciutti." },
+      { name: "Russula cyanoxantha (Colombina)", habitats: ["faggeta", "bosco misto", "cerro"], minT: 12, maxT: 21, minRain: 25, months: [6,7,8,9,10], type: "commestibile", desc: "Estremamente comune nelle faggete umide." },
+      { name: "Lactarius deliciosus (Sanguinello)", habitats: ["pineta", "conifere"], minT: 9, maxT: 18, minRain: 25, months: [9,10,11,12], type: "commestibile", desc: "Esclusivo sotto pini e conifere nei periodi freschi." },
+      { name: "Leccinum lepidum (Leccino)", habitats: ["macchia", "querceto", "lecceta", "castagneto"], minT: 13, maxT: 22, minRain: 30, months: [10,11,12,1,2,3,4], type: "commestibile", desc: "Simbionte di lecci e querce sempreverdi, fruttifica anche in inverno mite." },
+      { name: "Hygrophorus russula (Lardaiolo)", habitats: ["castagneto", "cerro", "querceto", "bosco misto"], minT: 7, maxT: 16, minRain: 30, months: [10,11,12], type: "commestibile", desc: "Tardo autunnale, ama i castagneti collinari freschi." },
+      { name: "Clitocybe geotropa (Trombetta)", habitats: ["bosco misto", "prati", "margini", "querceto"], minT: 9, maxT: 18, minRain: 25, months: [9,10,11], type: "commestibile", desc: "Cresce nei prati ai margini dei boschi in cerchi da strega." },
+      { name: "Tricholoma terreum (Moretta)", habitats: ["pineta", "conifere"], minT: 5, maxT: 14, minRain: 20, months: [10,11,12,1], type: "commestibile", desc: "Fungi tardo autunnali e invernali sotto pinete fitte." },
+      // SPECIE NON COMMESTIBILI / TOSSICHE / MORTALI RICHIESTE:
+      { name: "Amanita muscaria (Ovolino / Ombrellino)", habitats: ["conifere", "pineta", "faggeta", "betulla", "bosco misto"], minT: 8, maxT: 18, minRain: 25, months: [8,9,10,11], type: "tossico", desc: "Tossico (muscarina/ibotenico). Iconico fungo rosso con verruche bianche in boschi acidi." },
+      { name: "Amanita pantherina (Tignosa zonato-pelosa)", habitats: ["faggeta", "castagneto", "bosco misto", "querceto"], minT: 12, maxT: 23, minRain: 25, months: [6,7,8,9,10,11], type: "tossico", desc: "Tossico-neurotropo severo. Cappello marrone con verruche bianche regolari." },
+      { name: "Amanita phalloides (Tignosa mortale)", habitats: ["querceto", "castagneto", "faggeta", "bosco misto", "cerro"], minT: 13, maxT: 25, minRain: 30, months: [7,8,9,10,11], type: "mortale", desc: "Mortale. Contiene amanitine. Presente sotto latifoglie con volva e anello." },
+      { name: "Armillaria mellea (Chiodino / Famigliola)", habitats: ["bosco misto", "castagneto", "conifere", "latifoglie"], minT: 8, maxT: 18, minRain: 30, months: [9,10,11,12], type: "commestibile", desc: "Commestibile dopo bollitura. Parassita gregario su ceppi e radici di alberi." },
+      { name: "Macrolepiota procera (Mazza di tamburo)", habitats: ["bosco misto", "margini", "radure", "castagneto", "prati"], minT: 13, maxT: 25, minRain: 20, months: [6,7,8,9,10,11], type: "commestibile", desc: "Ottimo commestibile. Frequente in radure e margini boschivi erbosi." },
+      { name: "Hydnum marzuolum (Marzuolo / Fungo di marzo)", habitats: ["pineta", "conifere", "faggeta"], minT: 2, maxT: 10, minRain: 40, months: [2,3,4], type: "commestibile", desc: "Pregiato fungo ipogeo/semi-ipogeo di fine inverno sotto pinete e abetaie." }
+    ];
+
+    // --- CODA DI COMMIT AUTOMATICO A GITHUB ---
     let pendingCommitsQueue = [];
 
     function queueSpotUpdateForGitHub(spotName, newHabitat, newGeology) {
@@ -272,11 +305,12 @@
         const getRes = await fetch(url, { headers: { 'Authorization': `token ${ghToken}` } });
         if (!getRes.ok) return;
         const fileData = await getRes.json();
-        let jsText = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, ''))));
+        let jsText = decodeURIComponent(escape(atob(fileData.content.replace(/
+/g, ''))));
 
         let updatedCount = 0;
         pendingCommitsQueue.forEach(item => {
-          const locPattern = new RegExp(`name:\\s*"${item.name}"[^}]*}`);
+          const locPattern = new RegExp(`name:\s*"${item.name}"[^}]*}`);
           const match = jsText.match(locPattern);
           if (match) {
             let block = match[0];
@@ -310,10 +344,28 @@
             pendingCommitsQueue = [];
           }
         }
-      } catch (err) {
-        console.error("Errore sync GitHub:", err);
-      }
+      } catch (err) {}
     }, 60000);
+
+    function populateSpeciesDropdown() {
+      const select = document.getElementById('speciesFilter');
+      if (!select) return;
+      let html = '<option value="ALL">🍄 Tutte le Specie (Generico)</option>';
+      speciesList.forEach(sp => {
+        let icon = sp.type === 'tossico' ? '⚠️' : (sp.type === 'mortale' ? '☠️' : '🍄');
+        html += `<option value="${sp.name}">${icon} ${sp.name}</option>`;
+      });
+      select.innerHTML = html;
+      let saved = localStorage.getItem('fungo_selected_species') || 'ALL';
+      select.value = saved;
+    }
+
+    function onSpeciesFilterChange() {
+      const val = document.getElementById('speciesFilter').value;
+      localStorage.setItem('fungo_selected_species', val);
+      meteoCache = {};
+      refreshData();
+    }
 
     function refreshData() {
       if (typeof map !== 'undefined' && map) {
@@ -361,6 +413,7 @@
       });
     }
 
+    // --- RICERCA GLOBALE CON TASTO VAI ---
     function openSearchModal() {
       document.getElementById('search-modal').classList.remove('hidden');
       document.getElementById('search-query-input').value = '';
@@ -384,7 +437,7 @@
             const name = place.name || place.display_name.split(',')[0];
             const fullName = place.display_name;
             html += `
-              <div onclick="selectSearchPlace(${place.lat}, ${place.lon}, '${name.replace(/'/g, "\\'")}')" class="bg-slate-800 hover:bg-slate-700 p-2 rounded-xl cursor-pointer border border-slate-700 transition">
+              <div onclick="selectSearchPlace(${place.lat}, ${place.lon}, '${name.replace(/'/g, "\'")}')" class="bg-slate-800 hover:bg-slate-700 p-2 rounded-xl cursor-pointer border border-slate-700 transition">
                 <div class="font-bold text-emerald-400 text-xs">${name}</div>
                 <div class="text-[10px] text-slate-400 truncate">${fullName}</div>
               </div>
@@ -405,6 +458,7 @@
       document.getElementById("status-text").innerText = `📍 Posizionato su: ${name}`;
     }
 
+    // --- LIVELLO RILIEVO 3D ---
     let hillshadeLayer = null;
     let isHillshadeActive = false;
 
@@ -437,6 +491,8 @@
     async function openTop5Modal() {
       document.getElementById('top5-modal').classList.remove('hidden');
       const top5Body = document.getElementById('top5-body');
+      const selectedSpecie = localStorage.getItem('fungo_selected_species') || 'ALL';
+      document.getElementById('top5-subtitle').innerText = `Basato sul centro attuale (Filtro: ${selectedSpecie === 'ALL' ? 'Tutte le specie' : selectedSpecie})`;
       top5Body.innerHTML = '<div class="text-center text-slate-400 py-6">⏳ Analisi meteo nel raggio selezionato...</div>';
 
       if (typeof COMUNI_ITALIA === 'undefined' || !map) {
@@ -484,7 +540,7 @@
       top5.forEach((spot, index) => {
         let badgeColor = spot.score > 80 ? 'text-emerald-400 border-emerald-500 bg-emerald-950/30' : (spot.score > 60 ? 'text-green-400 border-green-600 bg-green-950/35' : 'text-amber-400 border-amber-600 bg-amber-950/30');
         html += `
-          <div onclick="flyToSpot(${spot.lat}, ${spot.lon}, '${spot.name.replace(/'/g, "\\'")}')" class="p-3 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 rounded-xl cursor-pointer transition flex items-center justify-between shadow">
+          <div onclick="flyToSpot(${spot.lat}, ${spot.lon}, '${spot.name.replace(/'/g, "\'")}')" class="p-3 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 rounded-xl cursor-pointer transition flex items-center justify-between shadow">
             <div class="space-y-0.5">
               <div class="font-bold text-xs text-white flex items-center space-x-1.5">
                 <span>#${index + 1}</span>
@@ -538,7 +594,7 @@
         const keys = await caches.keys();
         for (let key of keys) { await caches.delete(key); }
       }
-      alert("🧹 Cache ripulita! Ricarico...");
+      alert("🧹 Cache ripulita! Credenziali salve. Ricarico...");
       window.location.href = window.location.pathname + "?v=" + new Date().getTime();
     }
 
@@ -581,6 +637,7 @@
     function verificaAccesso() {
       if (localStorage.getItem("fungicast_auth") === "true") {
         initCustomCalendar();
+        populateSpeciesDropdown();
         initMap(); 
         loadCustomEssencesToSelect();
         return;
@@ -589,6 +646,7 @@
       if (pinInserito === PIN_CORRETTO) {
         localStorage.setItem("fungicast_auth", "true");
         initCustomCalendar();
+        populateSpeciesDropdown();
         initMap();
         loadCustomEssencesToSelect();
       } else {
@@ -597,6 +655,7 @@
       }
     }
 
+    // --- RILEVAMENTO AVANZATO OSM + ASPECT ---
     async function fetchSpotEnvironmentData(lat, lon, alt, existingHabitat, existingGeology) {
       let habitat = existingHabitat;
       let geology = existingGeology || (alt > 900 ? "Calcareo / Roccioso" : "Siliceo / Arenario");
@@ -755,7 +814,8 @@
         if (!getFileRes.ok) throw new Error("Impossibile leggere comuni_italia.js.");
         const fileData = await getFileRes.json();
 
-        const contentBase64 = fileData.content.replace(/\n/g, '');
+        const contentBase64 = fileData.content.replace(/
+/g, '');
         const currentJsText = decodeURIComponent(escape(atob(contentBase64)));
 
         const lastIndex = currentJsText.lastIndexOf("];");
@@ -764,7 +824,9 @@
         const favProp = newSpot.isFavorite ? `, isFavorite: true` : ``;
         const habProp = newSpot.habitat ? `, habitat: "${newSpot.habitat}"` : ``;
         const geoProp = newSpot.geology ? `, geology: "${newSpot.geology}"` : ``;
-        const newSpotJson = `,\n  { name: "${newSpot.name}", lat: ${newSpot.lat}, lon: ${newSpot.lon}, alt: ${newSpot.alt}, type: "Località"${habProp}${geoProp}${favProp}, minZoom: 9 }\n];`;
+        const newSpotJson = `,
+  { name: "${newSpot.name}", lat: ${newSpot.lat}, lon: ${newSpot.lon}, alt: ${newSpot.alt}, type: "Località"${habProp}${geoProp}${favProp}, minZoom: 9 }
+];`;
         const updatedJsText = currentJsText.substring(0, lastIndex) + newSpotJson;
 
         const updatedBase64 = btoa(unescape(encodeURIComponent(updatedJsText)));
@@ -805,8 +867,9 @@
         if (!getFileRes.ok) throw new Error("Impossibile leggere comuni_italia.js.");
         const fileData = await getFileRes.json();
 
-        let currentJsText = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, ''))));
-        const locPattern = new RegExp(`name:\\s*"${spotName}"[^}]*}`);
+        let currentJsText = decodeURIComponent(escape(atob(fileData.content.replace(/
+/g, ''))));
+        const locPattern = new RegExp(`name:\s*"${spotName}"[^}]*}`);
         const match = currentJsText.match(locPattern);
 
         if (match) {
@@ -867,43 +930,59 @@
       }
     }
 
-    function getTopSpecies(habitat, avgTemp, soilMoisture, goldenRain) {
-      const speciesList = [
-        { name: "Boletus aereus (Porcino Nero)", habitats: ["cerro", "querceto", "castagneto", "macchia"], strict: false, minT: 17, maxT: 25, minRain: 30 },
-        { name: "Boletus edulis (Porcino Bianco)", habitats: ["faggeta", "pineta", "conifere"], strict: false, minT: 12, maxT: 19, minRain: 35 },
-        { name: "Boletus aestivalis (Porcino Estivo)", habitats: ["castagneto", "bosco misto", "cerro", "querceto"], strict: false, minT: 16, maxT: 23, minRain: 25 },
-        { name: "Cantharellus cibarius (Finferlo)", habitats: ["faggeta", "castagneto", "bosco misto"], strict: false, minT: 14, maxT: 21, minRain: 40 },
-        { name: "Amanita caesarea (Ovolo Reale)", habitats: ["cerro", "querceto", "castagneto"], strict: false, minT: 19, maxT: 26, minRain: 25 },
-        { name: "Russula virescens (Colombina Verde)", habitats: ["querceto", "castagneto", "bosco misto"], strict: false, minT: 18, maxT: 25, minRain: 20 },
-        { name: "Russula cyanoxantha (Colombina)", habitats: ["faggeta", "bosco misto", "cerro"], strict: false, minT: 13, maxT: 20, minRain: 25 },
-        { name: "Lactarius deliciosus (Sanguinello)", habitats: ["pineta", "conifere"], strict: true, minT: 12, maxT: 19, minRain: 25 },
-        { name: "Leccinum lepidum (Leccino)", habitats: ["macchia", "querceto", "lecceta"], strict: true, minT: 15, maxT: 22, minRain: 30 },
-        { name: "Hygrophorus russula (Lardaiolo)", habitats: ["castagneto", "cerro", "querceto"], strict: false, minT: 10, maxT: 16, minRain: 30 },
-        { name: "Clitocybe geotropa (Trombetta)", habitats: ["bosco misto", "prati", "margini", "querceto"], strict: false, minT: 12, maxT: 18, minRain: 25 },
-        { name: "Tricholoma terreum (Moretta)", habitats: ["pineta", "conifere"], strict: true, minT: 8, maxT: 15, minRain: 20 }
-      ];
+    // --- BILANCIAMENTO HABITAT / MICROCLIMA ---
+    function getHabitatModifier(habitat, avgTemp, soilMoisture) {
+      let habLower = habitat.toLowerCase();
+      let tempMod = 1.0;
+      let moistureMod = 1.0;
 
+      if (habLower.includes('faggeta') || habLower.includes('conifere') || habLower.includes('pineta')) {
+        // Ombroso, fresco, trattiene bene l'umidità
+        if (avgTemp > 22) tempMod = 0.92; // attenua lo stress termico estivo
+        moistureMod = 1.12; 
+      } else if (habLower.includes('macchia') || habLower.includes('mediterranea')) {
+        // Più caldo, asciuga rapido
+        moistureMod = 0.82;
+      } else if (habLower.includes('castagneto') || habLower.includes('cerro') || habLower.includes('querceto')) {
+        // Humus equilibrato di latifoglie
+        tempMod = 1.0;
+        moistureMod = 1.05;
+      }
+      return { tempMod, moistureMod };
+    }
+
+    // --- CALCOLO SPECIE COMPATIBILI (Top Specie) ---
+    function getTopSpecies(habitat, avgTemp, soilMoisture, goldenRain, targetMonth) {
       let scored = [];
       speciesList.forEach(sp => {
         let habitatMatch = sp.habitats.some(h => habitat.toLowerCase().includes(h));
-        if (sp.strict && !habitatMatch) return;
-
+        // Se la specie è stretta, richiede habitat match deciso
         let score = 50;
         if (habitatMatch) score += 35;
         else score += 5;
 
-        if (avgTemp >= sp.minT && avgTemp <= sp.maxT) {
+        // Controllo st Stagionalità (Mesi)
+        let monthActive = sp.months.includes(targetMonth);
+        if (!monthActive) score -= 45; // fuorigioco stagionale
+
+        // Temperatura
+        let habMod = getHabitatModifier(habitat, avgTemp, soilMoisture);
+        let effectiveTemp = avgTemp * habMod.tempMod;
+
+        if (effectiveTemp >= sp.minT && effectiveTemp <= sp.maxT) {
           score += 25;
         } else {
-          let diff = Math.min(Math.abs(avgTemp - sp.minT), Math.abs(avgTemp - sp.maxT));
-          score -= diff * 6;
+          let diff = Math.min(Math.abs(effectiveTemp - sp.minT), Math.abs(effectiveTemp - sp.maxT));
+          score -= diff * 7;
         }
 
-        if (goldenRain >= sp.minRain) score += 20;
-        else score += (goldenRain / sp.minRain) * 15;
+        // Pioggia
+        let effectiveRain = goldenRain * habMod.moistureMod;
+        if (effectiveRain >= sp.minRain) score += 20;
+        else score += (effectiveRain / sp.minRain) * 15;
 
         score = Math.min(98, Math.max(5, Math.round(score)));
-        scored.push({ name: sp.name, score });
+        scored.push({ name: sp.name, score, type: sp.type, desc: sp.desc });
       });
 
       scored.sort((a, b) => b.score - a.score);
@@ -964,12 +1043,16 @@
         const favText = loc.isFavorite ? "⭐ Rimuovi dai Preferiti" : "☆ Aggiungi ai Preferiti ⭐";
         let speciesHtml = data.topSpecies.map((sp, idx) => `<li class="text-[10px] text-slate-800"><b>${idx+1}.</b> ${sp.name} <span class="text-emerald-700 font-bold">(${sp.score}%)</span></li>`).join('');
 
+        const selectedFilterName = localStorage.getItem('fungo_selected_species') || 'ALL';
+        const filterTitleTag = selectedFilterName !== 'ALL' ? `<div class="text-[10px] text-emerald-700 font-bold mb-1">🎯 Filtrato per: ${selectedFilterName}</div>` : '';
+
         const marker = L.marker([loc.lat, loc.lon], { icon: markerIcon }).addTo(map).bindPopup(`
           <div class="text-slate-900 p-1 max-w-[270px]">
             <h3 class="font-bold text-sm border-b pb-1 mb-2 flex items-center justify-between">
               <span>${loc.name} ${loc.isFavorite ? '⭐' : ''}</span>
               <span class="text-[10px] text-slate-500 font-normal">(${loc.type} - ⛰️ ${loc.alt}m)</span>
             </h3>
+            ${filterTitleTag}
             <div class="bg-slate-100 p-2 rounded-lg mb-2 text-center relative">
               <div class="text-xs text-slate-600">Probabilità Calcolata</div>
               <div class="text-xl font-black" style="color:${color}">${data.score}% (${labelText})</div>
@@ -989,16 +1072,16 @@
               <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C</p>
             </div>
             <div class="mt-3 pt-2 border-t border-slate-200 space-y-1.5 text-center">
-              <button onclick="openCalcDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-emerald-700 hover:bg-emerald-600 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
+              <button onclick="openCalcDetailsModal('${loc.name.replace(/'/g, "\'")}', '${cacheKey}')" class="bg-emerald-700 hover:bg-emerald-600 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
                 🧠 Spiegazione Calcolo %
               </button>
-              <button onclick="openDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-slate-900 hover:bg-slate-700 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
+              <button onclick="openDetailsModal('${loc.name.replace(/'/g, "\'")}', '${cacheKey}')" class="bg-slate-900 hover:bg-slate-700 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
                 📊 Dettagli Storici (20 Giorni)
               </button>
               <button onclick="refreshSingleSpot(${loc.lat}, ${loc.lon}, ${altitude}, '${cacheKey}', '${locKey}')" class="bg-blue-600 hover:bg-blue-500 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
                 🔄 Aggiorna Meteo Live
               </button>
-              <button onclick="toggleFavoriteSpot('${loc.name.replace(/'/g, "\\'")}', ${loc.lat}, ${loc.lon})" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 w-full py-1 px-3 rounded-lg text-[10px] font-bold transition shadow">
+              <button onclick="toggleFavoriteSpot('${loc.name.replace(/'/g, "\'")}', ${loc.lat}, ${loc.lon})" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 w-full py-1 px-3 rounded-lg text-[10px] font-bold transition shadow">
                 ${favText}
               </button>
             </div>
@@ -1015,8 +1098,9 @@
       const data = meteoCache[cacheKey];
       if (!data || !data.breakdown) return;
 
+      const selectedSpecie = localStorage.getItem('fungo_selected_species') || 'ALL';
       document.getElementById('calc-modal-title').innerText = `🧠 Analisi Calcolo %: ${locationName}`;
-      document.getElementById('calc-modal-subtitle').innerText = `Punteggio Finale: ${data.score}% | Dettaglio dei fattori algoritmici`;
+      document.getElementById('calc-modal-subtitle').innerText = `Punteggio Finale: ${data.score}% | Filtro Specie: ${selectedSpecie}`;
 
       const b = data.breakdown;
       let html = `
@@ -1046,7 +1130,7 @@
             </div>
             <div>
               <div class="flex justify-between text-slate-300">
-                <span>🌡️ Temperatura Media (7gg): <b>${b.avgTemp}°C</b></span>
+                <span>🌡️ Temperatura Media (7gg) [Mod. Habitat]: <b>${b.avgTemp}°C</b></span>
                 <span class="text-emerald-400 font-bold">${Math.round(b.tempScore)}% (Peso 20%)</span>
               </div>
               <div class="w-full bg-slate-900 h-1.5 rounded-full mt-1 overflow-hidden">
@@ -1066,7 +1150,8 @@
         </div>
 
         <div class="p-3 bg-slate-800 rounded-xl space-y-1.5 border border-slate-700 text-[11px]">
-          <div class="font-bold text-emerald-400">⚙️ Modificatori Ambientali & Vento:</div>
+          <div class="font-bold text-emerald-400">⚙️ Bilanciamento Microclimatico & Vento:</div>
+          <p>🌳 <b>Effetto Bosco / Habitat:</b> ${b.habitatDesc}</p>
           <p>☀️ <b>Esposizione (Aspect):</b> ${b.aspectStr} (Modificatore: x${b.aspectMultiplier})</p>
           <p>💨 <b>Vento & Evapotraspirazione:</b> ${b.windNote} ${b.dryPenalty < 1 ? `(Penalità: -${Math.round((1-b.dryPenalty)*100)}%)` : ''}</p>
         </div>
@@ -1081,7 +1166,7 @@
       if (!data || !data.dailyHistory) return;
 
       document.getElementById('modal-title').innerText = `📊 Card Storiche (20 Giorni): ${locationName}`;
-      document.getElementById('modal-subtitle').innerText = `Punteggio Totale: ${data.score}%`;
+      document.getElementById('modal-subtitle').innerText = `Punteggio Totale: ${data.score}% | Finestra d'Oro (-12 a -7gg)`;
 
       const modalBody = document.getElementById('modal-body');
       let html = `<div class="mb-3 p-2.5 bg-emerald-950/40 border border-emerald-800/50 rounded-xl text-[11px] text-emerald-300">🌿 <b>Finestra d'Oro (-12 a -7gg):</b> Giorni chiave evidenziati per la spinta del micelio.</div><div class="space-y-2">`;
@@ -1089,7 +1174,7 @@
       data.dailyHistory.forEach((day) => {
         const isGolden = day.isGolden;
         const cardBg = isGolden ? 'bg-emerald-950/40 border-emerald-500 ring-1 ring-emerald-500/50' : 'bg-slate-800/50 border-slate-700/60';
-        const badgeHtml = isGolden ? '<span class="bg-emerald-600 text-white text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">🌿 Finestra d\'Oro</span>' : '<span class="text-slate-400 text-[10px]">Giornata Standard</span>';
+        const badgeHtml = isGolden ? '<span class="bg-emerald-600 text-white text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">🌿 Finestra d'Oro (-12/-7gg)</span>' : '<span class="text-slate-400 text-[10px]">Giornata Standard</span>';
 
         html += `
           <div class="p-3 rounded-xl border ${cardBg} transition flex flex-col space-y-1.5 shadow-sm">
@@ -1104,7 +1189,7 @@
               </div>
               <div class="bg-slate-900/60 p-1.5 rounded-lg border border-slate-800">
                 <div class="text-[10px] text-slate-400">Temperature</div>
-                <div class="font-bold text-xs text-slate-200">🌡️ ${day.temp}°C</div>
+                <div class="font-bold text-xs text-slate-200">🌡️ ${day.temp}°C <span class="text-[9px] text-slate-400">(${day.tempMin}°)</span></div>
               </div>
               <div class="bg-slate-900/60 p-1.5 rounded-lg border border-slate-800">
                 <div class="text-[10px] text-slate-400">Vento Max</div>
@@ -1122,7 +1207,8 @@
 
     async function getFungiScore(lat, lon, altitude = 300, habitat = "Bosco Misto", geology = "Siliceo", aspectInfo = { aspect: 180, aspectStr: "Sud" }) {
       const targetDateStr = document.getElementById('targetDate').value;
-      const cacheKey = `${lat}_${lon}_${altitude}_${targetDateStr}`;
+      const selectedSpeciesFilter = localStorage.getItem('fungo_selected_species') || 'ALL';
+      const cacheKey = `${lat}_${lon}_${altitude}_${targetDateStr}_${selectedSpeciesFilter}`;
       if (meteoCache[cacheKey]) return meteoCache[cacheKey];
 
       try {
@@ -1161,38 +1247,80 @@
         const windSpeedDays = padArray(data.daily.wind_speed_10m_max, 21, 0);
         const windDirDays = padArray(data.daily.wind_direction_10m_dominant, 21, 0);
 
+        const targetMonth = new Date(targetDateStr).getMonth() + 1; // 1-12
+
         const totalRain = rainDays.reduce((a, b) => a + b, 0);
         const goldenWindowRain = rainDays.slice(8, 14).reduce((a, b) => a + b, 0); 
         const recentRain = rainDays.slice(17, 21).reduce((a, b) => a + b, 0); 
 
         const recentTemps = tempDays.slice(-7);
-        const avgTemp = recentTemps.reduce((a, b) => a + b, 0) / recentTemps.length;
+        const avgTempRaw = recentTemps.reduce((a, b) => a + b, 0) / recentTemps.length;
         const recentMinTemps = tempMinDays.slice(-7);
         const avgMinTemp = recentMinTemps.reduce((a, b) => a + b, 0) / recentMinTemps.length;
 
-        const soilMoistureEst = Math.min(100, Math.max(10, Math.round((totalRain * 0.4 + recentRain * 1.5) / 1.2)));
+        // Bilanciamento microclimatico basato su Habitat ed altitudine
+        const habMod = getHabitatModifier(habitat, avgTempRaw, totalRain);
+        const avgTemp = avgTempRaw * habMod.tempMod;
+        const soilMoistureEst = Math.min(100, Math.max(10, Math.round(((totalRain * 0.4 + recentRain * 1.5) / 1.2) * habMod.moistureMod)));
 
+        let baseScore = 0;
         let goldenScore = 0;
-        if (goldenWindowRain >= 25 && goldenWindowRain <= 70) goldenScore = 100;
-        else if (goldenWindowRain > 5 && goldenWindowRain < 25) goldenScore = (goldenWindowRain - 5) * 5;
-        else if (goldenWindowRain > 70) goldenScore = Math.max(0, 100 - (goldenWindowRain - 70));
-
         let soilScore = Math.min(100, soilMoistureEst * 1.5);
-
-        let minIdealTemp = altitude >= 1000 ? 10 : (altitude <= 500 ? 13 : 12);
-        let maxIdealTemp = altitude >= 1000 ? 17 : (altitude <= 500 ? 22 : 20);
-
         let tempScore = 0;
-        if (avgTemp >= minIdealTemp && avgTemp <= maxIdealTemp) tempScore = 100;
-        else if (avgTemp < minIdealTemp) tempScore = Math.max(0, 100 - (minIdealTemp - avgTemp) * 20);
-        else if (avgTemp > maxIdealTemp) tempScore = Math.max(0, 100 - (avgTemp - maxIdealTemp) * 18);
-
         let totalRainScore = 0;
-        if (totalRain >= 40 && totalRain <= 150) totalRainScore = 100;
-        else if (totalRain > 10 && totalRain < 40) totalRainScore = (totalRain - 10) * 3.3;
 
-        let combinedScore = (goldenScore * 0.45) + (soilScore * 0.20) + (tempScore * 0.20) + (totalRainScore * 0.15);
+        let habitatLower = habitat.toLowerCase();
+        let habitatDesc = "Latifoglie miste (equilibrio termico)";
+        if (habitatLower.includes('faggeta')) habitatDesc = "Faggeta montana (fresca, ottima ritenzione idrica)";
+        else if (habitatLower.includes('castagneto')) habitatDesc = "Castagneto collinare (humus ricco, ideale per porcini e amanite)";
+        else if (habitatLower.includes('querceto') || habitatLower.includes('cerro')) habitatDesc = "Querceto/Cerreta (caldo, ottimo per aereus e ovoli)";
+        else if (habitatLower.includes('pineta') || habitatLower.includes('conifere')) habitatDesc = "Pineta/Conifere (suolo acido, drenante, ideale per lattari e morette)";
 
+        if (selectedSpeciesFilter !== 'ALL') {
+          // --- ALGORITMO DEDICATO A SPECIE SINGOLA ---
+          const spObj = speciesList.find(s => s.name === selectedSpeciesFilter);
+          if (spObj) {
+            let habMatch = spObj.habitats.some(h => habitatLower.includes(h));
+            let habPoints = habMatch ? 35 : 10;
+            let monthActive = spObj.months.includes(targetMonth);
+            let monthPoints = monthActive ? 25 : 0;
+
+            if (goldenWindowRain >= spObj.minRain) goldenScore = 100;
+            else goldenScore = Math.max(0, (goldenWindowRain / spObj.minRain) * 100);
+
+            if (avgTemp >= spObj.minT && avgTemp <= spObj.maxT) tempScore = 100;
+            else {
+              let diff = Math.min(Math.abs(avgTemp - spObj.minT), Math.abs(avgTemp - spObj.maxT));
+              tempScore = Math.max(0, 100 - (diff * 12));
+            }
+
+            totalRainScore = totalRain >= 30 ? 100 : Math.round((totalRain / 30) * 100);
+
+            baseScore = (habPoints * 0.25) + (monthPoints * 0.25) + (goldenScore * 0.25) + (tempScore * 0.15) + (soilScore * 0.10);
+            if (!monthActive) baseScore *= 0.2; // Penalità severa se fuori mese
+          } else {
+            baseScore = 50;
+          }
+        } else {
+          // --- ALGORITMO GENERICO (Tutte le specie) ---
+          if (goldenWindowRain >= 25 && goldenWindowRain <= 70) goldenScore = 100;
+          else if (goldenWindowRain > 5 && goldenWindowRain < 25) goldenScore = (goldenWindowRain - 5) * 5;
+          else if (goldenWindowRain > 70) goldenScore = Math.max(0, 100 - (goldenWindowRain - 70));
+
+          let minIdealTemp = altitude >= 1000 ? 9 : (altitude <= 500 ? 13 : 11);
+          let maxIdealTemp = altitude >= 1000 ? 18 : (altitude <= 500 ? 25 : 22);
+
+          if (avgTemp >= minIdealTemp && avgTemp <= maxIdealTemp) tempScore = 100;
+          else if (avgTemp < minIdealTemp) tempScore = Math.max(0, 100 - (minIdealTemp - avgTemp) * 20);
+          else if (avgTemp > maxIdealTemp) tempScore = Math.max(0, 100 - (avgTemp - maxIdealTemp) * 18);
+
+          if (totalRain >= 40 && totalRain <= 150) totalRainScore = 100;
+          else if (totalRain > 10 && totalRain < 40) totalRainScore = (totalRain - 10) * 3.3;
+
+          baseScore = (goldenScore * 0.45) + (soilScore * 0.20) + (tempScore * 0.20) + (totalRainScore * 0.15);
+        }
+
+        // Modificatore di esposizione (Aspect)
         let aspectMultiplier = 1.0;
         if (avgTemp > 18) {
           if (aspectInfo.aspect >= 315 || aspectInfo.aspect < 45) aspectMultiplier = 1.12;
@@ -1201,8 +1329,9 @@
           if (aspectInfo.aspect >= 135 && aspectInfo.aspect <= 225) aspectMultiplier = 1.10;
           else if (aspectInfo.aspect >= 315 || aspectInfo.aspect < 45) aspectMultiplier = 0.90;
         }
-        combinedScore *= aspectMultiplier;
+        baseScore *= aspectMultiplier;
 
+        // Controllo venti secchi
         let dryWindDaysCount = 0;
         const postRainWinds = windSpeedDays.slice(14, 21);
         const postRainDirs = windDirDays.slice(14, 21);
@@ -1220,11 +1349,12 @@
         if (dryWindDaysCount >= 2) {
           dryPenalty = Math.max(0.4, 1.0 - (dryWindDaysCount * 0.12));
           windNote = `💨 Vento secco persistente (${dryWindDaysCount} giorni)`;
-          windDryNote = `⚠️ Siccità da vento prolungato (${dryWindDaysCount}gg post-pioggia)`;
+          windDryNote = `⚠️ Siccità da vento prolungato (${dryWindDaysCount}gg post-pioggia): suolo arido`;
         }
 
-        combinedScore = combinedScore * dryPenalty;
+        baseScore = baseScore * dryPenalty;
 
+        // --- CICLO DI VITA PROGRESSIVO DELLA BUTTATA ---
         let peakRainDayIndex = -1;
         let maxRainVal = 5;
         for (let i = 0; i < rainDays.length; i++) {
@@ -1245,17 +1375,18 @@
         }
 
         let daysSincePeakRain = peakRainDayIndex !== -1 ? (20 - peakRainDayIndex) : 999;
+
         let predictionNote = "Fase stazionaria / Attesa";
         let predictionColor = "text-slate-500";
         let stageMultiplier = 1.0;
 
         if (goldenWindowRain >= 20 || totalRain >= 30) {
           if (daysSincePeakRain <= 5) {
-            predictionNote = "💧 Suolo bagnato: primordi in formazione";
+            predictionNote = "💧 Suolo bagnato: primordi in formazione (boom in arrivo)";
             predictionColor = "text-blue-400 font-bold";
             stageMultiplier = 0.75; 
           } else if (daysSincePeakRain >= 6 && daysSincePeakRain <= 9) {
-            predictionNote = "🌱 Inizio buttata: primi funghi nati!";
+            predictionNote = "🌱 Inizio buttata: primi funghi piccoli appena nati!";
             predictionColor = "text-emerald-400 font-bold";
             stageMultiplier = 0.95; 
           } else if (daysSincePeakRain >= 10 && daysSincePeakRain <= 13) {
@@ -1267,19 +1398,24 @@
             predictionColor = "text-amber-400 font-bold";
             stageMultiplier = 0.70; 
           } else {
-            predictionNote = "⏳ Buttata terminata";
+            predictionNote = "⏳ Buttata terminata, in attesa nuove piogge";
             predictionColor = "text-slate-400 font-bold";
             stageMultiplier = 0.35; 
           }
+        } else if (recentRain > 25) {
+          predictionNote = "💧 Piogge recenti: suolo saturo, attesa attivazione micelio";
+          predictionColor = "text-blue-500 font-bold";
+          stageMultiplier = 0.60;
         } else {
-          predictionNote = "⏳ Condizioni asciutte";
+          predictionNote = "⏳ Condizioni asciutte, in attesa di precipitazioni";
           predictionColor = "text-slate-500";
           stageMultiplier = 0.30;
         }
 
-        combinedScore = combinedScore * stageMultiplier;
-        const finalScore = Math.min(100, Math.max(0, Math.round(combinedScore)));
-        const topSpecies = getTopSpecies(habitat, avgTemp, soilMoistureEst, goldenWindowRain);
+        baseScore = baseScore * stageMultiplier;
+        const finalScore = Math.min(100, Math.max(0, Math.round(baseScore)));
+
+        const topSpecies = getTopSpecies(habitat, avgTemp, soilMoistureEst, goldenWindowRain, targetMonth);
 
         const dailyHistory = [];
         for (let i = 0; i < timeDays.length; i++) {
@@ -1302,6 +1438,7 @@
           tempScore: Math.round(tempScore),
           totalRain: Math.round(totalRain),
           totalRainScore: Math.round(totalRainScore),
+          habitatDesc,
           aspectStr: aspectInfo.aspectStr,
           aspectMultiplier: aspectMultiplier.toFixed(2),
           windNote,
