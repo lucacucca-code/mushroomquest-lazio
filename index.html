@@ -39,7 +39,7 @@
 </head>
 <body class="bg-slate-900 text-slate-100 flex flex-col h-screen overflow-hidden">
 
-  <!-- BARRA SUPERIORE EDGE-TO-EDGE (Nome, Data, Settings, Refresh, Logout) -->
+  <!-- BARRA SUPERIORE EDGE-TO-EDGE -->
   <div class="absolute top-0 left-0 right-0 z-[1000] bg-slate-900/95 backdrop-blur-md border-b border-slate-700/50 px-3 py-2 flex items-center justify-between shadow-xl">
     <div class="flex items-center space-x-2 min-w-0">
       <span class="text-xl flex-shrink-0">🍄</span>
@@ -71,31 +71,27 @@
     </div>
   </div>
 
-  <!-- BARRA INFERIORE NAVIGAZIONALE EDGE-TO-EDGE (Cerca, Top 5, Rilievo 3D, Radar) -->
+  <!-- BARRA INFERIORE NAVIGAZIONALE EDGE-TO-EDGE -->
   <div class="absolute bottom-0 left-0 right-0 z-[1000] bg-slate-900/95 backdrop-blur-md border-t border-slate-700/50 px-4 py-2 flex items-center justify-around shadow-2xl">
-    <!-- Cerca Luogo -->
     <button onclick="openSearchModal()" class="flex flex-col items-center text-slate-300 hover:text-emerald-400 transition space-y-0.5">
       <span class="text-lg">🔍</span>
       <span class="text-[10px] font-semibold">Cerca</span>
     </button>
-    <!-- Top 5 Spot -->
     <button onclick="openTop5Modal()" class="flex flex-col items-center text-emerald-400 hover:text-emerald-300 transition space-y-0.5">
       <span class="text-lg">🏆</span>
       <span class="text-[10px] font-semibold">Top 5</span>
     </button>
-    <!-- Hillshade 3D -->
     <button onclick="toggleHillshade()" id="hillshade-btn" class="flex flex-col items-center text-slate-300 hover:text-emerald-400 transition space-y-0.5">
       <span class="text-lg">⛰️</span>
       <span class="text-[10px] font-semibold">Rilievo</span>
     </button>
-    <!-- Radar Live -->
     <button onclick="toggleRadar()" id="radar-btn" class="flex flex-col items-center text-slate-300 hover:text-emerald-400 transition space-y-0.5">
       <span class="text-lg">📡</span>
       <span class="text-[10px] font-semibold">Radar</span>
     </button>
   </div>
 
-  <!-- MODAL CERCA LUOGO (Con tasto Vai e ricerca globale su spot censiti e non) -->
+  <!-- MODAL CERCA LUOGO -->
   <div id="search-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -186,13 +182,13 @@
     </div>
   </div>
 
-  <!-- MODAL DETTAGLI STORICI (Ultimi 20 Giorni) -->
+  <!-- MODAL DETTAGLI STORICI -->
   <div id="details-modal" class="fixed inset-0 z-[2000] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
       <div class="p-4 border-b border-slate-800 flex items-center justify-between">
         <div>
           <h3 id="modal-title" class="font-bold text-base text-emerald-400">Analisi Dettagliata</h3>
-          <p id="modal-subtitle" class="text-xs text-slate-400">Storico ultimi 20 giorni (-12 a -7 gg Finestra d'Oro)</p>
+          <p id="modal-subtitle" class="text-xs text-slate-400">Storico ultimi 20 giorni</p>
         </div>
         <button onclick="closeDetailsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg p-1.5 text-sm font-bold">✕</button>
       </div>
@@ -203,7 +199,7 @@
     </div>
   </div>
 
-  <!-- MODAL AGGIUNGI / MODIFICA SPOT CON ESSENZE -->
+  <!-- MODAL AGGIUNGI SPOT -->
   <div id="add-spot-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -220,7 +216,7 @@
           <input type="number" id="new-spot-alt" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="400">
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">🌳 Essenze / Habitat (Rilevato da OSM)</label>
+          <label class="block text-slate-400 mb-1">🌳 Essenze / Habitat</label>
           <select id="new-spot-habitat-select" onchange="checkCustomHabitat(this)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2">
             <option value="Faggeta Pura / Mista">Faggeta Pura / Mista</option>
             <option value="Castagneto">Castagneto</option>
@@ -251,7 +247,6 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // --- CODA DI COMMIT AUTOMATICO A GITHUB (Ogni 1 Minuto) ---
     let pendingCommitsQueue = [];
 
     function queueSpotUpdateForGitHub(spotName, newHabitat, newGeology) {
@@ -271,7 +266,6 @@
       const ghToken = localStorage.getItem("gh_token");
       if (!ghUser || !ghRepo || !ghToken) return;
 
-      console.log(`🚀 Sincronizzazione automatica GitHub: ${pendingCommitsQueue.length} spot arricchiti.`);
       try {
         const path = "comuni_italia.js";
         const url = `https://api.github.com/repos/${ghUser}/${ghRepo}/contents/${path}`;
@@ -307,18 +301,17 @@
             method: "PUT",
             headers: { 'Authorization': `token ${ghToken}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              message: `🤖 Auto-sync: arricchiti ${updatedCount} spot (OSM/Geologia/Aspect)`,
+              message: `🤖 Auto-sync: arricchiti ${updatedCount} spot`,
               content: updatedBase64,
               sha: fileData.sha
             })
           });
           if (putRes.ok) {
-            console.log("✅ Commit automatico completato!");
             pendingCommitsQueue = [];
           }
         }
       } catch (err) {
-        console.error("❌ Errore sync GitHub automatico:", err);
+        console.error("Errore sync GitHub:", err);
       }
     }, 60000);
 
@@ -368,7 +361,6 @@
       });
     }
 
-    // --- RICERCA GLOBALE CON TASTO VAI (Cerca tra spot censiti e non censiti) ---
     function openSearchModal() {
       document.getElementById('search-modal').classList.remove('hidden');
       document.getElementById('search-query-input').value = '';
@@ -413,7 +405,6 @@
       document.getElementById("status-text").innerText = `📍 Posizionato su: ${name}`;
     }
 
-    // --- LIVELLO RILIEVO OMBREGGIATO 3D (AWS Terrain Tiles / Hillshade) ---
     let hillshadeLayer = null;
     let isHillshadeActive = false;
 
@@ -547,7 +538,7 @@
         const keys = await caches.keys();
         for (let key of keys) { await caches.delete(key); }
       }
-      alert("🧹 Cache ripulita! Credenziali salve. Ricarico...");
+      alert("🧹 Cache ripulita! Ricarico...");
       window.location.href = window.location.pathname + "?v=" + new Date().getTime();
     }
 
@@ -606,7 +597,6 @@
       }
     }
 
-    // --- RILEVAMENTO AVANZATO OSM + ASPECT CORRETTO ---
     async function fetchSpotEnvironmentData(lat, lon, alt, existingHabitat, existingGeology) {
       let habitat = existingHabitat;
       let geology = existingGeology || (alt > 900 ? "Calcareo / Roccioso" : "Siliceo / Arenario");
@@ -1091,7 +1081,7 @@
       if (!data || !data.dailyHistory) return;
 
       document.getElementById('modal-title').innerText = `📊 Card Storiche (20 Giorni): ${locationName}`;
-      document.getElementById('modal-subtitle').innerText = `Punteggio Totale: ${data.score}% | Finestra d'Oro (-12 a -7gg)`;
+      document.getElementById('modal-subtitle').innerText = `Punteggio Totale: ${data.score}%`;
 
       const modalBody = document.getElementById('modal-body');
       let html = `<div class="mb-3 p-2.5 bg-emerald-950/40 border border-emerald-800/50 rounded-xl text-[11px] text-emerald-300">🌿 <b>Finestra d'Oro (-12 a -7gg):</b> Giorni chiave evidenziati per la spinta del micelio.</div><div class="space-y-2">`;
@@ -1099,7 +1089,7 @@
       data.dailyHistory.forEach((day) => {
         const isGolden = day.isGolden;
         const cardBg = isGolden ? 'bg-emerald-950/40 border-emerald-500 ring-1 ring-emerald-500/50' : 'bg-slate-800/50 border-slate-700/60';
-        const badgeHtml = isGolden ? '<span class="bg-emerald-600 text-white text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">🌿 Finestra d\'Oro (-12/-7gg)</span>' : '<span class="text-slate-400 text-[10px]">Giornata Standard</span>';
+        const badgeHtml = isGolden ? '<span class="bg-emerald-600 text-white text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">🌿 Finestra d\'Oro</span>' : '<span class="text-slate-400 text-[10px]">Giornata Standard</span>';
 
         html += `
           <div class="p-3 rounded-xl border ${cardBg} transition flex flex-col space-y-1.5 shadow-sm">
@@ -1114,7 +1104,7 @@
               </div>
               <div class="bg-slate-900/60 p-1.5 rounded-lg border border-slate-800">
                 <div class="text-[10px] text-slate-400">Temperature</div>
-                <div class="font-bold text-xs text-slate-200">🌡️ ${day.temp}°C <span class="text-[9px] text-slate-400">(${day.tempMin}°)</span></div>
+                <div class="font-bold text-xs text-slate-200">🌡️ ${day.temp}°C</div>
               </div>
               <div class="bg-slate-900/60 p-1.5 rounded-lg border border-slate-800">
                 <div class="text-[10px] text-slate-400">Vento Max</div>
@@ -1201,10 +1191,8 @@
         if (totalRain >= 40 && totalRain <= 150) totalRainScore = 100;
         else if (totalRain > 10 && totalRain < 40) totalRainScore = (totalRain - 10) * 3.3;
 
-        // Punteggio base algoritmico
         let combinedScore = (goldenScore * 0.45) + (soilScore * 0.20) + (tempScore * 0.20) + (totalRainScore * 0.15);
 
-        // Modificatore di esposizione (Aspect)
         let aspectMultiplier = 1.0;
         if (avgTemp > 18) {
           if (aspectInfo.aspect >= 315 || aspectInfo.aspect < 45) aspectMultiplier = 1.12;
@@ -1215,7 +1203,6 @@
         }
         combinedScore *= aspectMultiplier;
 
-        // Controllo venti secchi e penalità di aridità
         let dryWindDaysCount = 0;
         const postRainWinds = windSpeedDays.slice(14, 21);
         const postRainDirs = windDirDays.slice(14, 21);
@@ -1233,13 +1220,11 @@
         if (dryWindDaysCount >= 2) {
           dryPenalty = Math.max(0.4, 1.0 - (dryWindDaysCount * 0.12));
           windNote = `💨 Vento secco persistente (${dryWindDaysCount} giorni)`;
-          windDryNote = `⚠️ Siccità da vento prolungato (${dryWindDaysCount}gg post-pioggia): suolo arido`;
+          windDryNote = `⚠️ Siccità da vento prolungato (${dryWindDaysCount}gg post-pioggia)`;
         }
 
-        // Applichiamo la penalità vento senza azzerarla
         combinedScore = combinedScore * dryPenalty;
 
-        // --- GESTIONE DEL CICLO DI VITA PROGRESSIVO DELLA BUTTATA ---
         let peakRainDayIndex = -1;
         let maxRainVal = 5;
         for (let i = 0; i < rainDays.length; i++) {
@@ -1260,18 +1245,17 @@
         }
 
         let daysSincePeakRain = peakRainDayIndex !== -1 ? (20 - peakRainDayIndex) : 999;
-
         let predictionNote = "Fase stazionaria / Attesa";
         let predictionColor = "text-slate-500";
         let stageMultiplier = 1.0;
 
         if (goldenWindowRain >= 20 || totalRain >= 30) {
           if (daysSincePeakRain <= 5) {
-            predictionNote = "💧 Suolo bagnato: primordi in formazione (boom in arrivo)";
+            predictionNote = "💧 Suolo bagnato: primordi in formazione";
             predictionColor = "text-blue-400 font-bold";
             stageMultiplier = 0.75; 
           } else if (daysSincePeakRain >= 6 && daysSincePeakRain <= 9) {
-            predictionNote = "🌱 Inizio buttata: primi funghi piccoli appena nati!";
+            predictionNote = "🌱 Inizio buttata: primi funghi nati!";
             predictionColor = "text-emerald-400 font-bold";
             stageMultiplier = 0.95; 
           } else if (daysSincePeakRain >= 10 && daysSincePeakRain <= 13) {
@@ -1283,24 +1267,18 @@
             predictionColor = "text-amber-400 font-bold";
             stageMultiplier = 0.70; 
           } else {
-            predictionNote = "⏳ Buttata terminata, in attesa nuove piogge";
+            predictionNote = "⏳ Buttata terminata";
             predictionColor = "text-slate-400 font-bold";
             stageMultiplier = 0.35; 
           }
-        } else if (recentRain > 25) {
-          predictionNote = "💧 Piogge recenti: suolo saturo, attesa attivazione micelio";
-          predictionColor = "text-blue-500 font-bold";
-          stageMultiplier = 0.60;
         } else {
-          predictionNote = "⏳ Condizioni asciutte, in attesa di precipitazioni";
+          predictionNote = "⏳ Condizioni asciutte";
           predictionColor = "text-slate-500";
           stageMultiplier = 0.30;
         }
 
-        // Applichiamo il coefficiente di stadio preservando umidità, temperatura e vento
         combinedScore = combinedScore * stageMultiplier;
         const finalScore = Math.min(100, Math.max(0, Math.round(combinedScore)));
-
         const topSpecies = getTopSpecies(habitat, avgTemp, soilMoistureEst, goldenWindowRain);
 
         const dailyHistory = [];
