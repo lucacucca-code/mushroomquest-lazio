@@ -972,6 +972,7 @@
       const bounds = map.getBounds();
       const statusText = document.getElementById("status-text");
       const targetDateStr = document.getElementById('targetDate').value;
+      const selectedSpeciesFilter = localStorage.getItem('fungo_selected_species') || 'ALL';
 
       if (typeof COMUNI_ITALIA === 'undefined') {
         statusText.innerText = "⚠️ Errore: comuni_italia.js non caricato";
@@ -987,7 +988,8 @@
       await Promise.all(visibleLocs.map(async (loc) => {
         const altitude = loc.alt || 300;
         const locKey = `${loc.lat}_${loc.lon}`;
-        const cacheKey = `${loc.lat}_${loc.lon}_${altitude}_${targetDateStr}`;
+        // Correzione chiave cache con il filtro specie incluso
+        const cacheKey = `${loc.lat}_${loc.lon}_${altitude}_${targetDateStr}_${selectedSpeciesFilter}`;
         
         if (activeMarkers[locKey]) return;
 
@@ -1021,8 +1023,7 @@
         const favText = loc.isFavorite ? "⭐ Rimuovi dai Preferiti" : "☆ Aggiungi ai Preferiti ⭐";
         let speciesHtml = data.topSpecies.map((sp, idx) => `<li class="text-[10px] text-slate-800"><b>${idx+1}.</b> ${sp.name} <span class="text-emerald-700 font-bold">(${sp.score}%)</span></li>`).join('');
 
-        const selectedFilterName = localStorage.getItem('fungo_selected_species') || 'ALL';
-        const filterTitleTag = selectedFilterName !== 'ALL' ? `<div class="text-[10px] text-emerald-700 font-bold mb-1">🎯 Filtrato per: ${selectedFilterName}</div>` : '';
+        const filterTitleTag = selectedSpeciesFilter !== 'ALL' ? `<div class="text-[10px] text-emerald-700 font-bold mb-1">🎯 Filtrato per: ${selectedSpeciesFilter}</div>` : '';
 
         const marker = L.marker([loc.lat, loc.lon], { icon: markerIcon }).addTo(map).bindPopup(`
           <div class="text-slate-900 p-1 max-w-[270px]">
