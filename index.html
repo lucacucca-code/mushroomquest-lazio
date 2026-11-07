@@ -252,27 +252,61 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // --- DATABASE ESTESO SPECIE FUNGINE (Commestibili, Tossiche, Mortali) ---
+    // --- DATABASE ESTESO A OLTRE 35 SPECIE FUNGINE (Commestibili, Tossiche, Mortali) ---
     const speciesList = [
-      { name: "Boletus aereus (Porcino Nero)", habitats: ["cerro", "querceto", "castagneto", "macchia", "bosco misto"], minT: 14, maxT: 26, minRain: 30, months: [5,6,7,8,9,10,11], type: "commestibile" },
-      { name: "Boletus edulis (Porcino Bianco)", habitats: ["faggeta", "pineta", "conifere", "castagneto", "bosco misto"], minT: 10, maxT: 20, minRain: 35, months: [6,7,8,9,10,11], type: "commestibile" },
-      { name: "Boletus aestivalis (Porcino Estivo)", habitats: ["castagneto", "bosco misto", "cerro", "querceto", "faggeta"], minT: 15, maxT: 25, minRain: 25, months: [5,6,7,8,9,10], type: "commestibile" },
-      { name: "Cantharellus cibarius (Finferlo)", habitats: ["faggeta", "castagneto", "bosco misto", "conifere"], minT: 11, maxT: 22, minRain: 35, months: [5,6,7,8,9,10,11], type: "commestibile" },
-      { name: "Amanita caesarea (Ovolo Reale)", habitats: ["cerro", "querceto", "castagneto", "macchia"], minT: 18, maxT: 28, minRain: 25, months: [6,7,8,9,10], type: "commestibile" },
-      { name: "Russula virescens (Colombina Verde)", habitats: ["querceto", "castagneto", "bosco misto", "faggeta"], minT: 16, maxT: 25, minRain: 20, months: [6,7,8,9,10], type: "commestibile" },
-      { name: "Russula cyanoxantha (Colombina)", habitats: ["faggeta", "bosco misto", "cerro"], minT: 12, maxT: 21, minRain: 25, months: [6,7,8,9,10], type: "commestibile" },
-      { name: "Lactarius deliciosus (Sanguinello)", habitats: ["pineta", "conifere"], minT: 9, maxT: 18, minRain: 25, months: [9,10,11,12], type: "commestibile" },
-      { name: "Leccinum lepidum (Leccino)", habitats: ["macchia", "querceto", "lecceta", "castagneto"], minT: 13, maxT: 22, minRain: 30, months: [10,11,12,1,2,3,4], type: "commestibile" },
-      { name: "Hygrophorus russula (Lardaiolo)", habitats: ["castagneto", "cerro", "querceto", "bosco misto"], minT: 7, maxT: 16, minRain: 30, months: [10,11,12], type: "commestibile" },
-      { name: "Clitocybe geotropa (Trombetta)", habitats: ["bosco misto", "prati", "margini", "querceto"], minT: 9, maxT: 18, minRain: 25, months: [9,10,11], type: "commestibile" },
-      { name: "Tricholoma terreum (Moretta)", habitats: ["pineta", "conifere"], minT: 5, maxT: 14, minRain: 20, months: [10,11,12,1], type: "commestibile" },
-      // TOSSICHE E MORTALI:
-      { name: "Amanita muscaria (Ovolino / Ombrellino)", habitats: ["conifere", "pineta", "faggeta", "betulla", "bosco misto"], minT: 8, maxT: 18, minRain: 25, months: [8,9,10,11], type: "tossico" },
-      { name: "Amanita pantherina (Tignosa zonato-pelosa)", habitats: ["faggeta", "castagneto", "bosco misto", "querceto"], minT: 12, maxT: 23, minRain: 25, months: [6,7,8,9,10,11], type: "tossico" },
-      { name: "Amanita phalloides (Tignosa mortale)", habitats: ["querceto", "castagneto", "faggeta", "bosco misto", "cerro"], minT: 13, maxT: 25, minRain: 30, months: [7,8,9,10,11], type: "mortale" },
-      { name: "Armillaria mellea (Chiodino / Famigliola)", habitats: ["bosco misto", "castagneto", "conifere", "latifoglie"], minT: 8, maxT: 18, minRain: 30, months: [9,10,11,12], type: "commestibile" },
-      { name: "Macrolepiota procera (Mazza di tamburo)", habitats: ["bosco misto", "margini", "radure", "castagneto", "prati"], minT: 13, maxT: 25, minRain: 20, months: [6,7,8,9,10,11], type: "commestibile" },
-      { name: "Hydnum marzuolum (Marzuolo / Fungo di marzo)", habitats: ["pineta", "conifere", "faggeta"], minT: 2, maxT: 10, minRain: 40, months: [2,3,4], type: "commestibile" }
+      // PORCINI & BOLETACEAE
+      { name: "Boletus aereus (Porcino Nero)", habitats: ["cerro", "querceto", "castagneto", "macchia", "bosco misto"], minT: 11, maxT: 26, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile" },
+      { name: "Boletus edulis (Porcino Bianco)", habitats: ["faggeta", "pineta", "conifere", "castagneto", "bosco misto"], minT: 8, maxT: 20, minRain: 30, months: [6,7,8,9,10,11], type: "commestibile" },
+      { name: "Boletus aestivalis (Porcino Estivo)", habitats: ["castagneto", "bosco misto", "cerro", "querceto", "faggeta"], minT: 12, maxT: 25, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile" },
+      { name: "Boletus pinophilus (Porcino Rosso/Pinicola)", habitats: ["pineta", "conifere", "faggeta", "castagneto"], minT: 7, maxT: 19, minRain: 30, months: [4,5,6,7,8,9,10,11], type: "commestibile" },
+      { name: "Suillellus luridus (Boleto lurido)", habitats: ["querceto", "castagneto", "faggeta", "latifoglie"], minT: 12, maxT: 25, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
+      { name: "Neoboletus erythropus (Boleto dal piede rosso)", habitats: ["faggeta", "castagneto", "conifere", "bosco misto"], minT: 9, maxT: 22, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile" },
+      { name: "Leccinum lepidum (Leccino)", habitats: ["macchia", "querceto", "lecceta", "castagneto"], minT: 11, maxT: 22, minRain: 25, months: [10,11,12,1,2,3,4], type: "commestibile" },
+      { name: "Leccinum scabrum (Cappello da muratore)", habitats: ["betulla", "bosco misto", "latifoglie"], minT: 8, maxT: 19, minRain: 25, months: [6,7,8,9,10,11], type: "commestibile" },
+      { name: "Suillus luteus (Pinarolo)", habitats: ["pineta", "conifere"], minT: 6, maxT: 18, minRain: 20, months: [9,10,11,12], type: "commestibile" },
+      { name: "Suillus granulatus (Pinarolo senza anello)", habitats: ["pineta", "conifere"], minT: 8, maxT: 20, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
+
+      // CANTHARELLACEAE & HYDNACEAE (Finferli, Trombette, Steccherini)
+      { name: "Cantharellus cibarius (Finferlo / Galletto)", habitats: ["faggeta", "castagneto", "bosco misto", "conifere"], minT: 9, maxT: 22, minRain: 30, months: [5,6,7,8,9,10,11], type: "commestibile" },
+      { name: "Craterellus cornucopioides (Trombetta dei morti)", habitats: ["faggeta", "castagneto", "querceto", "bosco misto"], minT: 8, maxT: 20, minRain: 30, months: [8,9,10,11,12], type: "commestibile" },
+      { name: "Cantharellus lutescens (Finferla / Camedrio)", habitats: ["pineta", "conifere", "faggeta"], minT: 5, maxT: 16, minRain: 25, months: [9,10,11,12,1], type: "commestibile" },
+      { name: "Hydnum repandum (Steccherino dorato)", habitats: ["faggeta", "castagneto", "conifere", "bosco misto"], minT: 6, maxT: 18, minRain: 25, months: [8,9,10,11,12,1], type: "commestibile" },
+      { name: "Hydnum marzuolum (Marzuolo / Fungo di marzo)", habitats: ["pineta", "conifere", "faggeta"], minT: 2, maxT: 12, minRain: 35, months: [1,2,3,4,5], type: "commestibile" },
+
+      // AMANITACEAE
+      { name: "Amanita caesarea (Ovolo Reale)", habitats: ["cerro", "querceto", "castagneto", "macchia"], minT: 15, maxT: 27, minRain: 25, months: [6,7,8,9,10,11], type: "commestibile" },
+      { name: "Amanita rubescens (Tignosa vinata)", habitats: ["castagneto", "faggeta", "conifere", "querceto"], minT: 9, maxT: 23, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
+      { name: "Amanita citrina (Tignosa paglierina)", habitats: ["castagneto", "querceto", "faggeta", "conifere"], minT: 8, maxT: 21, minRain: 20, months: [8,9,10,11,12], type: "commestibile" },
+      { name: "Amanita muscaria (Ovolino / Ombrellino)", habitats: ["conifere", "pineta", "faggeta", "betulla", "bosco misto"], minT: 7, maxT: 18, minRain: 20, months: [8,9,10,11,12], type: "tossico" },
+      { name: "Amanita pantherina (Tignosa zonato-pelosa)", habitats: ["faggeta", "castagneto", "bosco misto", "querceto"], minT: 10, maxT: 23, minRain: 20, months: [6,7,8,9,10,11], type: "tossico" },
+      { name: "Amanita phalloides (Tignosa mortale)", habitats: ["querceto", "castagneto", "faggeta", "bosco misto", "cerro"], minT: 11, maxT: 24, minRain: 25, months: [6,7,8,9,10,11], type: "mortale" },
+
+      // RUSSULACEAE & LACTARIUS
+      { name: "Russula virescens (Colombina Verde)", habitats: ["querceto", "castagneto", "bosco misto", "faggeta"], minT: 14, maxT: 25, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
+      { name: "Russula cyanoxantha (Colombina)", habitats: ["faggeta", "bosco misto", "cerro", "castagneto"], minT: 10, maxT: 22, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
+      { name: "Russula aurata (Colombina dorata)", habitats: ["faggeta", "castagneto", "querceto"], minT: 12, maxT: 24, minRain: 20, months: [6,7,8,9,10], type: "commestibile" },
+      { name: "Lactarius deliciosus (Sanguinello)", habitats: ["pineta", "conifere"], minT: 7, maxT: 18, minRain: 20, months: [9,10,11,12,1], type: "commestibile" },
+      { name: "Lactarius lignyotus (Lattario nero)", habitats: ["faggeta", "conifere"], minT: 8, maxT: 19, minRain: 25, months: [7,8,9,10,11], type: "commestibile" },
+
+      // PRATAIOLI, MAZZE DI TAMBURO E FUNGHI DA PRATO/RADURA
+      { name: "Macrolepiota procera (Mazza di tamburo)", habitats: ["bosco misto", "margini", "radure", "castagneto", "prati"], minT: 10, maxT: 25, minRain: 15, months: [5,6,7,8,9,10,11,12], type: "commestibile" },
+      { name: "Agaricus campestris (Prataiolo comune)", habitats: ["prati", "pascoli", "margini"], minT: 10, maxT: 23, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
+      { name: "Agaricus arvensis (Prataiolo maggiore)", habitats: ["prati", "pascoli", "radure"], minT: 9, maxT: 22, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
+      { name: "Clitopilus prunulus (Fungo del pane / Spia)", habitats: ["bosco misto", "castagneto", "faggeta", "margini", "querceto"], minT: 7, maxT: 21, minRain: 20, months: [6,7,8,9,10,11,12], type: "commestibile" },
+
+      // SPECIE LIGNOFILE & TARDIVE/INVERNALI
+      { name: "Cyclocybe aegerita (Pioppino)", habitats: ["pioppeto", "latifoglie", "bosco misto", "olmi"], minT: 9, maxT: 25, minRain: 20, months: [4,5,6,7,8,9,10,11,12], type: "commestibile" },
+      { name: "Pleurotus ostreatus (Orecchione / Gelone)", habitats: ["latifoglie", "pioppeto", "bosco misto", "faggeta"], minT: 2, maxT: 14, minRain: 20, months: [10,11,12,1,2,3], type: "commestibile" },
+      { name: "Armillaria mellea (Chiodino / Famigliola)", habitats: ["bosco misto", "castagneto", "conifere", "latifoglie"], minT: 6, maxT: 18, minRain: 25, months: [9,10,11,12,1], type: "commestibile" },
+      { name: "Hygrophorus russula (Lardaiolo rosso)", habitats: ["castagneto", "cerro", "querceto", "bosco misto"], minT: 5, maxT: 16, minRain: 25, months: [10,11,12,1], type: "commestibile" },
+      { name: "Hygrophorus penarius (Lardaiolo bianco)", habitats: ["faggeta", "querceto"], minT: 6, maxT: 17, minRain: 25, months: [9,10,11,12], type: "commestibile" },
+      { name: "Clitocybe geotropa (Trombetta / Geotropa)", habitats: ["bosco misto", "prati", "margini", "querceto", "faggeta"], minT: 7, maxT: 18, minRain: 20, months: [9,10,11,12,1], type: "commestibile" },
+      { name: "Tricholoma terreum (Moretta)", habitats: ["pineta", "conifere"], minT: 4, maxT: 15, minRain: 15, months: [10,11,12,1,2], type: "commestibile" },
+      { name: "Tricholoma portentosum (Caporinfranto)", habitats: ["conifere", "pineta", "faggeta"], minT: 3, maxT: 14, minRain: 20, months: [10,11,12,1], type: "commestibile" },
+
+      // PRIMAVERILI
+      { name: "Morchella esculenta (Spugnola)", habitats: ["bosco misto", "pioppeto", "frassino", "margini"], minT: 8, maxT: 18, minRain: 25, months: [3,4,5,6], type: "commestibile" },
+      { name: "Calocybe gambosa (Prugnolo / Fungo di S. Giorgio)", habitats: ["prati", "radure", "biancospino", "margini"], minT: 7, maxT: 18, minRain: 25, months: [3,4,5,6], type: "commestibile" }
     ];
 
     let pendingCommitsQueue = [];
@@ -917,19 +951,25 @@
       }
     }
 
-    function getHabitatModifier(habitat, avgTemp, soilMoisture) {
+    // --- REVISIONE DELL'ALGORITMO MICROCLIMATICO CON RITENZIONE TERMICA E STAGIONALE ---
+    function getHabitatModifier(habitat, avgTemp, soilMoisture, targetMonth) {
       let habLower = habitat.toLowerCase();
       let tempMod = 1.0;
       let moistureMod = 1.0;
+
+      // Autunno avanzato / Primavera: la lettiera di latifoglie mantiene il suolo caldo e trattiene l'umidità
+      if (targetMonth === 10 || targetMonth === 11 || targetMonth === 4 || targetMonth === 5) {
+        if (habLower.includes('castagneto') || habLower.includes('cerro') || habLower.includes('querceto') || habLower.includes('latifoglie')) {
+          tempMod = 1.10; // Bonus termico per miceli di boschi termofili collinari
+          moistureMod = 1.18; // Elevata ritenzione idrica da lettiera
+        }
+      }
 
       if (habLower.includes('faggeta') || habLower.includes('conifere') || habLower.includes('pineta')) {
         if (avgTemp > 22) tempMod = 0.92;
         moistureMod = 1.12; 
       } else if (habLower.includes('macchia') || habLower.includes('mediterranea')) {
-        moistureMod = 0.82;
-      } else if (habLower.includes('castagneto') || habLower.includes('cerro') || habLower.includes('querceto')) {
-        tempMod = 1.0;
-        moistureMod = 1.05;
+        moistureMod = 0.85;
       }
       return { tempMod, moistureMod };
     }
@@ -945,14 +985,14 @@
         let monthActive = sp.months.includes(targetMonth);
         if (!monthActive) score -= 45;
 
-        let habMod = getHabitatModifier(habitat, avgTemp, soilMoisture);
+        let habMod = getHabitatModifier(habitat, avgTemp, soilMoisture, targetMonth);
         let effectiveTemp = avgTemp * habMod.tempMod;
 
         if (effectiveTemp >= sp.minT && effectiveTemp <= sp.maxT) {
           score += 25;
         } else {
           let diff = Math.min(Math.abs(effectiveTemp - sp.minT), Math.abs(effectiveTemp - sp.maxT));
-          score -= diff * 7;
+          score -= diff * 6;
         }
 
         let effectiveRain = goldenRain * habMod.moistureMod;
@@ -988,7 +1028,6 @@
       await Promise.all(visibleLocs.map(async (loc) => {
         const altitude = loc.alt || 300;
         const locKey = `${loc.lat}_${loc.lon}`;
-        // Correzione chiave cache con il filtro specie incluso
         const cacheKey = `${loc.lat}_${loc.lon}_${altitude}_${targetDateStr}_${selectedSpeciesFilter}`;
         
         if (activeMarkers[locKey]) return;
@@ -1237,7 +1276,7 @@
         const recentMinTemps = tempMinDays.slice(-7);
         const avgMinTemp = recentMinTemps.reduce((a, b) => a + b, 0) / recentMinTemps.length;
 
-        const habMod = getHabitatModifier(habitat, avgTempRaw, totalRain);
+        const habMod = getHabitatModifier(habitat, avgTempRaw, totalRain, targetMonth);
         const avgTemp = avgTempRaw * habMod.tempMod;
         const soilMoistureEst = Math.min(100, Math.max(10, Math.round(((totalRain * 0.4 + recentRain * 1.5) / 1.2) * habMod.moistureMod)));
 
@@ -1268,30 +1307,31 @@
             if (avgTemp >= spObj.minT && avgTemp <= spObj.maxT) tempScore = 100;
             else {
               let diff = Math.min(Math.abs(avgTemp - spObj.minT), Math.abs(avgTemp - spObj.maxT));
-              tempScore = Math.max(0, 100 - (diff * 12));
+              tempScore = Math.max(0, 100 - (diff * 10));
             }
 
-            totalRainScore = totalRain >= 30 ? 100 : Math.round((totalRain / 30) * 100);
+            totalRainScore = totalRain >= 25 ? 100 : Math.round((totalRain / 25) * 100);
 
             baseScore = (habPoints * 0.25) + (monthPoints * 0.25) + (goldenScore * 0.25) + (tempScore * 0.15) + (soilScore * 0.10);
-            if (!monthActive) baseScore *= 0.2;
+            if (!monthActive) baseScore *= 0.3; // Penalità attenuata nei mesi spalla
           } else {
             baseScore = 50;
           }
         } else {
-          if (goldenWindowRain >= 25 && goldenWindowRain <= 70) goldenScore = 100;
-          else if (goldenWindowRain > 5 && goldenWindowRain < 25) goldenScore = (goldenWindowRain - 5) * 5;
-          else if (goldenWindowRain > 70) goldenScore = Math.max(0, 100 - (goldenWindowRain - 70));
+          if (goldenWindowRain >= 20 && goldenWindowRain <= 75) goldenScore = 100;
+          else if (goldenWindowRain > 5 && goldenWindowRain < 20) goldenScore = goldenWindowRain * 5;
+          else if (goldenWindowRain > 75) goldenScore = Math.max(0, 100 - (goldenWindowRain - 75));
 
-          let minIdealTemp = altitude >= 1000 ? 9 : (altitude <= 500 ? 13 : 11);
-          let maxIdealTemp = altitude >= 1000 ? 18 : (altitude <= 500 ? 25 : 22);
+          // Range termico allargato per includere la spinta tardo autunnale / primaverile
+          let minIdealTemp = altitude >= 1000 ? 7 : (altitude <= 500 ? 10 : 9);
+          let maxIdealTemp = altitude >= 1000 ? 19 : (altitude <= 500 ? 26 : 23);
 
           if (avgTemp >= minIdealTemp && avgTemp <= maxIdealTemp) tempScore = 100;
-          else if (avgTemp < minIdealTemp) tempScore = Math.max(0, 100 - (minIdealTemp - avgTemp) * 20);
-          else if (avgTemp > maxIdealTemp) tempScore = Math.max(0, 100 - (avgTemp - maxIdealTemp) * 18);
+          else if (avgTemp < minIdealTemp) tempScore = Math.max(0, 100 - (minIdealTemp - avgTemp) * 15);
+          else if (avgTemp > maxIdealTemp) tempScore = Math.max(0, 100 - (avgTemp - maxIdealTemp) * 15);
 
-          if (totalRain >= 40 && totalRain <= 150) totalRainScore = 100;
-          else if (totalRain > 10 && totalRain < 40) totalRainScore = (totalRain - 10) * 3.3;
+          if (totalRain >= 30 && totalRain <= 160) totalRainScore = 100;
+          else if (totalRain > 10 && totalRain < 30) totalRainScore = (totalRain - 10) * 5;
 
           baseScore = (goldenScore * 0.45) + (soilScore * 0.20) + (tempScore * 0.20) + (totalRainScore * 0.15);
         }
@@ -1300,9 +1340,9 @@
         if (avgTemp > 18) {
           if (aspectInfo.aspect >= 315 || aspectInfo.aspect < 45) aspectMultiplier = 1.12;
           else if (aspectInfo.aspect >= 135 && aspectInfo.aspect <= 225) aspectMultiplier = 0.88;
-        } else if (avgTemp < 13) {
-          if (aspectInfo.aspect >= 135 && aspectInfo.aspect <= 225) aspectMultiplier = 1.10;
-          else if (aspectInfo.aspect >= 315 || aspectInfo.aspect < 45) aspectMultiplier = 0.90;
+        } else if (avgTemp < 14) {
+          if (aspectInfo.aspect >= 135 && aspectInfo.aspect <= 225) aspectMultiplier = 1.12;
+          else if (aspectInfo.aspect >= 315 || aspectInfo.aspect < 45) aspectMultiplier = 0.88;
         }
         baseScore *= aspectMultiplier;
 
@@ -1311,7 +1351,7 @@
         const postRainDirs = windDirDays.slice(14, 21);
         
         for(let k = 0; k < postRainWinds.length; k++) {
-          if (postRainWinds[k] > 12 && (postRainDirs[k] >= 315 || postRainDirs[k] <= 67)) {
+          if (postRainWinds[k] > 14 && (postRainDirs[k] >= 315 || postRainDirs[k] <= 67)) {
             dryWindDaysCount++;
           }
         }
@@ -1321,7 +1361,7 @@
         let dryPenalty = 1.0;
 
         if (dryWindDaysCount >= 2) {
-          dryPenalty = Math.max(0.4, 1.0 - (dryWindDaysCount * 0.12));
+          dryPenalty = Math.max(0.45, 1.0 - (dryWindDaysCount * 0.10));
           windNote = `💨 Vento secco persistente (${dryWindDaysCount} giorni)`;
           windDryNote = `⚠️ Siccità da vento prolungato (${dryWindDaysCount}gg post-pioggia): suolo arido`;
         }
@@ -1353,36 +1393,36 @@
         let predictionColor = "text-slate-500";
         let stageMultiplier = 1.0;
 
-        if (goldenWindowRain >= 20 || totalRain >= 30) {
+        if (goldenWindowRain >= 15 || totalRain >= 25) {
           if (daysSincePeakRain <= 5) {
             predictionNote = "💧 Suolo bagnato: primordi in formazione (boom in arrivo)";
             predictionColor = "text-blue-400 font-bold";
-            stageMultiplier = 0.75; 
+            stageMultiplier = 0.80; 
           } else if (daysSincePeakRain >= 6 && daysSincePeakRain <= 9) {
             predictionNote = "🌱 Inizio buttata: primi funghi piccoli appena nati!";
             predictionColor = "text-emerald-400 font-bold";
-            stageMultiplier = 0.95; 
-          } else if (daysSincePeakRain >= 10 && daysSincePeakRain <= 13) {
+            stageMultiplier = 0.98; 
+          } else if (daysSincePeakRain >= 10 && daysSincePeakRain <= 14) {
             predictionNote = "🍄 Piena buttata / Fruttificazione in corso!";
             predictionColor = "text-emerald-500 font-bold";
-            stageMultiplier = 1.05; 
-          } else if (daysSincePeakRain >= 14 && daysSincePeakRain <= 17) {
+            stageMultiplier = 1.08; 
+          } else if (daysSincePeakRain >= 15 && daysSincePeakRain <= 18) {
             predictionNote = "⚠️ Buttata in chiusura (esemplari maturi)";
             predictionColor = "text-amber-400 font-bold";
-            stageMultiplier = 0.70; 
+            stageMultiplier = 0.75; 
           } else {
             predictionNote = "⏳ Buttata terminata, in attesa nuove piogge";
             predictionColor = "text-slate-400 font-bold";
-            stageMultiplier = 0.35; 
+            stageMultiplier = 0.40; 
           }
-        } else if (recentRain > 25) {
+        } else if (recentRain > 20) {
           predictionNote = "💧 Piogge recenti: suolo saturo, attesa attivazione micelio";
           predictionColor = "text-blue-500 font-bold";
-          stageMultiplier = 0.60;
+          stageMultiplier = 0.65;
         } else {
           predictionNote = "⏳ Condizioni asciutte, in attesa di precipitazioni";
           predictionColor = "text-slate-500";
-          stageMultiplier = 0.30;
+          stageMultiplier = 0.35;
         }
 
         baseScore = baseScore * stageMultiplier;
