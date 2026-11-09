@@ -252,7 +252,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // --- DATABASE ESTESO A OLTRE 35 SPECIE FUNGINE (Commestibili, Tossiche, Mortali) ---
+    // --- DATABASE ESTESO A OLTRE 35 SPECIE FUNGINE ---
     const speciesList = [
       // PORCINI & BOLETACEAE
       { name: "Boletus aereus (Porcino Nero)", habitats: ["cerro", "querceto", "castagneto", "macchia", "bosco misto"], minT: 11, maxT: 26, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile" },
@@ -266,7 +266,7 @@
       { name: "Suillus luteus (Pinarolo)", habitats: ["pineta", "conifere"], minT: 6, maxT: 18, minRain: 20, months: [9,10,11,12], type: "commestibile" },
       { name: "Suillus granulatus (Pinarolo senza anello)", habitats: ["pineta", "conifere"], minT: 8, maxT: 20, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
 
-      // CANTHARELLACEAE & HYDNACEAE (Finferli, Trombette, Steccherini)
+      // CANTHARELLACEAE & HYDNACEAE
       { name: "Cantharellus cibarius (Finferlo / Galletto)", habitats: ["faggeta", "castagneto", "bosco misto", "conifere"], minT: 9, maxT: 22, minRain: 30, months: [5,6,7,8,9,10,11], type: "commestibile" },
       { name: "Craterellus cornucopioides (Trombetta dei morti)", habitats: ["faggeta", "castagneto", "querceto", "bosco misto"], minT: 8, maxT: 20, minRain: 30, months: [8,9,10,11,12], type: "commestibile" },
       { name: "Cantharellus lutescens (Finferla / Camedrio)", habitats: ["pineta", "conifere", "faggeta"], minT: 5, maxT: 16, minRain: 25, months: [9,10,11,12,1], type: "commestibile" },
@@ -288,7 +288,7 @@
       { name: "Lactarius deliciosus (Sanguinello)", habitats: ["pineta", "conifere"], minT: 7, maxT: 18, minRain: 20, months: [9,10,11,12,1], type: "commestibile" },
       { name: "Lactarius lignyotus (Lattario nero)", habitats: ["faggeta", "conifere"], minT: 8, maxT: 19, minRain: 25, months: [7,8,9,10,11], type: "commestibile" },
 
-      // PRATAIOLI, MAZZE DI TAMBURO E FUNGHI DA PRATO/RADURA
+      // PRATAIOLI, MAZZE DI TAMBURO E RADURA
       { name: "Macrolepiota procera (Mazza di tamburo)", habitats: ["bosco misto", "margini", "radure", "castagneto", "prati"], minT: 10, maxT: 25, minRain: 15, months: [5,6,7,8,9,10,11,12], type: "commestibile" },
       { name: "Agaricus campestris (Prataiolo comune)", habitats: ["prati", "pascoli", "margini"], minT: 10, maxT: 23, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
       { name: "Agaricus arvensis (Prataiolo maggiore)", habitats: ["prati", "pascoli", "radure"], minT: 9, maxT: 22, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
@@ -951,17 +951,15 @@
       }
     }
 
-    // --- REVISIONE DELL'ALGORITMO MICROCLIMATICO CON RITENZIONE TERMICA E STAGIONALE ---
     function getHabitatModifier(habitat, avgTemp, soilMoisture, targetMonth) {
       let habLower = habitat.toLowerCase();
       let tempMod = 1.0;
       let moistureMod = 1.0;
 
-      // Autunno avanzato / Primavera: la lettiera di latifoglie mantiene il suolo caldo e trattiene l'umidità
       if (targetMonth === 10 || targetMonth === 11 || targetMonth === 4 || targetMonth === 5) {
         if (habLower.includes('castagneto') || habLower.includes('cerro') || habLower.includes('querceto') || habLower.includes('latifoglie')) {
-          tempMod = 1.10; // Bonus termico per miceli di boschi termofili collinari
-          moistureMod = 1.18; // Elevata ritenzione idrica da lettiera
+          tempMod = 1.08; 
+          moistureMod = 1.15; 
         }
       }
 
@@ -974,7 +972,7 @@
       return { tempMod, moistureMod };
     }
 
-    function getTopSpecies(habitat, avgTemp, soilMoisture, goldenRain, targetMonth) {
+    function getTopSpecies(habitat, avgTemp, soilMoisture, goldenRain, targetMonth, soilTemp) {
       let scored = [];
       speciesList.forEach(sp => {
         let habitatMatch = sp.habitats.some(h => habitat.toLowerCase().includes(h));
@@ -985,8 +983,8 @@
         let monthActive = sp.months.includes(targetMonth);
         if (!monthActive) score -= 45;
 
-        let habMod = getHabitatModifier(habitat, avgTemp, soilMoisture, targetMonth);
-        let effectiveTemp = avgTemp * habMod.tempMod;
+        // Combinazione tra Temperatura Aria e Suolo (6cm) per valutare le finestre di fruttificazione
+        let effectiveTemp = (soilTemp !== null && !isNaN(soilTemp)) ? ((avgTemp + soilTemp) / 2) : avgTemp;
 
         if (effectiveTemp >= sp.minT && effectiveTemp <= sp.maxT) {
           score += 25;
@@ -995,6 +993,7 @@
           score -= diff * 6;
         }
 
+        let habMod = getHabitatModifier(habitat, avgTemp, soilMoisture, targetMonth);
         let effectiveRain = goldenRain * habMod.moistureMod;
         if (effectiveRain >= sp.minRain) score += 20;
         else score += (effectiveRain / sp.minRain) * 15;
@@ -1087,7 +1086,8 @@
               <p><b>☀️ Esposizione:</b> ${env.aspectInfo.aspectStr}</p>
               <p><b>🌧️ Finestra d'Oro (-12 a -7gg):</b> ${data.goldenWindowRain} mm</p>
               <p><b>🌱 Umidità Suolo:</b> ${data.soilMoisture}%</p>
-              <p><b>🌡️ Temp. Media:</b> ${data.avgTemp} °C</p>
+              <p><b>🌡️ Temp. Aria (7gg):</b> ${data.avgTemp} °C</p>
+              <p><b>🌍 Temp. Suolo (6cm):</b> ${data.avgSoilTemp} °C</p>
             </div>
             <div class="mt-3 pt-2 border-t border-slate-200 space-y-1.5 text-center">
               <button onclick="openCalcDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-emerald-700 hover:bg-emerald-600 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
@@ -1148,7 +1148,7 @@
             </div>
             <div>
               <div class="flex justify-between text-slate-300">
-                <span>🌡️ Temperatura Media (7gg): <b>${b.avgTemp}°C</b></span>
+                <span>🌡️ Temp. Aria & Suolo (7gg): <b>${b.avgTemp}°C / ${b.avgSoilTemp}°C</b></span>
                 <span class="text-emerald-400 font-bold">${Math.round(b.tempScore)}% (Peso 20%)</span>
               </div>
               <div class="w-full bg-slate-900 h-1.5 rounded-full mt-1 overflow-hidden">
@@ -1206,8 +1206,8 @@
                 <div class="font-bold text-xs ${day.rain > 5 ? 'text-blue-400' : 'text-slate-300'}">🌧️ ${day.rain} mm</div>
               </div>
               <div class="bg-slate-900/60 p-1.5 rounded-lg border border-slate-800">
-                <div class="text-[10px] text-slate-400">Temperature</div>
-                <div class="font-bold text-xs text-slate-200">🌡️ ${day.temp}°C <span class="text-[9px] text-slate-400">(${day.tempMin}°)</span></div>
+                <div class="text-[10px] text-slate-400">Temp. Aria / Suolo</div>
+                <div class="font-bold text-xs text-slate-200">🌡️ ${day.temp}°C / <span class="text-emerald-400">${day.soilTemp}°C</span></div>
               </div>
               <div class="bg-slate-900/60 p-1.5 rounded-lg border border-slate-800">
                 <div class="text-[10px] text-slate-400">Vento Max</div>
@@ -1236,7 +1236,8 @@
         const isToday = (targetDateStr === localTodayStr);
         let url;
 
-        const dailyParams = "precipitation_sum,temperature_2m_mean,temperature_2m_min,wind_speed_10m_max,wind_direction_10m_dominant";
+        // Inclusione della temperatura del suolo 0-6cm nelle API giornaliere di Open-Meteo
+        const dailyParams = "precipitation_sum,temperature_2m_mean,temperature_2m_min,soil_temperature_0cm_to_6cm,wind_speed_10m_max,wind_direction_10m_dominant";
 
         if (isToday) {
           url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&past_days=20&forecast_days=1&daily=${dailyParams}&timezone=Europe%2FRome`;
@@ -1253,7 +1254,7 @@
         if (!data || !data.daily || !data.daily.precipitation_sum) return null;
 
         const padArray = (arr, len, fillVal) => {
-          let res = arr.map(v => v === null ? fillVal : v);
+          let res = (arr || []).map(v => v === null ? fillVal : v);
           while(res.length < len) res.unshift(fillVal);
           return res.slice(-len);
         };
@@ -1262,6 +1263,7 @@
         const rainDays = padArray(data.daily.precipitation_sum, 21, 0);
         const tempDays = padArray(data.daily.temperature_2m_mean, 21, 15);
         const tempMinDays = padArray(data.daily.temperature_2m_min, 21, 10);
+        const soilTempDays = padArray(data.daily.soil_temperature_0cm_to_6cm, 21, 14);
         const windSpeedDays = padArray(data.daily.wind_speed_10m_max, 21, 0);
         const windDirDays = padArray(data.daily.wind_direction_10m_dominant, 21, 0);
 
@@ -1273,11 +1275,17 @@
 
         const recentTemps = tempDays.slice(-7);
         const avgTempRaw = recentTemps.reduce((a, b) => a + b, 0) / recentTemps.length;
-        const recentMinTemps = tempMinDays.slice(-7);
-        const avgMinTemp = recentMinTemps.reduce((a, b) => a + b, 0) / recentMinTemps.length;
+
+        const recentSoilTemps = soilTempDays.slice(-7);
+        const avgSoilTempRaw = recentSoilTemps.reduce((a, b) => a + b, 0) / recentSoilTemps.length;
 
         const habMod = getHabitatModifier(habitat, avgTempRaw, totalRain, targetMonth);
         const avgTemp = avgTempRaw * habMod.tempMod;
+        const avgSoilTemp = avgSoilTempRaw * habMod.tempMod;
+
+        // Temperatura effettiva ponderata tra Aria e Suolo (6cm)
+        const effectiveAvgTemp = (avgTemp + avgSoilTemp) / 2;
+
         const soilMoistureEst = Math.min(100, Math.max(10, Math.round(((totalRain * 0.4 + recentRain * 1.5) / 1.2) * habMod.moistureMod)));
 
         let baseScore = 0;
@@ -1304,16 +1312,16 @@
             if (goldenWindowRain >= spObj.minRain) goldenScore = 100;
             else goldenScore = Math.max(0, (goldenWindowRain / spObj.minRain) * 100);
 
-            if (avgTemp >= spObj.minT && avgTemp <= spObj.maxT) tempScore = 100;
+            if (effectiveAvgTemp >= spObj.minT && effectiveAvgTemp <= spObj.maxT) tempScore = 100;
             else {
-              let diff = Math.min(Math.abs(avgTemp - spObj.minT), Math.abs(avgTemp - spObj.maxT));
+              let diff = Math.min(Math.abs(effectiveAvgTemp - spObj.minT), Math.abs(effectiveAvgTemp - spObj.maxT));
               tempScore = Math.max(0, 100 - (diff * 10));
             }
 
             totalRainScore = totalRain >= 25 ? 100 : Math.round((totalRain / 25) * 100);
 
             baseScore = (habPoints * 0.25) + (monthPoints * 0.25) + (goldenScore * 0.25) + (tempScore * 0.15) + (soilScore * 0.10);
-            if (!monthActive) baseScore *= 0.3; // Penalità attenuata nei mesi spalla
+            if (!monthActive) baseScore *= 0.3;
           } else {
             baseScore = 50;
           }
@@ -1322,13 +1330,12 @@
           else if (goldenWindowRain > 5 && goldenWindowRain < 20) goldenScore = goldenWindowRain * 5;
           else if (goldenWindowRain > 75) goldenScore = Math.max(0, 100 - (goldenWindowRain - 75));
 
-          // Range termico allargato per includere la spinta tardo autunnale / primaverile
           let minIdealTemp = altitude >= 1000 ? 7 : (altitude <= 500 ? 10 : 9);
           let maxIdealTemp = altitude >= 1000 ? 19 : (altitude <= 500 ? 26 : 23);
 
-          if (avgTemp >= minIdealTemp && avgTemp <= maxIdealTemp) tempScore = 100;
-          else if (avgTemp < minIdealTemp) tempScore = Math.max(0, 100 - (minIdealTemp - avgTemp) * 15);
-          else if (avgTemp > maxIdealTemp) tempScore = Math.max(0, 100 - (avgTemp - maxIdealTemp) * 15);
+          if (effectiveAvgTemp >= minIdealTemp && effectiveAvgTemp <= maxIdealTemp) tempScore = 100;
+          else if (effectiveAvgTemp < minIdealTemp) tempScore = Math.max(0, 100 - (minIdealTemp - effectiveAvgTemp) * 15);
+          else if (effectiveAvgTemp > maxIdealTemp) tempScore = Math.max(0, 100 - (effectiveAvgTemp - maxIdealTemp) * 15);
 
           if (totalRain >= 30 && totalRain <= 160) totalRainScore = 100;
           else if (totalRain > 10 && totalRain < 30) totalRainScore = (totalRain - 10) * 5;
@@ -1337,10 +1344,10 @@
         }
 
         let aspectMultiplier = 1.0;
-        if (avgTemp > 18) {
+        if (effectiveAvgTemp > 18) {
           if (aspectInfo.aspect >= 315 || aspectInfo.aspect < 45) aspectMultiplier = 1.12;
           else if (aspectInfo.aspect >= 135 && aspectInfo.aspect <= 225) aspectMultiplier = 0.88;
-        } else if (avgTemp < 14) {
+        } else if (effectiveAvgTemp < 14) {
           if (aspectInfo.aspect >= 135 && aspectInfo.aspect <= 225) aspectMultiplier = 1.12;
           else if (aspectInfo.aspect >= 315 || aspectInfo.aspect < 45) aspectMultiplier = 0.88;
         }
@@ -1428,7 +1435,7 @@
         baseScore = baseScore * stageMultiplier;
         const finalScore = Math.min(100, Math.max(0, Math.round(baseScore)));
 
-        const topSpecies = getTopSpecies(habitat, avgTemp, soilMoistureEst, goldenWindowRain, targetMonth);
+        const topSpecies = getTopSpecies(habitat, avgTemp, soilMoistureEst, goldenWindowRain, targetMonth, avgSoilTemp);
 
         const dailyHistory = [];
         for (let i = 0; i < timeDays.length; i++) {
@@ -1436,6 +1443,7 @@
             date: timeDays[i] || `Giorno ${i}`,
             rain: Math.round(rainDays[i] * 10) / 10,
             temp: Math.round(tempDays[i]),
+            soilTemp: Math.round(soilTempDays[i]),
             tempMin: Math.round(tempMinDays[i]),
             wind: Math.round(windSpeedDays[i]),
             isGolden: (i >= 8 && i <= 13)
@@ -1448,6 +1456,7 @@
           soilMoisture: soilMoistureEst,
           soilScore: Math.round(soilScore),
           avgTemp: Math.round(avgTemp),
+          avgSoilTemp: Math.round(avgSoilTemp),
           tempScore: Math.round(tempScore),
           totalRain: Math.round(totalRain),
           totalRainScore: Math.round(totalRainScore),
@@ -1462,7 +1471,7 @@
           goldenWindowRain: Math.round(goldenWindowRain),
           soilMoisture: soilMoistureEst,
           predictionNote, predictionColor, windDryNote,
-          avgTemp: Math.round(avgTemp), avgMinTemp: Math.round(avgMinTemp),
+          avgTemp: Math.round(avgTemp), avgSoilTemp: Math.round(avgSoilTemp), avgMinTemp: Math.round(avgMinTemp),
           windSpeed: Math.round(windSpeedDays[20]), windNote,
           score: finalScore,
           topSpecies,
