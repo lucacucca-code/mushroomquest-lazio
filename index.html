@@ -252,7 +252,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // --- DATABASE ESTESO A OLTRE 35 SPECIE FUNGINE ---
+    // --- DATABASE ESTESO A OLTRE 35 SPECIE FUNGINE (Commestibili, Tossiche, Mortali) ---
     const speciesList = [
       // PORCINI & BOLETACEAE
       { name: "Boletus aereus (Porcino Nero)", habitats: ["cerro", "querceto", "castagneto", "macchia", "bosco misto"], minT: 11, maxT: 26, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile" },
@@ -266,7 +266,7 @@
       { name: "Suillus luteus (Pinarolo)", habitats: ["pineta", "conifere"], minT: 6, maxT: 18, minRain: 20, months: [9,10,11,12], type: "commestibile" },
       { name: "Suillus granulatus (Pinarolo senza anello)", habitats: ["pineta", "conifere"], minT: 8, maxT: 20, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
 
-      // CANTHARELLACEAE & HYDNACEAE
+      // CANTHARELLACEAE & HYDNACEAE (Finferli, Trombette, Steccherini)
       { name: "Cantharellus cibarius (Finferlo / Galletto)", habitats: ["faggeta", "castagneto", "bosco misto", "conifere"], minT: 9, maxT: 22, minRain: 30, months: [5,6,7,8,9,10,11], type: "commestibile" },
       { name: "Craterellus cornucopioides (Trombetta dei morti)", habitats: ["faggeta", "castagneto", "querceto", "bosco misto"], minT: 8, maxT: 20, minRain: 30, months: [8,9,10,11,12], type: "commestibile" },
       { name: "Cantharellus lutescens (Finferla / Camedrio)", habitats: ["pineta", "conifere", "faggeta"], minT: 5, maxT: 16, minRain: 25, months: [9,10,11,12,1], type: "commestibile" },
@@ -288,7 +288,7 @@
       { name: "Lactarius deliciosus (Sanguinello)", habitats: ["pineta", "conifere"], minT: 7, maxT: 18, minRain: 20, months: [9,10,11,12,1], type: "commestibile" },
       { name: "Lactarius lignyotus (Lattario nero)", habitats: ["faggeta", "conifere"], minT: 8, maxT: 19, minRain: 25, months: [7,8,9,10,11], type: "commestibile" },
 
-      // PRATAIOLI, MAZZE DI TAMBURO E RADURA
+      // PRATAIOLI, MAZZE DI TAMBURO E FUNGHI DA PRATO/RADURA
       { name: "Macrolepiota procera (Mazza di tamburo)", habitats: ["bosco misto", "margini", "radure", "castagneto", "prati"], minT: 10, maxT: 25, minRain: 15, months: [5,6,7,8,9,10,11,12], type: "commestibile" },
       { name: "Agaricus campestris (Prataiolo comune)", habitats: ["prati", "pascoli", "margini"], minT: 10, maxT: 23, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
       { name: "Agaricus arvensis (Prataiolo maggiore)", habitats: ["prati", "pascoli", "radure"], minT: 9, maxT: 22, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
@@ -983,7 +983,6 @@
         let monthActive = sp.months.includes(targetMonth);
         if (!monthActive) score -= 45;
 
-        // Combinazione tra Temperatura Aria e Suolo (6cm) per valutare le finestre di fruttificazione
         let effectiveTemp = (soilTemp !== null && !isNaN(soilTemp)) ? ((avgTemp + soilTemp) / 2) : avgTemp;
 
         if (effectiveTemp >= sp.minT && effectiveTemp <= sp.maxT) {
@@ -1236,8 +1235,8 @@
         const isToday = (targetDateStr === localTodayStr);
         let url;
 
-        // Inclusione della temperatura del suolo 0-6cm nelle API giornaliere di Open-Meteo
-        const dailyParams = "precipitation_sum,temperature_2m_mean,temperature_2m_min,soil_temperature_0cm_to_6cm,wind_speed_10m_max,wind_direction_10m_dominant";
+        // PARAMETRO CORRETTO PER OPEN-METEO DAILY: soil_temperature_0_to_6cm_mean
+        const dailyParams = "precipitation_sum,temperature_2m_mean,temperature_2m_min,soil_temperature_0_to_6cm_mean,wind_speed_10m_max,wind_direction_10m_dominant";
 
         if (isToday) {
           url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&past_days=20&forecast_days=1&daily=${dailyParams}&timezone=Europe%2FRome`;
@@ -1263,7 +1262,7 @@
         const rainDays = padArray(data.daily.precipitation_sum, 21, 0);
         const tempDays = padArray(data.daily.temperature_2m_mean, 21, 15);
         const tempMinDays = padArray(data.daily.temperature_2m_min, 21, 10);
-        const soilTempDays = padArray(data.daily.soil_temperature_0cm_to_6cm, 21, 14);
+        const soilTempDays = padArray(data.daily.soil_temperature_0_to_6cm_mean, 21, 14);
         const windSpeedDays = padArray(data.daily.wind_speed_10m_max, 21, 0);
         const windDirDays = padArray(data.daily.wind_direction_10m_dominant, 21, 0);
 
@@ -1283,7 +1282,6 @@
         const avgTemp = avgTempRaw * habMod.tempMod;
         const avgSoilTemp = avgSoilTempRaw * habMod.tempMod;
 
-        // Temperatura effettiva ponderata tra Aria e Suolo (6cm)
         const effectiveAvgTemp = (avgTemp + avgSoilTemp) / 2;
 
         const soilMoistureEst = Math.min(100, Math.max(10, Math.round(((totalRain * 0.4 + recentRain * 1.5) / 1.2) * habMod.moistureMod)));
