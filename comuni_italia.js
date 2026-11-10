@@ -128,7 +128,7 @@ const COMUNI_ITALIA = [
 
   // --- TRENTINO-ALTO ADIGE ---
   { name: "Trento", lat: 46.0679, lon: 11.1211, alt: 194, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Provincia", minZoom: 0 },
-  { name: "Bolzano", lat: 46.4983, lon: 11.3548, alt: 262, type: "Provincia", minZoom: 0 },
+  { name: "Bolzano", lat: 46.4983, lon: 11.3548, alt: 262, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Provincia", minZoom: 0 },
   { name: "Moena (Val di Fassa)", lat: 46.3756, lon: 11.6708, alt: 1148, type: "Comune", minZoom: 9 },
   { name: "Cavalese (Val di Fiemme)", lat: 46.2933, lon: 11.4625, alt: 1000, type: "Comune", minZoom: 9 },
   { name: "San Martino di Castrozza", lat: 46.2956, lon: 11.7983, alt: 1487, type: "Località", minZoom: 9 },
