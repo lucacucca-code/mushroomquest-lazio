@@ -189,4 +189,6 @@ const COMUNI_ITALIA = [
   { name: "Riparbella", lat: 43.3463, lon: 10.5418, alt: 52, type: "Località", habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", isFavorite: true, minZoom: 9 }
 ,
   { name: "San Gregorio da sassola", lat: 41.918, lon: 12.8721, alt: 400, type: "Località", habitat: "Bosco Misto", geology: "Siliceo / Arenario", minZoom: 9 }
+,
+  { name: "Pineta Livata", lat: 41.9471, lon: 13.1429, alt: 1350, type: "Località", habitat: "Pineta / Conifere", geology: "Calcareo / Roccioso", isFavorite: true, minZoom: 9 }
 ];
