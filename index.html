@@ -252,9 +252,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // --- DATABASE ESTESO A OLTRE 35 SPECIE FUNGINE ---
+    // --- DATABASE ESTESO SPECIE FUNGINE ---
     const speciesList = [
-      // PORCINI & BOLETACEAE
       { name: "Boletus aereus (Porcino Nero)", habitats: ["cerro", "querceto", "castagneto", "macchia", "bosco misto"], minT: 11, maxT: 26, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile" },
       { name: "Boletus edulis (Porcino Bianco)", habitats: ["faggeta", "pineta", "conifere", "castagneto", "bosco misto"], minT: 8, maxT: 20, minRain: 30, months: [6,7,8,9,10,11], type: "commestibile" },
       { name: "Boletus aestivalis (Porcino Estivo)", habitats: ["castagneto", "bosco misto", "cerro", "querceto", "faggeta"], minT: 12, maxT: 25, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile" },
@@ -262,51 +261,11 @@
       { name: "Suillellus luridus (Boleto lurido)", habitats: ["querceto", "castagneto", "faggeta", "latifoglie"], minT: 12, maxT: 25, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
       { name: "Neoboletus erythropus (Boleto dal piede rosso)", habitats: ["faggeta", "castagneto", "conifere", "bosco misto"], minT: 9, maxT: 22, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile" },
       { name: "Leccinum lepidum (Leccino)", habitats: ["macchia", "querceto", "lecceta", "castagneto"], minT: 11, maxT: 22, minRain: 25, months: [10,11,12,1,2,3,4], type: "commestibile" },
-      { name: "Leccinum scabrum (Cappello da muratore)", habitats: ["betulla", "bosco misto", "latifoglie"], minT: 8, maxT: 19, minRain: 25, months: [6,7,8,9,10,11], type: "commestibile" },
-      { name: "Suillus luteus (Pinarolo)", habitats: ["pineta", "conifere"], minT: 6, maxT: 18, minRain: 20, months: [9,10,11,12], type: "commestibile" },
-      { name: "Suillus granulatus (Pinarolo senza anello)", habitats: ["pineta", "conifere"], minT: 8, maxT: 20, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
-
-      // CANTHARELLACEAE & HYDNACEAE
       { name: "Cantharellus cibarius (Finferlo / Galletto)", habitats: ["faggeta", "castagneto", "bosco misto", "conifere"], minT: 9, maxT: 22, minRain: 30, months: [5,6,7,8,9,10,11], type: "commestibile" },
       { name: "Craterellus cornucopioides (Trombetta dei morti)", habitats: ["faggeta", "castagneto", "querceto", "bosco misto"], minT: 8, maxT: 20, minRain: 30, months: [8,9,10,11,12], type: "commestibile" },
-      { name: "Cantharellus lutescens (Finferla / Camedrio)", habitats: ["pineta", "conifere", "faggeta"], minT: 5, maxT: 16, minRain: 25, months: [9,10,11,12,1], type: "commestibile" },
-      { name: "Hydnum repandum (Steccherino dorato)", habitats: ["faggeta", "castagneto", "conifere", "bosco misto"], minT: 6, maxT: 18, minRain: 25, months: [8,9,10,11,12,1], type: "commestibile" },
-      { name: "Hydnum marzuolum (Marzuolo / Fungo di marzo)", habitats: ["pineta", "conifere", "faggeta"], minT: 2, maxT: 12, minRain: 35, months: [1,2,3,4,5], type: "commestibile" },
-
-      // AMANITACEAE
       { name: "Amanita caesarea (Ovolo Reale)", habitats: ["cerro", "querceto", "castagneto", "macchia"], minT: 15, maxT: 27, minRain: 25, months: [6,7,8,9,10,11], type: "commestibile" },
-      { name: "Amanita rubescens (Tignosa vinata)", habitats: ["castagneto", "faggeta", "conifere", "querceto"], minT: 9, maxT: 23, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
-      { name: "Amanita citrina (Tignosa paglierina)", habitats: ["castagneto", "querceto", "faggeta", "conifere"], minT: 8, maxT: 21, minRain: 20, months: [8,9,10,11,12], type: "commestibile" },
-      { name: "Amanita muscaria (Ovolino / Ombrellino)", habitats: ["conifere", "pineta", "faggeta", "betulla", "bosco misto"], minT: 7, maxT: 18, minRain: 20, months: [8,9,10,11,12], type: "tossico" },
-      { name: "Amanita pantherina (Tignosa zonato-pelosa)", habitats: ["faggeta", "castagneto", "bosco misto", "querceto"], minT: 10, maxT: 23, minRain: 20, months: [6,7,8,9,10,11], type: "tossico" },
       { name: "Amanita phalloides (Tignosa mortale)", habitats: ["querceto", "castagneto", "faggeta", "bosco misto", "cerro"], minT: 11, maxT: 24, minRain: 25, months: [6,7,8,9,10,11], type: "mortale" },
-
-      // RUSSULACEAE & LACTARIUS
-      { name: "Russula virescens (Colombina Verde)", habitats: ["querceto", "castagneto", "bosco misto", "faggeta"], minT: 14, maxT: 25, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
-      { name: "Russula cyanoxantha (Colombina)", habitats: ["faggeta", "bosco misto", "cerro", "castagneto"], minT: 10, maxT: 22, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
-      { name: "Russula aurata (Colombina dorata)", habitats: ["faggeta", "castagneto", "querceto"], minT: 12, maxT: 24, minRain: 20, months: [6,7,8,9,10], type: "commestibile" },
-      { name: "Lactarius deliciosus (Sanguinello)", habitats: ["pineta", "conifere"], minT: 7, maxT: 18, minRain: 20, months: [9,10,11,12,1], type: "commestibile" },
-      { name: "Lactarius lignyotus (Lattario nero)", habitats: ["faggeta", "conifere"], minT: 8, maxT: 19, minRain: 25, months: [7,8,9,10,11], type: "commestibile" },
-
-      // MAZZE DI TAMBURO, PRATAIOLI & ALTRO
-      { name: "Macrolepiota procera (Mazza di tamburo)", habitats: ["bosco misto", "margini", "radure", "castagneto", "prati"], minT: 10, maxT: 25, minRain: 15, months: [5,6,7,8,9,10,11,12], type: "commestibile" },
-      { name: "Agaricus campestris (Prataiolo comune)", habitats: ["prati", "pascoli", "margini"], minT: 10, maxT: 23, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
-      { name: "Agaricus arvensis (Prataiolo maggiore)", habitats: ["prati", "pascoli", "radure"], minT: 9, maxT: 22, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
-      { name: "Clitopilus prunulus (Fungo del pane / Spia)", habitats: ["bosco misto", "castagneto", "faggeta", "margini", "querceto"], minT: 7, maxT: 21, minRain: 20, months: [6,7,8,9,10,11,12], type: "commestibile" },
-
-      // SPECIE LIGNOFILE & TARDIVE
-      { name: "Cyclocybe aegerita (Pioppino)", habitats: ["pioppeto", "latifoglie", "bosco misto", "olmi"], minT: 9, maxT: 25, minRain: 20, months: [4,5,6,7,8,9,10,11,12], type: "commestibile" },
-      { name: "Pleurotus ostreatus (Orecchione / Gelone)", habitats: ["latifoglie", "pioppeto", "bosco misto", "faggeta"], minT: 2, maxT: 14, minRain: 20, months: [10,11,12,1,2,3], type: "commestibile" },
-      { name: "Armillaria mellea (Chiodino / Famigliola)", habitats: ["bosco misto", "castagneto", "conifere", "latifoglie"], minT: 6, maxT: 18, minRain: 25, months: [9,10,11,12,1], type: "commestibile" },
-      { name: "Hygrophorus russula (Lardaiolo rosso)", habitats: ["castagneto", "cerro", "querceto", "bosco misto"], minT: 5, maxT: 16, minRain: 25, months: [10,11,12,1], type: "commestibile" },
-      { name: "Hygrophorus penarius (Lardaiolo bianco)", habitats: ["faggeta", "querceto"], minT: 6, maxT: 17, minRain: 25, months: [9,10,11,12], type: "commestibile" },
-      { name: "Clitocybe geotropa (Trombetta / Geotropa)", habitats: ["bosco misto", "prati", "margini", "querceto", "faggeta"], minT: 7, maxT: 18, minRain: 20, months: [9,10,11,12,1], type: "commestibile" },
-      { name: "Tricholoma terreum (Moretta)", habitats: ["pineta", "conifere"], minT: 4, maxT: 15, minRain: 15, months: [10,11,12,1,2], type: "commestibile" },
-      { name: "Tricholoma portentosum (Caporinfranto)", habitats: ["conifere", "pineta", "faggeta"], minT: 3, maxT: 14, minRain: 20, months: [10,11,12,1], type: "commestibile" },
-
-      // PRIMAVERILI
-      { name: "Morchella esculenta (Spugnola)", habitats: ["bosco misto", "pioppeto", "frassino", "margini"], minT: 8, maxT: 18, minRain: 25, months: [3,4,5,6], type: "commestibile" },
-      { name: "Calocybe gambosa (Prugnolo / Fungo di S. Giorgio)", habitats: ["prati", "radure", "biancospino", "margini"], minT: 7, maxT: 18, minRain: 25, months: [3,4,5,6], type: "commestibile" }
+      { name: "Macrolepiota procera (Mazza di tamburo)", habitats: ["bosco misto", "margini", "radure", "castagneto", "prati"], minT: 10, maxT: 25, minRain: 15, months: [5,6,7,8,9,10,11,12], type: "commestibile" }
     ];
 
     let pendingCommitsQueue = [];
@@ -359,7 +318,7 @@
 
         if (updatedCount > 0) {
           const updatedBase64 = btoa(unescape(encodeURIComponent(jsText)));
-          const putRes = await fetch(url, {
+          await fetch(url, {
             method: "PUT",
             headers: { 'Authorization': `token ${ghToken}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -368,9 +327,7 @@
               sha: fileData.sha
             })
           });
-          if (putRes.ok) {
-            pendingCommitsQueue = [];
-          }
+          pendingCommitsQueue = [];
         }
       } catch (err) {}
     }, 60000);
@@ -501,10 +458,7 @@
       } else {
         statusText.innerText = "⛰️ Attivazione Rilievo Ombreggiato 3D...";
         hillshadeLayer = L.tileLayer('https://s3.amazonaws.com/elevation-tiles-prod/hillshade/{z}/{x}/{y}.png', {
-          opacity: 0.5,
-          zIndex: 400,
-          maxZoom: 18,
-          attribution: 'AWS Terrain Tiles / Copernicus DEM'
+          opacity: 0.5, zIndex: 400, maxZoom: 18, attribution: 'AWS Terrain Tiles / Copernicus DEM'
         }).addTo(map);
 
         isHillshadeActive = true;
@@ -620,7 +574,7 @@
         const keys = await caches.keys();
         for (let key of keys) { await caches.delete(key); }
       }
-      alert("🧹 Cache ripulita! Credenziali salve. Ricarico...");
+      alert("🧹 Cache ripulita! Ricarico...");
       window.location.href = window.location.pathname + "?v=" + new Date().getTime();
     }
 
@@ -745,7 +699,7 @@
         pendingLon = parseFloat(e.latlng.lng.toFixed(4));
         const statusText = document.getElementById("status-text");
 
-        statusText.innerText = "🔍 Rilevamento dati e OpenStreetMap...";
+        statusText.innerText = "🔍 Rilevamento dati...";
 
         try {
           const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pendingLat}&lon=${pendingLon}&zoom=14&addressdetails=1`);
@@ -1086,7 +1040,7 @@
               <p><b>🌧️ Finestra d'Oro (-12 a -7gg):</b> ${data.goldenWindowRain} mm</p>
               <p><b>🌱 Umidità Suolo:</b> ${data.soilMoisture}%</p>
               <p><b>🌡️ Temp. Aria (7gg):</b> ${data.avgTemp} °C</p>
-              <p><b>🌍 Temp. Suolo (0-10cm):</b> ${data.avgSoilTemp} °C</p>
+              <p><b>🌍 Temp. Suolo (0-7cm):</b> ${data.avgSoilTemp} °C</p>
             </div>
             <div class="mt-3 pt-2 border-t border-slate-200 space-y-1.5 text-center">
               <button onclick="openCalcDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-emerald-700 hover:bg-emerald-600 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
@@ -1235,16 +1189,16 @@
         const isToday = (targetDateStr === localTodayStr);
         let url;
 
-        // PARAMETRO NATIVO OPEN-METEO DAILY: soil_temperature_0_to_10cm_mean
-        const dailyParams = "precipitation_sum,temperature_2m_mean,temperature_2m_min,soil_temperature_0_to_10cm_mean,wind_speed_10m_max,wind_direction_10m_dominant";
+        const dailyParams = "precipitation_sum,temperature_2m_mean,temperature_2m_min,wind_speed_10m_max,wind_direction_10m_dominant";
+        const hourlyParams = "soil_temperature_0_to_7cm";
 
         if (isToday) {
-          url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&past_days=20&forecast_days=1&daily=${dailyParams}&timezone=Europe%2FRome`;
+          url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&past_days=20&forecast_days=1&daily=${dailyParams}&hourly=${hourlyParams}&timezone=Europe%2FRome`;
         } else {
           const tDate = new Date(targetDateStr);
           const sDate = new Date(tDate);
           sDate.setDate(sDate.getDate() - 20);
-          url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&start_date=${sDate.toISOString().split('T')[0]}&end_date=${targetDateStr}&daily=${dailyParams}&timezone=Europe%2FRome`;
+          url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&start_date=${sDate.toISOString().split('T')[0]}&end_date=${targetDateStr}&daily=${dailyParams}&hourly=${hourlyParams}&timezone=Europe%2FRome`;
         }
 
         const res = await fetch(url);
@@ -1262,12 +1216,24 @@
         const rainDays = padArray(data.daily.precipitation_sum, 21, 0);
         const tempDays = padArray(data.daily.temperature_2m_mean, 21, 15);
         const tempMinDays = padArray(data.daily.temperature_2m_min, 21, 10);
-        
-        // Gestione con fallback automatico in caso il suolo non venga restituito dall'API
-        const soilTempDays = padArray(data.daily.soil_temperature_0_to_10cm_mean || data.daily.temperature_2m_mean, 21, 14);
-        
         const windSpeedDays = padArray(data.daily.wind_speed_10m_max, 21, 0);
         const windDirDays = padArray(data.daily.wind_direction_10m_dominant, 21, 0);
+
+        // Aggregazione delle 24 ore per calcolare la media giornaliera della temperatura del suolo
+        let soilTempDays = [];
+        if (data.hourly && data.hourly.soil_temperature_0_to_7cm) {
+          const hSoil = data.hourly.soil_temperature_0_to_7cm;
+          for (let d = 0; d < timeDays.length; d++) {
+            const dayChunk = hSoil.slice(d * 24, (d + 1) * 24).filter(v => v !== null && !isNaN(v));
+            if (dayChunk.length > 0) {
+              const dayAvg = dayChunk.reduce((a, b) => a + b, 0) / dayChunk.length;
+              soilTempDays.push(dayAvg);
+            } else {
+              soilTempDays.push(tempDays[d] || 15);
+            }
+          }
+        }
+        soilTempDays = padArray(soilTempDays, 21, 14);
 
         const targetMonth = new Date(targetDateStr).getMonth() + 1;
 
@@ -1472,7 +1438,7 @@
           goldenWindowRain: Math.round(goldenWindowRain),
           soilMoisture: soilMoistureEst,
           predictionNote, predictionColor, windDryNote,
-          avgTemp: Math.round(avgTemp), avgSoilTemp: Math.round(avgSoilTemp), avgMinTemp: Math.round(avgMinTemp),
+          avgTemp: Math.round(avgTemp), avgSoilTemp: Math.round(avgSoilTemp), avgMinTemp: Math.round(tempMinDays[20]),
           windSpeed: Math.round(windSpeedDays[20]), windNote,
           score: finalScore,
           topSpecies,
