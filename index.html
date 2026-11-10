@@ -252,7 +252,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // --- DATABASE ESTESO A OLTRE 35 SPECIE FUNGINE (Commestibili, Tossiche, Mortali) ---
+    // --- DATABASE ESTESO A OLTRE 35 SPECIE FUNGINE ---
     const speciesList = [
       // PORCINI & BOLETACEAE
       { name: "Boletus aereus (Porcino Nero)", habitats: ["cerro", "querceto", "castagneto", "macchia", "bosco misto"], minT: 11, maxT: 26, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile" },
@@ -266,7 +266,7 @@
       { name: "Suillus luteus (Pinarolo)", habitats: ["pineta", "conifere"], minT: 6, maxT: 18, minRain: 20, months: [9,10,11,12], type: "commestibile" },
       { name: "Suillus granulatus (Pinarolo senza anello)", habitats: ["pineta", "conifere"], minT: 8, maxT: 20, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
 
-      // CANTHARELLACEAE & HYDNACEAE (Finferli, Trombette, Steccherini)
+      // CANTHARELLACEAE & HYDNACEAE
       { name: "Cantharellus cibarius (Finferlo / Galletto)", habitats: ["faggeta", "castagneto", "bosco misto", "conifere"], minT: 9, maxT: 22, minRain: 30, months: [5,6,7,8,9,10,11], type: "commestibile" },
       { name: "Craterellus cornucopioides (Trombetta dei morti)", habitats: ["faggeta", "castagneto", "querceto", "bosco misto"], minT: 8, maxT: 20, minRain: 30, months: [8,9,10,11,12], type: "commestibile" },
       { name: "Cantharellus lutescens (Finferla / Camedrio)", habitats: ["pineta", "conifere", "faggeta"], minT: 5, maxT: 16, minRain: 25, months: [9,10,11,12,1], type: "commestibile" },
@@ -288,13 +288,13 @@
       { name: "Lactarius deliciosus (Sanguinello)", habitats: ["pineta", "conifere"], minT: 7, maxT: 18, minRain: 20, months: [9,10,11,12,1], type: "commestibile" },
       { name: "Lactarius lignyotus (Lattario nero)", habitats: ["faggeta", "conifere"], minT: 8, maxT: 19, minRain: 25, months: [7,8,9,10,11], type: "commestibile" },
 
-      // PRATAIOLI, MAZZE DI TAMBURO E FUNGHI DA PRATO/RADURA
+      // MAZZE DI TAMBURO, PRATAIOLI & ALTRO
       { name: "Macrolepiota procera (Mazza di tamburo)", habitats: ["bosco misto", "margini", "radure", "castagneto", "prati"], minT: 10, maxT: 25, minRain: 15, months: [5,6,7,8,9,10,11,12], type: "commestibile" },
       { name: "Agaricus campestris (Prataiolo comune)", habitats: ["prati", "pascoli", "margini"], minT: 10, maxT: 23, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
       { name: "Agaricus arvensis (Prataiolo maggiore)", habitats: ["prati", "pascoli", "radure"], minT: 9, maxT: 22, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
       { name: "Clitopilus prunulus (Fungo del pane / Spia)", habitats: ["bosco misto", "castagneto", "faggeta", "margini", "querceto"], minT: 7, maxT: 21, minRain: 20, months: [6,7,8,9,10,11,12], type: "commestibile" },
 
-      // SPECIE LIGNOFILE & TARDIVE/INVERNALI
+      // SPECIE LIGNOFILE & TARDIVE
       { name: "Cyclocybe aegerita (Pioppino)", habitats: ["pioppeto", "latifoglie", "bosco misto", "olmi"], minT: 9, maxT: 25, minRain: 20, months: [4,5,6,7,8,9,10,11,12], type: "commestibile" },
       { name: "Pleurotus ostreatus (Orecchione / Gelone)", habitats: ["latifoglie", "pioppeto", "bosco misto", "faggeta"], minT: 2, maxT: 14, minRain: 20, months: [10,11,12,1,2,3], type: "commestibile" },
       { name: "Armillaria mellea (Chiodino / Famigliola)", habitats: ["bosco misto", "castagneto", "conifere", "latifoglie"], minT: 6, maxT: 18, minRain: 25, months: [9,10,11,12,1], type: "commestibile" },
@@ -1086,7 +1086,7 @@
               <p><b>🌧️ Finestra d'Oro (-12 a -7gg):</b> ${data.goldenWindowRain} mm</p>
               <p><b>🌱 Umidità Suolo:</b> ${data.soilMoisture}%</p>
               <p><b>🌡️ Temp. Aria (7gg):</b> ${data.avgTemp} °C</p>
-              <p><b>🌍 Temp. Suolo (6cm):</b> ${data.avgSoilTemp} °C</p>
+              <p><b>🌍 Temp. Suolo (0-10cm):</b> ${data.avgSoilTemp} °C</p>
             </div>
             <div class="mt-3 pt-2 border-t border-slate-200 space-y-1.5 text-center">
               <button onclick="openCalcDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-emerald-700 hover:bg-emerald-600 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
@@ -1235,8 +1235,8 @@
         const isToday = (targetDateStr === localTodayStr);
         let url;
 
-        // PARAMETRO CORRETTO PER OPEN-METEO DAILY: soil_temperature_0_to_6cm_mean
-        const dailyParams = "precipitation_sum,temperature_2m_mean,temperature_2m_min,soil_temperature_0_to_6cm_mean,wind_speed_10m_max,wind_direction_10m_dominant";
+        // PARAMETRO NATIVO OPEN-METEO DAILY: soil_temperature_0_to_10cm_mean
+        const dailyParams = "precipitation_sum,temperature_2m_mean,temperature_2m_min,soil_temperature_0_to_10cm_mean,wind_speed_10m_max,wind_direction_10m_dominant";
 
         if (isToday) {
           url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&past_days=20&forecast_days=1&daily=${dailyParams}&timezone=Europe%2FRome`;
@@ -1262,7 +1262,10 @@
         const rainDays = padArray(data.daily.precipitation_sum, 21, 0);
         const tempDays = padArray(data.daily.temperature_2m_mean, 21, 15);
         const tempMinDays = padArray(data.daily.temperature_2m_min, 21, 10);
-        const soilTempDays = padArray(data.daily.soil_temperature_0_to_6cm_mean, 21, 14);
+        
+        // Gestione con fallback automatico in caso il suolo non venga restituito dall'API
+        const soilTempDays = padArray(data.daily.soil_temperature_0_to_10cm_mean || data.daily.temperature_2m_mean, 21, 14);
+        
         const windSpeedDays = padArray(data.daily.wind_speed_10m_max, 21, 0);
         const windDirDays = padArray(data.daily.wind_direction_10m_dominant, 21, 0);
 
