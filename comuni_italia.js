@@ -80,7 +80,7 @@ const COMUNI_ITALIA = [
   { name: "Guarcino", lat: 41.8167, lon: 13.3333, alt: 825, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Alatri", lat: 41.7333, lon: 13.3833, alt: 502, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
   { name: "Campocatino", lat: 41.8167, lon: 13.4333, alt: 1800, type: "Località", minZoom: 11 },
-  { name: "Cassino", lat: 41.4922, lon: 13.8306, alt: 40, type: "Comune", minZoom: 9 },
+  { name: "Cassino", lat: 41.4922, lon: 13.8306, alt: 40, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
 
   // --- LEPINI & AURUNCI (Sud Lazio) ---
   { name: "Sermoneta", lat: 41.5500, lon: 12.9833, alt: 157, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Comune", minZoom: 9 },
