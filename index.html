@@ -252,20 +252,20 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // --- DATABASE ESTESO SPECIE FUNGINE ---
+    // --- DATABASE ESTESO SPECIE FUNGINE CON GEOLOGIA E FINESTRE D'INCUBAZIONE DINAMICHE ---
     const speciesList = [
-      { name: "Boletus aereus (Porcino Nero)", habitats: ["cerro", "querceto", "castagneto", "macchia", "bosco misto"], minT: 11, maxT: 26, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile" },
-      { name: "Boletus edulis (Porcino Bianco)", habitats: ["faggeta", "pineta", "conifere", "castagneto", "bosco misto"], minT: 8, maxT: 20, minRain: 30, months: [6,7,8,9,10,11], type: "commestibile" },
-      { name: "Boletus aestivalis (Porcino Estivo)", habitats: ["castagneto", "bosco misto", "cerro", "querceto", "faggeta"], minT: 12, maxT: 25, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile" },
-      { name: "Boletus pinophilus (Porcino Rosso/Pinicola)", habitats: ["pineta", "conifere", "faggeta", "castagneto"], minT: 7, maxT: 19, minRain: 30, months: [4,5,6,7,8,9,10,11], type: "commestibile" },
-      { name: "Suillellus luridus (Boleto lurido)", habitats: ["querceto", "castagneto", "faggeta", "latifoglie"], minT: 12, maxT: 25, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile" },
-      { name: "Neoboletus erythropus (Boleto dal piede rosso)", habitats: ["faggeta", "castagneto", "conifere", "bosco misto"], minT: 9, maxT: 22, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile" },
-      { name: "Leccinum lepidum (Leccino)", habitats: ["macchia", "querceto", "lecceta", "castagneto"], minT: 11, maxT: 22, minRain: 25, months: [10,11,12,1,2,3,4], type: "commestibile" },
-      { name: "Cantharellus cibarius (Finferlo / Galletto)", habitats: ["faggeta", "castagneto", "bosco misto", "conifere"], minT: 9, maxT: 22, minRain: 30, months: [5,6,7,8,9,10,11], type: "commestibile" },
-      { name: "Craterellus cornucopioides (Trombetta dei morti)", habitats: ["faggeta", "castagneto", "querceto", "bosco misto"], minT: 8, maxT: 20, minRain: 30, months: [8,9,10,11,12], type: "commestibile" },
-      { name: "Amanita caesarea (Ovolo Reale)", habitats: ["cerro", "querceto", "castagneto", "macchia"], minT: 15, maxT: 27, minRain: 25, months: [6,7,8,9,10,11], type: "commestibile" },
-      { name: "Amanita phalloides (Tignosa mortale)", habitats: ["querceto", "castagneto", "faggeta", "bosco misto", "cerro"], minT: 11, maxT: 24, minRain: 25, months: [6,7,8,9,10,11], type: "mortale" },
-      { name: "Macrolepiota procera (Mazza di tamburo)", habitats: ["bosco misto", "margini", "radure", "castagneto", "prati"], minT: 10, maxT: 25, minRain: 15, months: [5,6,7,8,9,10,11,12], type: "commestibile" }
+      { name: "Boletus aereus (Porcino Nero)", habitats: ["cerro", "querceto", "castagneto", "macchia", "bosco misto"], minT: 11, maxT: 26, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile", geologyPrefs: ["siliceo", "arenario", "acido", "granito"], minDays: 6, maxDays: 9 },
+      { name: "Boletus edulis (Porcino Bianco)", habitats: ["faggeta", "pineta", "conifere", "castagneto", "bosco misto"], minT: 8, maxT: 20, minRain: 30, months: [6,7,8,9,10,11], type: "commestibile", geologyPrefs: ["siliceo", "acido", "arenario", "granito", "vulcanico"], minDays: 10, maxDays: 13 },
+      { name: "Boletus aestivalis (Porcino Estivo)", habitats: ["castagneto", "bosco misto", "cerro", "querceto", "faggeta"], minT: 12, maxT: 25, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile", geologyPrefs: ["siliceo", "arenario", "acido", "calcareo", "misto"], minDays: 7, maxDays: 10 },
+      { name: "Boletus pinophilus (Porcino Rosso/Pinicola)", habitats: ["pineta", "conifere", "faggeta", "castagneto"], minT: 7, maxT: 19, minRain: 30, months: [4,5,6,7,8,9,10,11], type: "commestibile", geologyPrefs: ["siliceo", "acido", "arenario", "granito"], minDays: 11, maxDays: 14 },
+      { name: "Suillellus luridus (Boleto lurido)", habitats: ["querceto", "castagneto", "faggeta", "latifoglie"], minT: 12, maxT: 25, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile", geologyPrefs: ["calcareo", "argilloso", "neutro", "misto"], minDays: 8, maxDays: 11 },
+      { name: "Neoboletus erythropus (Boleto dal piede rosso)", habitats: ["faggeta", "castagneto", "conifere", "bosco misto"], minT: 9, maxT: 22, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile", geologyPrefs: ["siliceo", "acido", "arenario", "calcareo"], minDays: 9, maxDays: 12 },
+      { name: "Leccinum lepidum (Leccino)", habitats: ["macchia", "querceto", "lecceta", "castagneto"], minT: 11, maxT: 22, minRain: 25, months: [10,11,12,1,2,3,4], type: "commestibile", geologyPrefs: ["siliceo", "arenario", "calcareo", "misto"], minDays: 12, maxDays: 15 },
+      { name: "Cantharellus cibarius (Finferlo / Galletto)", habitats: ["faggeta", "castagneto", "bosco misto", "conifere"], minT: 9, maxT: 22, minRain: 30, months: [5,6,7,8,9,10,11], type: "commestibile", geologyPrefs: ["siliceo", "acido", "arenario", "granito"], minDays: 12, maxDays: 16 },
+      { name: "Craterellus cornucopioides (Trombetta dei morti)", habitats: ["faggeta", "castagneto", "querceto", "bosco misto"], minT: 8, maxT: 20, minRain: 30, months: [8,9,10,11,12], type: "commestibile", geologyPrefs: ["calcareo", "argilloso", "siliceo", "misto"], minDays: 12, maxDays: 16 },
+      { name: "Amanita caesarea (Ovolo Reale)", habitats: ["cerro", "querceto", "castagneto", "macchia"], minT: 15, maxT: 27, minRain: 25, months: [6,7,8,9,10,11], type: "commestibile", geologyPrefs: ["siliceo", "arenario", "acido", "calcareo", "granito"], minDays: 6, maxDays: 9 },
+      { name: "Amanita phalloides (Tignosa mortale)", habitats: ["querceto", "castagneto", "faggeta", "bosco misto", "cerro"], minT: 11, maxT: 24, minRain: 25, months: [6,7,8,9,10,11], type: "mortale", geologyPrefs: ["siliceo", "acido", "calcareo", "misto"], minDays: 9, maxDays: 12 },
+      { name: "Macrolepiota procera (Mazza di tamburo)", habitats: ["bosco misto", "margini", "radure", "castagneto", "prati"], minT: 10, maxT: 25, minRain: 15, months: [5,6,7,8,9,10,11,12], type: "commestibile", geologyPrefs: ["siliceo", "calcareo", "misto", "arenario"], minDays: 5, maxDays: 8 }
     ];
 
     let pendingCommitsQueue = [];
@@ -445,7 +445,6 @@
     let hillshadeLayer = null;
     let isHillshadeActive = false;
 
-    // --- MODALITÀ RILIEVO AGGIORNATA CON ESRI WORLD HILLSHADE ---
     function toggleHillshade() {
       const btn = document.getElementById('hillshade-btn');
       const statusText = document.getElementById("status-text");
@@ -951,8 +950,10 @@
       return { tempMod, moistureMod };
     }
 
-    function getTopSpecies(habitat, avgTemp, soilMoisture, goldenRain, targetMonth, soilTemp) {
+    function getTopSpecies(habitat, avgTemp, soilMoisture, rainDays, targetMonth, soilTemp, geology) {
       let scored = [];
+      let geologyLower = (geology || "").toLowerCase();
+
       speciesList.forEach(sp => {
         let habitatMatch = sp.habitats.some(h => habitat.toLowerCase().includes(h));
         let score = 50;
@@ -962,7 +963,8 @@
         let monthActive = sp.months.includes(targetMonth);
         if (!monthActive) score -= 45;
 
-        let effectiveTemp = (soilTemp !== null && !isNaN(soilTemp)) ? ((avgTemp + soilTemp) / 2) : avgTemp;
+        // --- 1. RICALCOLO TERMICO INERZIALE 70/30 ---
+        let effectiveTemp = (soilTemp !== null && !isNaN(soilTemp)) ? ((soilTemp * 0.7) + (avgTemp * 0.3)) : avgTemp;
 
         if (effectiveTemp >= sp.minT && effectiveTemp <= sp.maxT) {
           score += 25;
@@ -971,8 +973,19 @@
           score -= diff * 6;
         }
 
+        // --- 3. COMPATIBILITÀ GEOLOGICA SPECIE-SPECIE ---
+        let geologyMatch = sp.geologyPrefs.some(pref => geologyLower.includes(pref));
+        if (!geologyMatch) {
+          score *= 0.6; // Penalità del 40% se la geologia non corrisponde
+        }
+
+        // --- 4. FINESTRE D'INCUBAZIONE DINAMICHE ---
+        let startIndex = Math.max(0, 25 - sp.maxDays);
+        let endIndex = Math.min(25, 25 - sp.minDays);
+        let spGoldenRain = rainDays.slice(startIndex, endIndex + 1).reduce((a, b) => a + b, 0);
+
         let habMod = getHabitatModifier(habitat, avgTemp, soilMoisture, targetMonth);
-        let effectiveRain = goldenRain * habMod.moistureMod;
+        let effectiveRain = spGoldenRain * habMod.moistureMod;
         if (effectiveRain >= sp.minRain) score += 20;
         else score += (effectiveRain / sp.minRain) * 15;
 
@@ -1053,6 +1066,7 @@
               <div class="text-xl font-black" style="color:${color}">${data.score}% (${labelText})</div>
               <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>
               ${data.windDryNote ? `<div class="text-[9px] mt-1 text-red-700 font-bold bg-red-100 p-1 rounded">${data.windDryNote}</div>` : ''}
+              ${data.geologyWarning ? `<div class="text-[9px] mt-1 text-amber-700 font-bold bg-amber-100 p-1 rounded">${data.geologyWarning}</div>` : ''}
             </div>
             <div class="bg-emerald-50 border border-emerald-200 p-1.5 rounded-lg mb-2">
               <div class="text-[10px] font-bold text-emerald-900 mb-0.5">🍄 Top 3 Specie Probabili:</div>
@@ -1064,7 +1078,7 @@
               <p><b>☀️ Esposizione:</b> ${env.aspectInfo.aspectStr}</p>
               <p><b>🌍 Umidità Profonda (Micelio):</b> ${data.deepMoisture}%</p>
               <p><b>💧 Umidità Superficiale (Primordi):</b> ${data.surfaceMoisture}%</p>
-              <p><b>🌡️ Temp. Aria / Suolo:</b> ${data.avgTemp}°C / ${data.avgSoilTemp}°C</p>
+              <p><b>🌡️ Temp. Inerziale (70% Suolo / 30% Aria):</b> ${data.effectiveTemp}°C</p>
             </div>
             <div class="mt-3 pt-2 border-t border-slate-200 space-y-1.5 text-center">
               <button onclick="openCalcDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-emerald-700 hover:bg-emerald-600 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
@@ -1108,7 +1122,7 @@
             <div>
               <div class="flex justify-between text-slate-300">
                 <span>🌍 Umidità Profonda (Micelio): <b>${b.deepMoisture}%</b></span>
-                <span class="text-cyan-400 font-bold">Riserva 25gg (Peso 20%)</span>
+                <span class="text-cyan-400 font-bold">Riserva 25gg (Ritenzione: x${b.retentionMultiplier})</span>
               </div>
               <div class="w-full bg-slate-900 h-1.5 rounded-full mt-1 overflow-hidden">
                 <div class="bg-cyan-500 h-full" style="width: ${b.deepMoisture}%"></div>
@@ -1117,7 +1131,7 @@
             <div>
               <div class="flex justify-between text-slate-300">
                 <span>💧 Umidità Superficiale & Primordi: <b>${b.surfaceMoisture}%</b></span>
-                <span class="text-emerald-400 font-bold">Finestra & Rugiada (Peso 30%)</span>
+                <span class="text-emerald-400 font-bold">Finestra Dinamica & Rugiada</span>
               </div>
               <div class="w-full bg-slate-900 h-1.5 rounded-full mt-1 overflow-hidden">
                 <div class="bg-emerald-500 h-full" style="width: ${b.surfaceMoisture}%"></div>
@@ -1125,7 +1139,7 @@
             </div>
             <div>
               <div class="flex justify-between text-slate-300">
-                <span>🌡️ Temp. Aria & Suolo: <b>${b.avgTemp}°C / ${b.avgSoilTemp}°C</b></span>
+                <span>🌡️ Temp. Inerziale (70% Suolo / 30% Aria): <b>${b.effectiveTemp}°C</b></span>
                 <span class="text-emerald-400 font-bold">Termica Specie (Peso 25%)</span>
               </div>
               <div class="w-full bg-slate-900 h-1.5 rounded-full mt-1 overflow-hidden">
@@ -1136,7 +1150,10 @@
         </div>
 
         <div class="p-3 bg-slate-800 rounded-xl space-y-1.5 border border-slate-700 text-[11px]">
-          <div class="font-bold text-emerald-400">⚙️ Dettagli Microclimatici & Evaporazione:</div>
+          <div class="font-bold text-emerald-400">⚙️ Dettagli Microclimatici & Geologia:</div>
+          <p>🪨 <b>Substrato / Geologia Spot:</b> ${b.geology}</p>
+          <p>⚖️ <b>Compatibilità Geologica Specie:</b> ${b.geologyCompatStatus}</p>
+          <p>⏳ <b>Finestra d'Incubazione Specifica:</b> ${b.incubationDaysDesc}</p>
           <p>💧 <b>Punto di Rugiada Medio:</b> ${b.avgDewPoint}°C (Scudo antievaporazione)</p>
           <p>🌳 <b>Habitat:</b> ${b.habitatDesc}</p>
           <p>☀️ <b>Esposizione:</b> ${b.aspectStr} (x${b.aspectMultiplier})</p>
@@ -1163,7 +1180,7 @@
         let cardBg = 'bg-slate-800/40 border-slate-700/50';
 
         if (day.isGolden) {
-          badgeHtml = '<span class="bg-emerald-600 text-white text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">🌿 Finestra d\'Oro (Trigger)</span>';
+          badgeHtml = '<span class="bg-emerald-600 text-white text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">🌿 Finestra d\'Incubazione</span>';
           cardBg = 'bg-emerald-950/40 border-emerald-500 ring-1 ring-emerald-500/50';
         } else if (day.isRecent) {
           badgeHtml = '<span class="bg-blue-600 text-white text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">💧 Superficiale Recente</span>';
@@ -1203,7 +1220,7 @@
       document.getElementById('details-modal').classList.remove('hidden');
     }
 
-    async function getFungiScore(lat, lon, altitude = 300, habitat = "Bosco Misto", geology = "Siliceo", aspectInfo = { aspect: 180, aspectStr: "Sud" }) {
+    async function getFungiScore(lat, lon, altitude = 300, habitat = "Bosco Misto", geology = "Siliceo / Arenario", aspectInfo = { aspect: 180, aspectStr: "Sud" }) {
       const targetDateStr = document.getElementById('targetDate').value;
       const selectedSpeciesFilter = localStorage.getItem('fungo_selected_species') || 'ALL';
       const cacheKey = `${lat}_${lon}_${altitude}_${targetDateStr}_${selectedSpeciesFilter}`;
@@ -1278,25 +1295,30 @@
         const targetMonth = new Date(targetDateStr).getMonth() + 1;
         const totalRain = rainDays.reduce((a, b) => a + b, 0);
 
+        // --- 2. MODULAZIONE DEL SUBSTRATO E GEOLOGIA NEL BILANCIO IDRICO ---
+        let geologyLower = (geology || "").toLowerCase();
+        let retentionMultiplier = 1.0;
+        if (geologyLower.includes('siliceo') || geologyLower.includes('arenario') || geologyLower.includes('acido') || geologyLower.includes('granito')) {
+          retentionMultiplier = 0.90; // Drena più rapidamente (-10% ritenzione)
+        } else if (geologyLower.includes('calcareo') || geologyLower.includes('argilloso') || geologyLower.includes('roccioso') || geologyLower.includes('neutro')) {
+          retentionMultiplier = 1.10; // Trattiene di più (+10% ritenzione)
+        }
+
         // --- MODELLO A DUE STRATI IDRICI ---
         let deepWaterSum = 0;
         for (let i = 0; i < rainDays.length; i++) {
           let decayFactor = Math.pow(0.92, 25 - i);
           deepWaterSum += rainDays[i] * decayFactor;
         }
-        const deepMoistureEst = Math.min(100, Math.max(15, Math.round(deepWaterSum * 1.8)));
+        const deepMoistureEst = Math.min(100, Math.max(15, Math.round(deepWaterSum * 1.8 * retentionMultiplier)));
 
-        const goldenWindowRain = rainDays.slice(13, 19).reduce((a, b) => a + b, 0); 
-        const surfaceRecentRain = rainDays.slice(19, 26).reduce((a, b) => a + b, 0); 
-
+        // Parametri termici recenti e scudo rugiada
         const recentTemps = tempDays.slice(-7);
         const avgTempRaw = recentTemps.reduce((a, b) => a + b, 0) / recentTemps.length;
         const recentDewPoints = dewPointDays.slice(-7);
         const avgDewPointRaw = recentDewPoints.reduce((a, b) => a + b, 0) / recentDewPoints.length;
         const dewPointDiff = Math.max(0, avgTempRaw - avgDewPointRaw);
         const humidityShield = Math.max(0.6, Math.min(1.3, 1.2 - (dewPointDiff * 0.04)));
-
-        const surfaceMoistureEst = Math.min(100, Math.max(10, Math.round((goldenWindowRain * 0.7 + surfaceRecentRain * 1.6) * humidityShield)));
 
         const recentSoilTemps = soilTempDays.slice(-7);
         const avgSoilTempRaw = recentSoilTemps.reduce((a, b) => a + b, 0) / recentSoilTemps.length;
@@ -1306,14 +1328,18 @@
         const avgSoilTemp = avgSoilTempRaw * habMod.tempMod;
         const avgDewPoint = avgDewPointRaw;
 
-        const effectiveAvgTemp = (avgTemp + avgSoilTemp) / 2;
+        // --- 1. RICALCOLO TERMICO INERZIALE (70% SUOLO / 30% ARIA) ---
+        const effectiveAvgTemp = (avgSoilTemp * 0.7) + (avgTemp * 0.3);
 
         let baseScore = 0;
         let goldenScore = 0;
         let deepScore = Math.min(100, deepMoistureEst * 1.2);
-        let surfaceScore = Math.min(100, surfaceMoistureEst * 1.3);
+        let surfaceScore = 0;
         let tempScore = 0;
         let totalRainScore = 0;
+        let geologyCompatStatus = "Compatibile / Neutro";
+        let geologyWarning = "";
+        let incubationDaysDesc = "Standard (10-14 gg)";
 
         let habitatLower = habitat.toLowerCase();
         let habitatDesc = "Latifoglie miste (equilibrio termico)";
@@ -1322,9 +1348,21 @@
         else if (habitatLower.includes('querceto') || habitatLower.includes('cerro')) habitatDesc = "Querceto/Cerreta (caldo, ottimo per aereus e ovoli)";
         else if (habitatLower.includes('pineta') || habitatLower.includes('conifere')) habitatDesc = "Pineta/Conifere (suolo acido, drenante)";
 
+        let goldenWindowRain = 0;
+        let surfaceRecentRain = rainDays.slice(19, 26).reduce((a, b) => a + b, 0);
+
         if (selectedSpeciesFilter !== 'ALL') {
           const spObj = speciesList.find(s => s.name === selectedSpeciesFilter);
           if (spObj) {
+            // Finestra d'incubazione specifica della specie
+            let startIndex = Math.max(0, 25 - spObj.maxDays);
+            let endIndex = Math.min(25, 25 - spObj.minDays);
+            goldenWindowRain = rainDays.slice(startIndex, endIndex + 1).reduce((a, b) => a + b, 0);
+            incubationDaysDesc = `${spObj.minDays}-${spObj.maxDays} giorni fa (Specifica)`;
+
+            let surfaceMoistureEst = Math.min(100, Math.max(10, Math.round((goldenWindowRain * 0.7 + surfaceRecentRain * 1.6) * humidityShield * retentionMultiplier)));
+            surfaceScore = Math.min(100, surfaceMoistureEst * 1.3);
+
             let habMatch = spObj.habitats.some(h => habitatLower.includes(h));
             let habPoints = habMatch ? 35 : 10;
             let monthActive = spObj.months.includes(targetMonth);
@@ -1347,10 +1385,25 @@
                         (deepScore * 0.10);
 
             if (!monthActive) baseScore *= 0.3;
+
+            // --- 3. COMPATIBILITÀ GEOLOGICA SPECIE-SPECIE ---
+            let geologyMatch = spObj.geologyPrefs.some(pref => geologyLower.includes(pref));
+            if (!geologyMatch) {
+              baseScore *= 0.6; // Penalità 40%
+              geologyCompatStatus = `⚠️ Incompatibile con geologia (${geology}) - Penalità -40%`;
+              geologyWarning = `⚠️ Substrato non ideale per ${spObj.name.split(' ')[0]}`;
+            } else {
+              geologyCompatStatus = `✅ Substrato geologico ideale`;
+            }
+
           } else {
             baseScore = 50;
           }
         } else {
+          goldenWindowRain = rainDays.slice(13, 19).reduce((a, b) => a + b, 0);
+          let surfaceMoistureEst = Math.min(100, Math.max(10, Math.round((goldenWindowRain * 0.7 + surfaceRecentRain * 1.6) * humidityShield * retentionMultiplier)));
+          surfaceScore = Math.min(100, surfaceMoistureEst * 1.3);
+
           if (goldenWindowRain >= 20 && goldenWindowRain <= 75) goldenScore = 100;
           else if (goldenWindowRain > 5 && goldenWindowRain < 20) goldenScore = goldenWindowRain * 5;
           else if (goldenWindowRain > 75) goldenScore = Math.max(0, 100 - (goldenWindowRain - 75));
@@ -1408,16 +1461,6 @@
             peakRainDayIndex = i;
           }
         }
-        
-        if (peakRainDayIndex === -1) {
-          let maxGolden = 0;
-          for (let i = 13; i <= 18; i++) {
-            if (rainDays[i] > maxGolden) {
-              maxGolden = rainDays[i];
-              peakRainDayIndex = i;
-            }
-          }
-        }
 
         let daysSincePeakRain = peakRainDayIndex !== -1 ? (25 - peakRainDayIndex) : 999;
 
@@ -1460,11 +1503,11 @@
         baseScore = baseScore * stageMultiplier;
         const finalScore = Math.min(100, Math.max(0, Math.round(baseScore)));
 
-        const topSpecies = getTopSpecies(habitat, avgTemp, surfaceMoistureEst, goldenWindowRain, targetMonth, avgSoilTemp);
+        const topSpecies = getTopSpecies(habitat, avgTemp, deepMoistureEst, rainDays, targetMonth, avgSoilTemp, geology);
 
         const dailyHistory = [];
         for (let i = 0; i < timeDays.length; i++) {
-          const isGolden = (i >= 13 && i <= 18);
+          const isGolden = (selectedSpeciesFilter === 'ALL') ? (i >= 13 && i <= 18) : false; // evidenza generica
           const isRecent = (i >= 19);
           dailyHistory.push({
             date: timeDays[i] || `Giorno ${i}`,
@@ -1482,13 +1525,18 @@
         const breakdown = {
           goldenRain: Math.round(goldenWindowRain),
           deepMoisture: deepMoistureEst,
-          surfaceMoisture: surfaceMoistureEst,
+          surfaceMoisture: Math.round(surfaceScore / 1.3),
           goldenScore: Math.round(goldenScore),
+          effectiveTemp: Math.round(effectiveAvgTemp * 10) / 10,
           avgTemp: Math.round(avgTemp),
           avgSoilTemp: Math.round(avgSoilTemp),
           avgDewPoint: Math.round(avgDewPoint),
           tempScore: Math.round(tempScore),
           totalRain: Math.round(totalRain),
+          geology,
+          retentionMultiplier,
+          geologyCompatStatus,
+          incubationDaysDesc,
           habitatDesc,
           aspectStr: aspectInfo.aspectStr,
           aspectMultiplier: aspectMultiplier.toFixed(2),
@@ -1499,9 +1547,10 @@
         const result = { 
           goldenWindowRain: Math.round(goldenWindowRain),
           deepMoisture: deepMoistureEst,
-          surfaceMoisture: surfaceMoistureEst,
-          predictionNote, predictionColor, windDryNote,
-          avgTemp: Math.round(avgTemp), avgSoilTemp: Math.round(avgSoilTemp), avgDewPoint: Math.round(avgDewPoint), avgMinTemp: Math.round(tempMinDays[25]),
+          surfaceMoisture: Math.round(surfaceScore / 1.3),
+          predictionNote, predictionColor, windDryNote, geologyWarning,
+          effectiveTemp: Math.round(effectiveAvgTemp * 10) / 10,
+          avgTemp: Math.round(avgTemp), avgSoilTemp: Math.round(avgSoilTemp), avgDewPoint: Math.round(avgDewPoint),
           windSpeed: Math.round(windSpeedDays[25]), windNote,
           score: finalScore,
           topSpecies,
