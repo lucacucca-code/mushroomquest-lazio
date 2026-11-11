@@ -252,21 +252,198 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // --- DATABASE ESTESO SPECIE FUNGINE CON GEOLOGIA E FINESTRE D'INCUBAZIONE DINAMICHE ---
+
+// --- DATABASE ESTESO E COMPLETO SPECIE FUNGINE (25 SPECIE) ---
     const speciesList = [
-      { name: "Boletus aereus (Porcino Nero)", habitats: ["cerro", "querceto", "castagneto", "macchia", "bosco misto"], minT: 11, maxT: 26, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile", geologyPrefs: ["siliceo", "arenario", "acido", "granito"], minDays: 6, maxDays: 9 },
-      { name: "Boletus edulis (Porcino Bianco)", habitats: ["faggeta", "pineta", "conifere", "castagneto", "bosco misto"], minT: 8, maxT: 20, minRain: 30, months: [6,7,8,9,10,11], type: "commestibile", geologyPrefs: ["siliceo", "acido", "arenario", "granito", "vulcanico"], minDays: 10, maxDays: 13 },
-      { name: "Boletus aestivalis (Porcino Estivo)", habitats: ["castagneto", "bosco misto", "cerro", "querceto", "faggeta"], minT: 12, maxT: 25, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile", geologyPrefs: ["siliceo", "arenario", "acido", "calcareo", "misto"], minDays: 7, maxDays: 10 },
-      { name: "Boletus pinophilus (Porcino Rosso/Pinicola)", habitats: ["pineta", "conifere", "faggeta", "castagneto"], minT: 7, maxT: 19, minRain: 30, months: [4,5,6,7,8,9,10,11], type: "commestibile", geologyPrefs: ["siliceo", "acido", "arenario", "granito"], minDays: 11, maxDays: 14 },
-      { name: "Suillellus luridus (Boleto lurido)", habitats: ["querceto", "castagneto", "faggeta", "latifoglie"], minT: 12, maxT: 25, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile", geologyPrefs: ["calcareo", "argilloso", "neutro", "misto"], minDays: 8, maxDays: 11 },
-      { name: "Neoboletus erythropus (Boleto dal piede rosso)", habitats: ["faggeta", "castagneto", "conifere", "bosco misto"], minT: 9, maxT: 22, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile", geologyPrefs: ["siliceo", "acido", "arenario", "calcareo"], minDays: 9, maxDays: 12 },
-      { name: "Leccinum lepidum (Leccino)", habitats: ["macchia", "querceto", "lecceta", "castagneto"], minT: 11, maxT: 22, minRain: 25, months: [10,11,12,1,2,3,4], type: "commestibile", geologyPrefs: ["siliceo", "arenario", "calcareo", "misto"], minDays: 12, maxDays: 15 },
-      { name: "Cantharellus cibarius (Finferlo / Galletto)", habitats: ["faggeta", "castagneto", "bosco misto", "conifere"], minT: 9, maxT: 22, minRain: 30, months: [5,6,7,8,9,10,11], type: "commestibile", geologyPrefs: ["siliceo", "acido", "arenario", "granito"], minDays: 12, maxDays: 16 },
-      { name: "Craterellus cornucopioides (Trombetta dei morti)", habitats: ["faggeta", "castagneto", "querceto", "bosco misto"], minT: 8, maxT: 20, minRain: 30, months: [8,9,10,11,12], type: "commestibile", geologyPrefs: ["calcareo", "argilloso", "siliceo", "misto"], minDays: 12, maxDays: 16 },
-      { name: "Amanita caesarea (Ovolo Reale)", habitats: ["cerro", "querceto", "castagneto", "macchia"], minT: 15, maxT: 27, minRain: 25, months: [6,7,8,9,10,11], type: "commestibile", geologyPrefs: ["siliceo", "arenario", "acido", "calcareo", "granito"], minDays: 6, maxDays: 9 },
-      { name: "Amanita phalloides (Tignosa mortale)", habitats: ["querceto", "castagneto", "faggeta", "bosco misto", "cerro"], minT: 11, maxT: 24, minRain: 25, months: [6,7,8,9,10,11], type: "mortale", geologyPrefs: ["siliceo", "acido", "calcareo", "misto"], minDays: 9, maxDays: 12 },
-      { name: "Macrolepiota procera (Mazza di tamburo)", habitats: ["bosco misto", "margini", "radure", "castagneto", "prati"], minT: 10, maxT: 25, minRain: 15, months: [5,6,7,8,9,10,11,12], type: "commestibile", geologyPrefs: ["siliceo", "calcareo", "misto", "arenario"], minDays: 5, maxDays: 8 }
-    ];
+      // --- BOLETI / PORCINI ---
+      { 
+        name: "Boletus edulis (Porcino Bianco)", 
+        habitats: ["faggeta", "pineta", "conifere", "castagneto", "bosco misto"], 
+        minT: 8, maxT: 20, minRain: 30, months: [6,7,8,9,10,11], type: "commestibile", 
+        geologyPrefs: ["siliceo", "acido", "arenario", "granito", "vulcanico", "misto"], 
+        minDays: 10, maxDays: 13 
+      },
+      { 
+        name: "Boletus aereus (Porcino Nero)", 
+        habitats: ["cerro", "querceto", "castagneto", "macchia", "bosco misto"], 
+        minT: 11, maxT: 26, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile", 
+        geologyPrefs: ["siliceo", "arenario", "acido", "granito", "vulcanico"], 
+        minDays: 6, maxDays: 9 
+      },
+      { 
+        name: "Boletus aestivalis (Porcino Estivo)", 
+        habitats: ["castagneto", "bosco misto", "cerro", "querceto", "faggeta"], 
+        minT: 12, maxT: 25, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile", 
+        geologyPrefs: ["siliceo", "arenario", "acido", "calcareo", "misto"], 
+        minDays: 7, maxDays: 10 
+      },
+      { 
+        name: "Boletus pinophilus (Porcino Rosso/Pinicola)", 
+        habitats: ["pineta", "conifere", "faggeta", "castagneto"], 
+        minT: 7, maxT: 19, minRain: 30, months: [4,5,6,7,8,9,10,11], type: "commestibile", 
+        geologyPrefs: ["siliceo", "acido", "arenario", "granito"], 
+        minDays: 11, maxDays: 14 
+      },
+      { 
+        name: "Suillellus luridus (Boleto lurido)", 
+        habitats: ["querceto", "castagneto", "faggeta", "latifoglie"], 
+        minT: 12, maxT: 25, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile", 
+        geologyPrefs: ["calcareo", "argilloso", "neutro", "misto"], 
+        minDays: 8, maxDays: 11 
+      },
+      { 
+        name: "Neoboletus erythropus (Boleto dal piede rosso)", 
+        habitats: ["faggeta", "castagneto", "conifere", "bosco misto"], 
+        minT: 9, maxT: 22, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile", 
+        geologyPrefs: ["siliceo", "acido", "arenario", "calcareo", "misto"], 
+        minDays: 9, maxDays: 12 
+      },
+      { 
+        name: "Leccinum lepidum (Leccino)", 
+        habitats: ["macchia", "querceto", "lecceta", "castagneto"], 
+        minT: 11, maxT: 22, minRain: 25, months: [10,11,12,1,2,3,4], type: "commestibile", 
+        geologyPrefs: ["siliceo", "arenario", "calcareo", "misto"], 
+        minDays: 12, maxDays: 15 
+      },
+      { 
+        name: "Leccinum scabrum (Leccino delle betulle)", 
+        habitats: ["betulla", "bosco misto", "faggeta"], 
+        minT: 8, maxT: 20, minRain: 25, months: [6,7,8,9,10,11], type: "commestibile", 
+        geologyPrefs: ["siliceo", "acido", "granito"], 
+        minDays: 9, maxDays: 12 
+      },
+
+      // --- FINFERLI, TROMBETTE E CLAVARIACEAE ---
+      { 
+        name: "Cantharellus cibarius (Finferlo / Galletto)", 
+        habitats: ["faggeta", "castagneto", "bosco misto", "conifere"], 
+        minT: 9, maxT: 22, minRain: 30, months: [5,6,7,8,9,10,11], type: "commestibile", 
+        geologyPrefs: ["siliceo", "acido", "arenario", "granito"], 
+        minDays: 12, maxDays: 16 
+      },
+      { 
+        name: "Craterellus cornucopioides (Trombetta dei morti)", 
+        habitats: ["faggeta", "castagneto", "querceto", "bosco misto"], 
+        minT: 8, maxT: 20, minRain: 30, months: [8,9,10,11,12], type: "commestibile", 
+        geologyPrefs: ["calcareo", "argilloso", "siliceo", "misto"], 
+        minDays: 12, maxDays: 16 
+      },
+      { 
+        name: "Hydnum repandum (Steccherino dorato)", 
+        habitats: ["faggeta", "castagneto", "conifere", "bosco misto"], 
+        minT: 7, maxT: 18, minRain: 25, months: [9,10,11,12,1], type: "commestibile", 
+        geologyPrefs: ["calcareo", "siliceo", "misto", "argilloso"], 
+        minDays: 13, maxDays: 17 
+      },
+
+      // --- AMANITE ---
+      { 
+        name: "Amanita caesarea (Ovolo Reale)", 
+        habitats: ["cerro", "querceto", "castagneto", "macchia"], 
+        minT: 15, maxT: 27, minRain: 25, months: [6,7,8,9,10,11], type: "commestibile", 
+        geologyPrefs: ["siliceo", "arenario", "acido", "calcareo", "granito"], 
+        minDays: 6, maxDays: 9 
+      },
+      { 
+        name: "Amanita phalloides (Tignosa mortale)", 
+        habitats: ["querceto", "castagneto", "faggeta", "bosco misto", "cerro"], 
+        minT: 11, maxT: 24, minRain: 25, months: [6,7,8,9,10,11], type: "mortale", 
+        geologyPrefs: ["siliceo", "acido", "calcareo", "misto"], 
+        minDays: 9, maxDays: 12 
+      },
+      { 
+        name: "Amanita muscaria (Ovolaccio)", 
+        habitats: ["faggeta", "conifere", "pineta", "betulla"], 
+        minT: 6, maxT: 19, minRain: 25, months: [7,8,9,10,11], type: "tossico", 
+        geologyPrefs: ["siliceo", "acido", "granito"], 
+        minDays: 10, maxDays: 13 
+      },
+
+      // --- MAZZE DI TAMBURO, PRATAIOLI E COLTIVABILI ---
+      { 
+        name: "Macrolepiota procera (Mazza di tamburo)", 
+        habitats: ["bosco misto", "margini", "radure", "castagneto", "prati"], 
+        minT: 10, maxT: 25, minRain: 15, months: [5,6,7,8,9,10,11,12], type: "commestibile", 
+        geologyPrefs: ["siliceo", "calcareo", "misto", "arenario"], 
+        minDays: 5, maxDays: 8 
+      },
+      { 
+        name: "Agaricus campestris (Prataiolo)", 
+        habitats: ["prati", "pascoli", "radure"], 
+        minT: 10, maxT: 24, minRain: 20, months: [5,6,7,8,9,10,11], type: "commestibile", 
+        geologyPrefs: ["calcareo", "argilloso", "misto", "siliceo"], 
+        minDays: 5, maxDays: 8 
+      },
+      { 
+        name: "Pleurotus ostreatus (Orecchione / Sbrisa)", 
+        habitats: ["latifoglie", "pioppeto", "faggeta", "bosco misto"], 
+        minT: 4, maxT: 16, minRain: 20, months: [10,11,12,1,2,3], type: "commestibile", 
+        geologyPrefs: ["calcareo", "siliceo", "misto", "argilloso"], 
+        minDays: 7, maxDays: 11 
+      },
+
+      // --- CHIODINI, RUSSOLE E LATTARI ---
+      { 
+        name: "Armillaria mellea (Chiodino / Famigliola)", 
+        habitats: ["latifoglie", "castagneto", "querceto", "faggeta", "bosco misto"], 
+        minT: 7, maxT: 18, minRain: 25, months: [9,10,11,12], type: "commestibile", 
+        geologyPrefs: ["calcareo", "siliceo", "misto", "argilloso"], 
+        minDays: 8, maxDays: 12 
+      },
+      { 
+        name: "Lactarius deliciosus (Sanguinello)", 
+        habitats: ["pineta", "conifere"], 
+        minT: 8, maxT: 20, minRain: 25, months: [9,10,11,12], type: "commestibile", 
+        geologyPrefs: ["calcareo", "siliceo", "arenario", "misto"], 
+        minDays: 9, maxDays: 12 
+      },
+      { 
+        name: "Russula cyanoxantha (Colombina verde)", 
+        habitats: ["faggeta", "castagneto", "querceto", "bosco misto"], 
+        minT: 10, maxT: 23, minRain: 25, months: [5,6,7,8,9,10,11], type: "commestibile", 
+        geologyPrefs: ["siliceo", "calcareo", "acido", "misto"], 
+        minDays: 7, maxDays: 10 
+      },
+      { 
+        name: "Russula virescens (Verdone)", 
+        habitats: ["castagneto", "querceto", "faggeta", "bosco misto"], 
+        minT: 12, maxT: 25, minRain: 25, months: [5,6,7,8,9,10], type: "commestibile", 
+        geologyPrefs: ["siliceo", "acido", "arenario", "granito"], 
+        minDays: 6, maxDays: 9 
+      },
+
+      // --- SPECIE PRIMAVERILI ED ESTIVE ---
+      { 
+        name: "Morchella esculenta (Spugnola / Spugnoletta)", 
+        habitats: ["pioppeto", "frassineto", "margini", "bosco misto", "bruciati"], 
+        minT: 8, maxT: 18, minRain: 20, months: [3,4,5], type: "commestibile", 
+        geologyPrefs: ["calcareo", "argilloso", "neutro"], 
+        minDays: 7, maxDays: 11 
+      },
+      { 
+        name: "Calocybe gambosa (Prugnolo / Fungo di S. Giorgio)", 
+        habitats: ["prati", "biancospino", "margini", "radure"], 
+        minT: 9, maxT: 19, minRain: 20, months: [4,5,6], type: "commestibile", 
+        geologyPrefs: ["calcareo", "argilloso", "neutro"], 
+        minDays: 8, maxDays: 12 
+      },
+
+      // --- TARTUFI E SPECIE IPOGEE ---
+      { 
+        name: "Tuber magnatum (Tartufo Bianco Pregiato)", 
+        habitats: ["pioppeto", "querceto", "saliceto", "faggeta", "noccioleto"], 
+        minT: 6, maxT: 17, minRain: 30, months: [9,10,11,12,1], type: "commestibile", 
+        geologyPrefs: ["calcareo", "argilloso", "marnoso", "sedimentario"], 
+        minDays: 15, maxDays: 22 
+      },
+      { 
+        name: "Tuber melanosporum (Tartufo Nero Pregiato)", 
+        habitats: ["querceto", "noccioleto", "pineta", "cerro"], 
+        minT: 8, maxT: 20, minRain: 25, months: [11,12,1,2,3], type: "commestibile", 
+        geologyPrefs: ["calcareo", "breccioso", "drenante"], 
+        minDays: 14, maxDays: 20 
+      }
+    ];  
 
     let pendingCommitsQueue = [];
 
