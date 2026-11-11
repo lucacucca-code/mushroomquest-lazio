@@ -218,7 +218,7 @@
         </div>
         <div>
           <label class="block text-slate-400 mb-1">Altitudine (m slm)</label>
-          <input type="number" id="new-spot-alt" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="400">
+          <input type="number" id="new-spot-alt" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors duration-200" placeholder="400">
         </div>
         <div>
           <label class="block text-slate-400 mb-1">🌳 Essenze / Habitat</label>
@@ -699,43 +699,66 @@
         pendingLon = parseFloat(e.latlng.lng.toFixed(4));
         const statusText = document.getElementById("status-text");
 
-        statusText.innerText = "🔍 Rilevamento dati...";
+        statusText.innerText = "🔍 Rilevamento dati & Altitudine...";
+
+        let autoAlt = 9999;
+        let isAltFound = false;
 
         try {
-          const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pendingLat}&lon=${pendingLon}&zoom=14&addressdetails=1`);
-          const geoData = await geoRes.json();
-          let autoName = geoData.display_name ? (geoData.address.wood || geoData.address.suburb || geoData.address.village || geoData.address.town || "Spot Boscoso") : "Nuovo Spot";
-
+          // CHIAMATA AD HOC DEDICATA ALL'ALTITUDINE DEL PUNTO CLICCATO
           const eleRes = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${pendingLat}&longitude=${pendingLon}`);
-          const eleData = await eleRes.json();
-          const autoAlt = (eleData && eleData.elevation && eleData.elevation.length > 0) ? Math.round(eleData.elevation[0]) : 400;
-
-          const env = await fetchSpotEnvironmentData(pendingLat, pendingLon, autoAlt, null, null);
-          statusText.innerText = "Tocca la mappa per censire uno spot";
-
-          document.getElementById('new-spot-name').value = autoName;
-          document.getElementById('new-spot-alt').value = autoAlt;
-          document.getElementById('new-spot-fav').checked = false;
-
-          const select = document.getElementById('new-spot-habitat-select');
-          let optionExists = Array.from(select.options).some(opt => opt.value === env.habitat);
-          if (!optionExists) {
-            let opt = document.createElement('option');
-            opt.value = env.habitat;
-            opt.innerText = "🌿 " + env.habitat;
-            select.insertBefore(opt, select.lastElementChild);
+          if (eleRes.ok) {
+            const eleData = await eleRes.json();
+            if (eleData && eleData.elevation && eleData.elevation.length > 0 && eleData.elevation[0] !== null) {
+              autoAlt = Math.round(eleData.elevation[0]);
+              isAltFound = true;
+            }
           }
-          select.value = env.habitat;
-          document.getElementById('new-spot-habitat-custom').classList.add('hidden');
-          document.getElementById('add-spot-modal').classList.remove('hidden');
-
-        } catch (err) {
-          statusText.innerText = "Tocca la mappa per censire uno spot";
-          document.getElementById('new-spot-name').value = "Spot Boscoso";
-          document.getElementById('new-spot-alt').value = 400;
-          document.getElementById('new-spot-habitat-select').value = "Bosco Misto";
-          document.getElementById('add-spot-modal').classList.remove('hidden');
+        } catch(err) {
+          console.warn("Impossibile recuperare l'altitudine puntuale:", err);
         }
+
+        let autoName = "Spot Boscoso";
+        try {
+          const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pendingLat}&lon=${pendingLon}&zoom=14&addressdetails=1`);
+          if (geoRes.ok) {
+            const geoData = await geoRes.json();
+            if (geoData && geoData.display_name) {
+              autoName = geoData.address.wood || geoData.address.suburb || geoData.address.village || geoData.address.town || "Spot Boscoso";
+            }
+          }
+        } catch(err) {}
+
+        const altToUse = isAltFound ? autoAlt : (autoAlt === 9999 ? 400 : autoAlt);
+        const env = await fetchSpotEnvironmentData(pendingLat, pendingLon, altToUse, null, null);
+        statusText.innerText = "Tocca la mappa per censire uno spot";
+
+        const altInput = document.getElementById('new-spot-alt');
+        document.getElementById('new-spot-name').value = autoName;
+        document.getElementById('new-spot-fav').checked = false;
+
+        if (isAltFound) {
+          altInput.value = autoAlt;
+          altInput.classList.remove('border-red-500', 'bg-red-950/40', 'text-red-400');
+          altInput.classList.add('border-slate-700', 'bg-slate-800', 'text-white');
+        } else {
+          // ERRORE / NON TROVATO: VALORE 9999 E BORDURA ROSSA
+          altInput.value = 9999;
+          altInput.classList.remove('border-slate-700', 'bg-slate-800', 'text-white');
+          altInput.classList.add('border-red-500', 'bg-red-950/40', 'text-red-400');
+        }
+
+        const select = document.getElementById('new-spot-habitat-select');
+        let optionExists = Array.from(select.options).some(opt => opt.value === env.habitat);
+        if (!optionExists) {
+          let opt = document.createElement('option');
+          opt.value = env.habitat;
+          opt.innerText = "🌿 " + env.habitat;
+          select.insertBefore(opt, select.lastElementChild);
+        }
+        select.value = env.habitat;
+        document.getElementById('new-spot-habitat-custom').classList.add('hidden');
+        document.getElementById('add-spot-modal').classList.remove('hidden');
       });
 
       map.on('moveend zoomend', loadMeteoData);
@@ -744,7 +767,8 @@
 
     async function confirmAddSpot() {
       const name = document.getElementById('new-spot-name').value.trim() || "Spot Boscoso";
-      const alt = parseInt(document.getElementById('new-spot-alt').value) || 400;
+      const altInput = document.getElementById('new-spot-alt');
+      const alt = parseInt(altInput.value) || 9999;
       const isFavorite = document.getElementById('new-spot-fav').checked;
 
       let habitat = document.getElementById('new-spot-habitat-select').value;
@@ -1253,21 +1277,17 @@
         const targetMonth = new Date(targetDateStr).getMonth() + 1;
         const totalRain = rainDays.reduce((a, b) => a + b, 0);
 
-        // --- 1. MODELLO A DUE STRATI IDRICI ---
-        
-        // A) Umidità Profonda (Alimenta il Micelio): Storico completo 25 giorni con decadimento lento
+        // --- MODELLO A DUE STRATI IDRICI ---
         let deepWaterSum = 0;
         for (let i = 0; i < rainDays.length; i++) {
-          let decayFactor = Math.pow(0.92, 25 - i); // Persistenza elevata nel sottosuolo
+          let decayFactor = Math.pow(0.92, 25 - i);
           deepWaterSum += rainDays[i] * decayFactor;
         }
         const deepMoistureEst = Math.min(100, Math.max(15, Math.round(deepWaterSum * 1.8)));
 
-        // B) Umidità Superficiale & Primordi: Finestra d'Oro (-12 a -7gg) + Ultimi giorni (-6 a 0gg)
         const goldenWindowRain = rainDays.slice(13, 19).reduce((a, b) => a + b, 0); 
         const surfaceRecentRain = rainDays.slice(19, 26).reduce((a, b) => a + b, 0); 
 
-        // Scudo termodinamico del Punto di Rugiada
         const recentTemps = tempDays.slice(-7);
         const avgTempRaw = recentTemps.reduce((a, b) => a + b, 0) / recentTemps.length;
         const recentDewPoints = dewPointDays.slice(-7);
@@ -1301,7 +1321,6 @@
         else if (habitatLower.includes('querceto') || habitatLower.includes('cerro')) habitatDesc = "Querceto/Cerreta (caldo, ottimo per aereus e ovoli)";
         else if (habitatLower.includes('pineta') || habitatLower.includes('conifere')) habitatDesc = "Pineta/Conifere (suolo acido, drenante)";
 
-        // --- 2. INTEGRATO NATIVAMENTE NEL FILTRO SPECIE SPECIFICA ---
         if (selectedSpeciesFilter !== 'ALL') {
           const spObj = speciesList.find(s => s.name === selectedSpeciesFilter);
           if (spObj) {
@@ -1310,18 +1329,15 @@
             let monthActive = spObj.months.includes(targetMonth);
             let monthPoints = monthActive ? 25 : 0;
 
-            // Trigger della pioggia per la singola specie
             if (goldenWindowRain >= spObj.minRain) goldenScore = 100;
             else goldenScore = Math.max(0, (goldenWindowRain / spObj.minRain) * 100);
 
-            // Stabilità termica puntuale per la specie
             if (effectiveAvgTemp >= spObj.minT && effectiveAvgTemp <= spObj.maxT) tempScore = 100;
             else {
               let diff = Math.min(Math.abs(effectiveAvgTemp - spObj.minT), Math.abs(effectiveAvgTemp - spObj.maxT));
               tempScore = Math.max(0, 100 - (diff * 10));
             }
 
-            // Calcolo integrato che include i due strati di umidità e le caratteristiche della specie
             baseScore = (habPoints * 0.25) + 
                         (monthPoints * 0.20) + 
                         (goldenScore * 0.20) + 
