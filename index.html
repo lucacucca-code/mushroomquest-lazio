@@ -445,6 +445,7 @@
     let hillshadeLayer = null;
     let isHillshadeActive = false;
 
+    // --- MODALITÀ RILIEVO AGGIORNATA CON ESRI WORLD HILLSHADE ---
     function toggleHillshade() {
       const btn = document.getElementById('hillshade-btn');
       const statusText = document.getElementById("status-text");
@@ -454,17 +455,21 @@
         isHillshadeActive = false;
         btn.classList.remove('text-emerald-400');
         btn.classList.add('text-slate-300');
-        statusText.innerText = "Rilievo 3D disattivato";
+        statusText.innerText = "Rilievo disattivato";
       } else {
-        statusText.innerText = "⛰️ Attivazione Rilievo Ombreggiato 3D...";
-        hillshadeLayer = L.tileLayer('https://s3.amazonaws.com/elevation-tiles-prod/hillshade/{z}/{x}/{y}.png', {
-          opacity: 0.5, zIndex: 400, maxZoom: 18, attribution: 'AWS Terrain Tiles / Copernicus DEM'
+        statusText.innerText = "⛰️ Attivazione Rilievo Ombreggiato...";
+        hillshadeLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}', {
+          opacity: 0.6, 
+          zIndex: 400, 
+          maxZoom: 18, 
+          maxNativeZoom: 13,
+          attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ'
         }).addTo(map);
 
         isHillshadeActive = true;
         btn.classList.remove('text-slate-300');
         btn.classList.add('text-emerald-400');
-        statusText.innerText = "⛰️ Rilievo Ombreggiato 3D Attivo";
+        statusText.innerText = "⛰️ Rilievo Ombreggiato Attivo";
       }
     }
 
@@ -705,7 +710,6 @@
         let isAltFound = false;
 
         try {
-          // CHIAMATA AD HOC DEDICATA ALL'ALTITUDINE DEL PUNTO CLICCATO
           const eleRes = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${pendingLat}&longitude=${pendingLon}`);
           if (eleRes.ok) {
             const eleData = await eleRes.json();
@@ -714,9 +718,7 @@
               isAltFound = true;
             }
           }
-        } catch(err) {
-          console.warn("Impossibile recuperare l'altitudine puntuale:", err);
-        }
+        } catch(err) {}
 
         let autoName = "Spot Boscoso";
         try {
@@ -742,7 +744,6 @@
           altInput.classList.remove('border-red-500', 'bg-red-950/40', 'text-red-400');
           altInput.classList.add('border-slate-700', 'bg-slate-800', 'text-white');
         } else {
-          // ERRORE / NON TROVATO: VALORE 9999 E BORDURA ROSSA
           altInput.value = 9999;
           altInput.classList.remove('border-slate-700', 'bg-slate-800', 'text-white');
           altInput.classList.add('border-red-500', 'bg-red-950/40', 'text-red-400');
