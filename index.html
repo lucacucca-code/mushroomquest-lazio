@@ -94,6 +94,10 @@
       <span class="text-lg">🌲</span>
       <span class="text-[10px] font-semibold">Boschi</span>
     </button>
+    <button onclick="toggleGeologyLayer()" id="geology-btn" class="flex flex-col items-center text-slate-300 hover:text-emerald-400 transition space-y-0.5">
+      <span class="text-lg">🪨</span>
+      <span class="text-[10px] font-semibold">Geologia</span>
+    </button>
     <button onclick="toggleHillshade()" id="hillshade-btn" class="flex flex-col items-center text-slate-300 hover:text-emerald-400 transition space-y-0.5">
       <span class="text-lg">⛰️</span>
       <span class="text-[10px] font-semibold">Rilievo</span>
@@ -117,6 +121,30 @@
     <div class="flex items-center space-x-2">
       <div class="w-3 h-3 rounded bg-teal-800"></div>
       <span class="text-slate-300">Bosco di Conifere (Pini, Abeti)</span>
+    </div>
+  </div>
+
+  <!-- LEGENDA GEOLOGIA ISPRA (In basso a sinistra, nascosta di default) -->
+  <div id="geology-legend" class="absolute bottom-16 left-3 z-[1000] bg-slate-900/90 backdrop-blur-md border border-slate-700 p-2.5 rounded-xl text-[10px] hidden shadow-xl space-y-1.5">
+    <div class="font-bold text-amber-400 border-b border-slate-700 pb-1 flex items-center justify-between">
+      <span>🪨 Carta Geologica (ISPRA)</span>
+      <span class="text-[9px] text-slate-400">Litologia</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <div class="w-3 h-3 rounded bg-amber-600"></div>
+      <span class="text-slate-300">Calcareo / Sedimentario (Alto drenaggio)</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <div class="w-3 h-3 rounded bg-orange-700"></div>
+      <span class="text-slate-300">Siliceo / Arenario / Acido</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <div class="w-3 h-3 rounded bg-purple-700"></div>
+      <span class="text-slate-300">Vulcanico / Tufaceo (Tuscia / Laziale)</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <div class="w-3 h-3 rounded bg-blue-700"></div>
+      <span class="text-slate-300">Argilloso / Alluvionale (Ritenzione alta)</span>
     </div>
   </div>
 
@@ -238,14 +266,14 @@
     </div>
   </div>
 
-  <!-- MODAL AGGIUNGI / MODIFICA SPOT CON ESSENZE -->
+  <!-- MODAL AGGIUNGI / MODIFICA SPOT CON ESSENZE & GEOLOGIA -->
   <div id="add-spot-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-3">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
         <h3 id="spot-modal-title" class="font-bold text-sm text-emerald-400">📍 Censisci Nuovo Spot</h3>
         <button onclick="closeAddSpotModal()" class="text-slate-400 hover:text-white font-bold text-sm">✕</button>
       </div>
-      <div class="space-y-3 text-xs">
+      <div class="space-y-2.5 text-xs">
         <div>
           <label class="block text-slate-400 mb-1">Nome dello Spot</label>
           <input type="text" id="new-spot-name" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Es. Faggeta Alta">
@@ -256,7 +284,7 @@
         </div>
         <div>
           <label class="block text-slate-400 mb-1">🌳 Essenze / Habitat (Modificabile)</label>
-          <select id="new-spot-habitat-select" onchange="checkCustomHabitat(this)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2">
+          <select id="new-spot-habitat-select" onchange="checkCustomHabitat(this)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-1">
             <option value="Faggeta Pura / Mista">Faggeta Pura / Mista</option>
             <option value="Castagneto">Castagneto</option>
             <option value="Cerro / Querceto">Cerro / Querceto</option>
@@ -266,6 +294,16 @@
             <option value="custom">✏️ Altro (inserisci personalizzato)...</option>
           </select>
           <input type="text" id="new-spot-habitat-custom" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 hidden" placeholder="Es. Sughereta / Carpino">
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">🪨 Substrato Geologico (Modificabile)</label>
+          <select id="new-spot-geology-select" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <option value="Vulcanico / Tufaceo">Vulcanico / Tufaceo</option>
+            <option value="Calcareo / Roccioso">Calcareo / Roccioso</option>
+            <option value="Siliceo / Arenario / Acido">Siliceo / Arenario / Acido</option>
+            <option value="Argilloso / Alluvionale">Argilloso / Alluvionale</option>
+            <option value="Misto / Neutro">Misto / Neutro</option>
+          </select>
         </div>
         <div class="flex items-center space-x-2 pt-1">
           <input type="checkbox" id="new-spot-fav" class="w-4 h-4 accent-emerald-500 rounded">
@@ -728,7 +766,6 @@
       }
     }
 
-    // --- NUOVO LAYER COPERNICUS FOREST TYPE ---
     let forestLayer = null;
     let isForestActive = false;
 
@@ -746,14 +783,13 @@
         statusText.innerText = "Layer Boschi disattivato";
       } else {
         statusText.innerText = "🌲 Caricamento Copernicus Forest Type...";
-        // Servizio WMS dimostrativo/pubblico o endpoint standard open per copertura forestale HRL
         forestLayer = L.tileLayer.wms('https://image.discomap.eea.europa.eu/arcgis/services/Forest/HRL_ForestType_2018/MapServer/WmsServer', {
-          layers: '1', // 1: Forest Type
+          layers: '1',
           format: 'image/png',
           transparent: true,
           opacity: 0.55,
           zIndex: 450,
-          attribution: 'EEA / Copernicus Land Monitoring Service'
+          attribution: 'EEA / Copernicus'
         }).addTo(map);
 
         isForestActive = true;
@@ -761,6 +797,42 @@
         btn.classList.add('text-emerald-400');
         legend.classList.remove('hidden');
         statusText.innerText = "🌲 Layer Boschi Copernicus Attivo";
+      }
+    }
+
+    // --- NUOVO LAYER GEOLOGIA ISPRA ---
+    let geologyLayer = null;
+    let isGeologyActive = false;
+
+    function toggleGeologyLayer() {
+      const btn = document.getElementById('geology-btn');
+      const statusText = document.getElementById("status-text");
+      const legend = document.getElementById('geology-legend');
+
+      if (isGeologyActive) {
+        if (geologyLayer) { map.removeLayer(geologyLayer); geologyLayer = null; }
+        isGeologyActive = false;
+        btn.classList.remove('text-amber-400');
+        btn.classList.add('text-slate-300');
+        legend.classList.add('hidden');
+        statusText.innerText = "Layer Geologico disattivato";
+      } else {
+        statusText.innerText = "🪨 Caricamento Carta Geologica ISPRA...";
+        // Servizio WMS pubblico ISPRA / Geoportale Nazionale per litologia/geologia
+        geologyLayer = L.tileLayer.wms('https://sgi2.isprambiente.it/arcgis/services/cartografia_geologica/unita_litologiche_500k/MapServer/WmsServer', {
+          layers: '0',
+          format: 'image/png',
+          transparent: true,
+          opacity: 0.55,
+          zIndex: 460,
+          attribution: 'ISPRA Servizio Geologico d\'Italia'
+        }).addTo(map);
+
+        isGeologyActive = true;
+        btn.classList.remove('text-slate-300');
+        btn.classList.add('text-amber-400');
+        legend.classList.remove('hidden');
+        statusText.innerText = "🪨 Carta Geologica Attiva";
       }
     }
 
@@ -891,17 +963,6 @@
         (error) => {
           console.warn("Errore geolocalizzazione:", error);
           statusText.innerText = "⚠️ Impossibile rilevare la posizione GPS.";
-          switch(error.code) {
-            case error.PERMISSION_DENIED:
-              alert("Permesso di geolocalizzazione negato.");
-              break;
-            case error.POSITION_UNAVAILABLE:
-              alert("Posizione non disponibile.");
-              break;
-            case error.TIMEOUT:
-              alert("Tempo scaduto.");
-              break;
-          }
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
@@ -996,13 +1057,12 @@
       }
     }
 
-    // --- CENSIMENTO SPOT CON FALLBACK ROBUSTO SU TIMEOUT/ERRORE ---
+    // --- CENSIMENTO SPOT INTELLIGENTE CON TIMEOUT E FALLBACK SU ESSENZA E GEOLOGIA ---
     async function fetchSpotEnvironmentData(lat, lon, alt, existingHabitat, existingGeology) {
       let habitat = existingHabitat;
-      let geology = existingGeology || (alt > 900 ? "Calcareo / Roccioso" : "Siliceo / Arenario");
+      let geology = existingGeology || (alt > 900 ? "Calcareo / Roccioso" : "Vulcanico / Tufaceo");
       let aspectInfo = { aspect: 180, aspectStr: "Sud (Aprico)" };
 
-      // Controller per gestire timeout (max 4 secondi di attesa per i servizi esterni)
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 4000);
 
@@ -1023,20 +1083,26 @@
               }
             }
             if (tags.geological || tags.rock) {
-              geology = tags.geological || tags.rock;
+              let tagGeo = tags.geological || tags.rock;
+              if (tagGeo.toLowerCase().includes('limestone') || tagGeo.toLowerCase().includes('calcar')) geology = "Calcareo / Roccioso";
+              else if (tagGeo.toLowerCase().includes('volcan') || tagGeo.toLowerCase().includes('tuff')) geology = "Vulcanico / Tufaceo";
+              else if (tagGeo.toLowerCase().includes('sand') || tagGeo.toLowerCase().includes('silic')) geology = "Siliceo / Arenario / Acido";
+              else geology = tagGeo;
             }
           }
         }
       } catch (err) {
-        // Fallback immediato in caso di timeout o errore di rete senza bloccare l'utente
-        console.warn("Servizio forestale esterno non raggiungibile o in timeout. Uso logica altitudinale.");
+        console.warn("Servizi esterni non raggiungibili o in timeout. Uso logica altitudinale di fallback.");
       } finally {
         clearTimeout(timeoutId);
       }
 
-      // Fallback altitudinale deterministico se il servizio esterno non ha restituito nulla
+      // Fallback deterministico se non disponibile
       if (!habitat) {
         habitat = alt >= 1000 ? "Faggeta Pura / Mista" : (alt >= 600 ? "Castagneto" : "Cerro / Querceto");
+      }
+      if (!geology) {
+        geology = alt > 900 ? "Calcareo / Roccioso" : "Vulcanico / Tufaceo";
       }
 
       try {
@@ -1077,7 +1143,7 @@
         pendingLon = parseFloat(e.latlng.lng.toFixed(4));
         const statusText = document.getElementById("status-text");
 
-        statusText.innerText = "🔍 Rilevamento dati & Altitudine...";
+        statusText.innerText = "🔍 Rilevamento dati, Habitat & Geologia...";
 
         let autoAlt = 9999;
         let isAltFound = false;
@@ -1122,16 +1188,30 @@
           altInput.classList.add('border-red-500', 'bg-red-950/40', 'text-red-400');
         }
 
-        const select = document.getElementById('new-spot-habitat-select');
-        let optionExists = Array.from(select.options).some(opt => opt.value === env.habitat);
+        const habSelect = document.getElementById('new-spot-habitat-select');
+        let optionExists = Array.from(habSelect.options).some(opt => opt.value === env.habitat);
         if (!optionExists) {
           let opt = document.createElement('option');
           opt.value = env.habitat;
           opt.innerText = "🌿 " + env.habitat;
-          select.insertBefore(opt, select.lastElementChild);
+          habSelect.insertBefore(opt, habSelect.lastElementChild);
         }
-        select.value = env.habitat;
+        habSelect.value = env.habitat;
         document.getElementById('new-spot-habitat-custom').classList.add('hidden');
+
+        const geoSelect = document.getElementById('new-spot-geology-select');
+        let geoOptionExists = Array.from(geoSelect.options).some(opt => opt.value.toLowerCase().includes(env.geology.toLowerCase().split('/')[0].trim()));
+        if (geoOptionExists) {
+          for (let opt of geoSelect.options) {
+            if (opt.value.toLowerCase().includes(env.geology.toLowerCase().split('/')[0].trim())) {
+              geoSelect.value = opt.value;
+              break;
+            }
+          }
+        } else {
+          geoSelect.value = "Vulcanico / Tufaceo";
+        }
+
         document.getElementById('add-spot-modal').classList.remove('hidden');
       });
 
@@ -1155,6 +1235,8 @@
         }
       }
 
+      let geology = document.getElementById('new-spot-geology-select').value;
+
       closeAddSpotModal();
 
       const newSpotObj = {
@@ -1164,7 +1246,7 @@
         alt: alt,
         type: "Località",
         habitat: habitat,
-        geology: alt > 900 ? "Calcareo / Roccioso" : "Siliceo / Arenario",
+        geology: geology,
         isFavorite: isFavorite,
         minZoom: 9
       };
@@ -1387,7 +1469,7 @@
         return currentZoom >= loc.minZoom && bounds.contains([loc.lat, loc.lon]);
       });
 
-      if (!isRadarActive && !isForestActive) statusText.innerText = `🍄 Caricamento ${visibleLocs.length} aree...`;
+      if (!isRadarActive && !isForestActive && !isGeologyActive) statusText.innerText = `🍄 Caricamento ${visibleLocs.length} aree...`;
 
       await Promise.all(visibleLocs.map(async (loc) => {
         const altitude = loc.alt || 300;
@@ -1474,7 +1556,7 @@
         activeMarkers[locKey] = marker;
       }));
 
-      if (!isRadarActive && !isForestActive) statusText.innerText = `🍄 ${Object.keys(activeMarkers).length} aree caricate`;
+      if (!isRadarActive && !isForestActive && !isGeologyActive) statusText.innerText = `🍄 ${Object.keys(activeMarkers).length} aree caricate`;
     }
 
     function openCalcDetailsModal(locationName, cacheKey) {
