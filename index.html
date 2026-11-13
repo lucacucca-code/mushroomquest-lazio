@@ -108,43 +108,35 @@
     </button>
   </div>
 
-  <!-- LEGENDA COPERNICUS BOSCHI (In basso a sinistra, nascosta di default) -->
+  <!-- LEGENDA BOSCHI (In basso a sinistra, nascosta di default) -->
   <div id="forest-legend" class="absolute bottom-16 left-3 z-[1000] bg-slate-900/90 backdrop-blur-md border border-slate-700 p-2.5 rounded-xl text-[10px] hidden shadow-xl space-y-1.5">
     <div class="font-bold text-emerald-400 border-b border-slate-700 pb-1 flex items-center justify-between">
-      <span>🌲 Copernicus Forest Type</span>
-      <span class="text-[9px] text-slate-400">UE / HRL</span>
+      <span>🌲 Copertura Forestale & Natura</span>
+      <span class="text-[9px] text-slate-400">OSM / Topo</span>
     </div>
     <div class="flex items-center space-x-2">
       <div class="w-3 h-3 rounded bg-emerald-600"></div>
-      <span class="text-slate-300">Bosco di Latifoglie (Faggi, Querce, Castagni)</span>
+      <span class="text-slate-300">Aree Forestali e Parchi Naturali</span>
     </div>
     <div class="flex items-center space-x-2">
-      <div class="w-3 h-3 rounded bg-teal-800"></div>
-      <span class="text-slate-300">Bosco di Conifere (Pini, Abeti)</span>
+      <div class="w-3 h-3 rounded bg-green-800"></div>
+      <span class="text-slate-300">Sentieri e Linee di crinale</span>
     </div>
   </div>
 
-  <!-- LEGENDA GEOLOGIA ISPRA (In basso a sinistra, nascosta di default) -->
+  <!-- LEGENDA GEOLOGIA (In basso a sinistra, nascosta di default) -->
   <div id="geology-legend" class="absolute bottom-16 left-3 z-[1000] bg-slate-900/90 backdrop-blur-md border border-slate-700 p-2.5 rounded-xl text-[10px] hidden shadow-xl space-y-1.5">
     <div class="font-bold text-amber-400 border-b border-slate-700 pb-1 flex items-center justify-between">
-      <span>🪨 Carta Geologica (ISPRA)</span>
-      <span class="text-[9px] text-slate-400">Litologia</span>
+      <span>🪨 Rilievo & Substrato (OpenTopo)</span>
+      <span class="text-[9px] text-slate-400">Morfologia</span>
     </div>
     <div class="flex items-center space-x-2">
       <div class="w-3 h-3 rounded bg-amber-600"></div>
-      <span class="text-slate-300">Calcareo / Sedimentario (Alto drenaggio)</span>
+      <span class="text-slate-300">Rilievi calcarei / Rocciosi</span>
     </div>
     <div class="flex items-center space-x-2">
       <div class="w-3 h-3 rounded bg-orange-700"></div>
-      <span class="text-slate-300">Siliceo / Arenario / Acido</span>
-    </div>
-    <div class="flex items-center space-x-2">
-      <div class="w-3 h-3 rounded bg-purple-700"></div>
-      <span class="text-slate-300">Vulcanico / Tufaceo (Tuscia / Laziale)</span>
-    </div>
-    <div class="flex items-center space-x-2">
-      <div class="w-3 h-3 rounded bg-blue-700"></div>
-      <span class="text-slate-300">Argilloso / Alluvionale (Ritenzione alta)</span>
+      <span class="text-slate-300">Suoli acidi / Arenari / Vulcanici</span>
     </div>
   </div>
 
@@ -687,9 +679,7 @@
               });
             }
           }
-        } catch (err) {
-          console.warn("Errore geocoding Open-Meteo:", err);
-        }
+        } catch (err) {}
       }
 
       if (foundResults.length === 0) {
@@ -708,9 +698,7 @@
               });
             }
           }
-        } catch (err) {
-          console.warn("Errore fallback Nominatim:", err);
-        }
+        } catch (err) {}
       }
 
       if (foundResults.length > 0) {
@@ -756,7 +744,7 @@
           zIndex: 400, 
           maxZoom: 18, 
           maxNativeZoom: 13,
-          attribution: 'Tiles &copy; Esri'
+          attribution: 'Esri Hillshade'
         }).addTo(map);
 
         isHillshadeActive = true;
@@ -766,7 +754,8 @@
       }
     }
 
-let forestLayer = null;
+    // --- LAYER BOSCHI STABILE (OpenTopoMap / Natura) ---
+    let forestLayer = null;
     let isForestActive = false;
 
     function toggleForestLayer() {
@@ -782,25 +771,23 @@ let forestLayer = null;
         legend.classList.add('hidden');
         statusText.innerText = "Layer Boschi disattivato";
       } else {
-        statusText.innerText = "🌲 Attivazione Copertura Forestale...";
-        
-        // Utilizziamo un layer tile compatibile e trasparente per le aree boschive (Waymarked Trails - Nature / Forestry)
-        forestLayer = L.tileLayer('https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png', {
-          opacity: 0.6,
+        statusText.innerText = "🌲 Caricamento Copertura Naturale...";
+        forestLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+          maxZoom: 17,
+          opacity: 0.7,
           zIndex: 450,
-          maxZoom: 18,
-          attribution: 'Hiking trails & forests by Waymarked Trails'
+          attribution: 'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap'
         }).addTo(map);
 
         isForestActive = true;
         btn.classList.remove('text-slate-300');
         btn.classList.add('text-emerald-400');
         legend.classList.remove('hidden');
-        statusText.innerText = "🌲 Layer Boschi Attivo";
+        statusText.innerText = "🌲 Layer Boschi & Topografia Attivo";
       }
     }
 
-    // --- NUOVO LAYER GEOLOGIA ISPRA ---
+    // --- LAYER GEOLOGIA STABILE (Mappa Morfologica / Terreno) ---
     let geologyLayer = null;
     let isGeologyActive = false;
 
@@ -817,22 +804,19 @@ let forestLayer = null;
         legend.classList.add('hidden');
         statusText.innerText = "Layer Geologico disattivato";
       } else {
-        statusText.innerText = "🪨 Caricamento Carta Geologica ISPRA...";
-        // Servizio WMS pubblico ISPRA / Geoportale Nazionale per litologia/geologia
-        geologyLayer = L.tileLayer.wms('https://sgi2.isprambiente.it/arcgis/services/cartografia_geologica/unita_litologiche_500k/MapServer/WmsServer', {
-          layers: '0',
-          format: 'image/png',
-          transparent: true,
-          opacity: 0.55,
+        statusText.innerText = "🪨 Caricamento Substrato & Rilievi...";
+        geologyLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}', {
+          maxZoom: 13,
+          opacity: 0.6,
           zIndex: 460,
-          attribution: 'ISPRA Servizio Geologico d\'Italia'
+          attribution: 'Esri World Terrain'
         }).addTo(map);
 
         isGeologyActive = true;
         btn.classList.remove('text-slate-300');
         btn.classList.add('text-amber-400');
         legend.classList.remove('hidden');
-        statusText.innerText = "🪨 Carta Geologica Attiva";
+        statusText.innerText = "🪨 Substrato & Morfologia Attiva";
       }
     }
 
@@ -1057,7 +1041,7 @@ let forestLayer = null;
       }
     }
 
-    // --- CENSIMENTO SPOT INTELLIGENTE CON TIMEOUT E FALLBACK SU ESSENZA E GEOLOGIA ---
+    // --- CENSIMENTO SPOT CON TIMEOUT E FALLBACK ROBUSTO ---
     async function fetchSpotEnvironmentData(lat, lon, alt, existingHabitat, existingGeology) {
       let habitat = existingHabitat;
       let geology = existingGeology || (alt > 900 ? "Calcareo / Roccioso" : "Vulcanico / Tufaceo");
@@ -1092,12 +1076,11 @@ let forestLayer = null;
           }
         }
       } catch (err) {
-        console.warn("Servizi esterni non raggiungibili o in timeout. Uso logica altitudinale di fallback.");
+        console.warn("Servizio esterno non raggiungibile o in timeout. Uso logica altitudinale.");
       } finally {
         clearTimeout(timeoutId);
       }
 
-      // Fallback deterministico se non disponibile
       if (!habitat) {
         habitat = alt >= 1000 ? "Faggeta Pura / Mista" : (alt >= 600 ? "Castagneto" : "Cerro / Querceto");
       }
