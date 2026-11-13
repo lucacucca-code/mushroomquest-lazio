@@ -138,7 +138,7 @@ const COMUNI_ITALIA = [
 ,
   { name: "Sante Marie", lat: 42.1208, lon: 13.1635, alt: 975, habitat: "Cerro / Querceto", geology: "Calcareo / Roccioso", type: "Località", isFavorite: true, minZoom: 9 }
 ,
-  { name: "Amelia", lat: 42.5536, lon: 12.4146, alt: 320, habitat: "Cerro / Querceto", geology: "Siliceo / Arenario", type: "Località", minZoom: 9 }
+  { name: "Amelia", lat: 42.5536, lon: 12.4146, alt: 320, habitat: "Cerro / Querceto", geology: "Vulcanico / Tufaceo", type: "Località", minZoom: 9 }
 ,
   { name: "Amelia", lat: 42.5552, lon: 12.418, alt: 325, type: "Località", isFavorite: true, minZoom: 9 }
 ,
