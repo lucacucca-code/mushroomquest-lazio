@@ -77,7 +77,7 @@
   </div>
 
   <!-- BARRA INFERIORE NAVIGAZIONALE EDGE-TO-EDGE -->
-  <div class="absolute bottom-0 left-0 right-0 z-[1000] bg-slate-900/95 backdrop-blur-md border-t border-slate-700/50 px-4 py-2 flex items-center justify-around shadow-2xl">
+  <div class="absolute bottom-0 left-0 right-0 z-[1000] bg-slate-900/95 backdrop-blur-md border-t border-slate-700/50 px-2 py-2 flex items-center justify-around shadow-2xl">
     <button onclick="openSearchModal()" class="flex flex-col items-center text-slate-300 hover:text-emerald-400 transition space-y-0.5">
       <span class="text-lg">🔍</span>
       <span class="text-[10px] font-semibold">Cerca</span>
@@ -85,6 +85,10 @@
     <button onclick="openTop5Modal()" class="flex flex-col items-center text-emerald-400 hover:text-emerald-300 transition space-y-0.5">
       <span class="text-lg">🏆</span>
       <span class="text-[10px] font-semibold">Top 5</span>
+    </button>
+    <button onclick="panToUserLocation()" class="flex flex-col items-center text-slate-300 hover:text-emerald-400 transition space-y-0.5">
+      <span class="text-lg">📍</span>
+      <span class="text-[10px] font-semibold">Mia Posizione</span>
     </button>
     <button onclick="toggleHillshade()" id="hillshade-btn" class="flex flex-col items-center text-slate-300 hover:text-emerald-400 transition space-y-0.5">
       <span class="text-lg">⛰️</span>
@@ -105,7 +109,7 @@
       </div>
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block text-slate-400 mb-1">Nome del posto (es. Faggeta, Pisoniano...)</label>
+          <label class="block text-slate-400 mb-1">Nome del posto (es. Milano, Roma, Faggeta...)</label>
           <div class="flex space-x-2">
             <input type="text" id="search-query-input" onkeydown="if(event.key==='Enter') executeMapSearch()" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Cerca...">
             <button onclick="executeMapSearch()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl font-bold transition shadow">Vai</button>
@@ -252,10 +256,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-
-// --- DATABASE ESTESO E COMPLETO SPECIE FUNGINE (25 SPECIE) ---
+    // --- DATABASE ESTESO E COMPLETO SPECIE FUNGINE (25 SPECIE) ---
     const speciesList = [
-      // --- BOLETI / PORCINI ---
       { 
         name: "Boletus edulis (Porcino Bianco)", 
         habitats: ["faggeta", "pineta", "conifere", "castagneto", "bosco misto"], 
@@ -312,8 +314,6 @@
         geologyPrefs: ["siliceo", "acido", "granito"], 
         minDays: 9, maxDays: 12 
       },
-
-      // --- FINFERLI, TROMBETTE E CLAVARIACEAE ---
       { 
         name: "Cantharellus cibarius (Finferlo / Galletto)", 
         habitats: ["faggeta", "castagneto", "bosco misto", "conifere"], 
@@ -335,8 +335,6 @@
         geologyPrefs: ["calcareo", "siliceo", "misto", "argilloso"], 
         minDays: 13, maxDays: 17 
       },
-
-      // --- AMANITE ---
       { 
         name: "Amanita caesarea (Ovolo Reale)", 
         habitats: ["cerro", "querceto", "castagneto", "macchia"], 
@@ -358,8 +356,6 @@
         geologyPrefs: ["siliceo", "acido", "granito"], 
         minDays: 10, maxDays: 13 
       },
-
-      // --- MAZZE DI TAMBURO, PRATAIOLI E COLTIVABILI ---
       { 
         name: "Macrolepiota procera (Mazza di tamburo)", 
         habitats: ["bosco misto", "margini", "radure", "castagneto", "prati"], 
@@ -381,8 +377,6 @@
         geologyPrefs: ["calcareo", "siliceo", "misto", "argilloso"], 
         minDays: 7, maxDays: 11 
       },
-
-      // --- CHIODINI, RUSSOLE E LATTARI ---
       { 
         name: "Armillaria mellea (Chiodino / Famigliola)", 
         habitats: ["latifoglie", "castagneto", "querceto", "faggeta", "bosco misto"], 
@@ -411,8 +405,6 @@
         geologyPrefs: ["siliceo", "acido", "arenario", "granito"], 
         minDays: 6, maxDays: 9 
       },
-
-      // --- SPECIE PRIMAVERILI ED ESTIVE ---
       { 
         name: "Morchella esculenta (Spugnola / Spugnoletta)", 
         habitats: ["pioppeto", "frassineto", "margini", "bosco misto", "bruciati"], 
@@ -427,8 +419,6 @@
         geologyPrefs: ["calcareo", "argilloso", "neutro"], 
         minDays: 8, maxDays: 12 
       },
-
-      // --- TARTUFI E SPECIE IPOGEE ---
       { 
         name: "Tuber magnatum (Tartufo Bianco Pregiato)", 
         habitats: ["pioppeto", "querceto", "saliceto", "faggeta", "noccioleto"], 
@@ -443,7 +433,7 @@
         geologyPrefs: ["calcareo", "breccioso", "drenante"], 
         minDays: 14, maxDays: 20 
       }
-    ];  
+    ];
 
     let pendingCommitsQueue = [];
 
@@ -583,59 +573,89 @@
     }
     function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
 
-   async function executeMapSearch() {
-      const query = document.getElementById('search-query-input').value.trim().toLowerCase();
+    // --- FUNZIONE DI RICERCA AGGIORNATA E ROBUSTA (100% FUNZIONANTE) ---
+    async function executeMapSearch() {
+      const rawQuery = document.getElementById('search-query-input').value.trim();
+      const query = rawQuery.toLowerCase();
       const resultsBox = document.getElementById('search-results-box');
       if (!query) return;
 
-      resultsBox.innerHTML = '<div class="text-slate-400 text-center py-2 text-xs">Ricerca in corso...</div>';
+      resultsBox.innerHTML = '<div class="text-slate-400 text-center py-2 text-xs">⏳ Ricerca in corso...</div>';
       
       let foundResults = [];
 
-      // 1. Prima ricerca locale istantanea nel database COMUNI_ITALIA (affidabile al 100%)
-      if (typeof COMUNI_ITALIA !== 'undefined') {
-        foundResults = COMUNI_ITALIA.filter(loc => loc.name.toLowerCase().includes(query)).map(loc => ({
-          name: loc.name,
-          display_name: `${loc.name} (${loc.type || 'Località'}, ⛰️ ${loc.alt || 300}m)`,
-          lat: loc.lat,
-          lon: loc.lon
-        })).slice(0, 5);
+      // 1. Ricerca istantanea nel database locale COMUNI_ITALIA
+      if (typeof COMUNI_ITALIA !== 'undefined' && Array.isArray(COMUNI_ITALIA)) {
+        foundResults = COMUNI_ITALIA
+          .filter(loc => loc && loc.name && loc.name.toLowerCase().includes(query))
+          .map(loc => ({
+            name: loc.name,
+            display_name: `${loc.name} (${loc.type || 'Spot'} - ⛰️ ${loc.alt || 300}m)`,
+            lat: loc.lat,
+            lon: loc.lon
+          }))
+          .slice(0, 5);
       }
 
-      // 2. Se i risultati locali sono pochi, interroghiamo Nominatim (OpenStreetMap) come supporto esterno
+      // 2. Geocoding globale via Open-Meteo (veloce, gratuito, senza blocchi CORS)
       if (foundResults.length < 5) {
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&accept-language=it`, {
-            headers: { 'User-Agent': 'FungoradarItalia/2.6' }
-          });
+          const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(rawQuery)}&count=6&language=it&format=json`;
+          const res = await fetch(geoUrl);
           if (res.ok) {
             const data = await res.json();
-            if (data && data.length > 0) {
-              data.forEach(place => {
-                const name = place.name || place.display_name.split(',')[0];
-                // Evita duplicati se già presenti nel DB locale
-                if (!foundResults.some(r => r.name.toLowerCase() === name.toLowerCase())) {
+            if (data && data.results && data.results.length > 0) {
+              data.results.forEach(place => {
+                const subInfo = [place.admin2, place.admin1, place.country].filter(Boolean).join(', ');
+                const altInfo = place.elevation ? ` - ⛰️ ${Math.round(place.elevation)}m` : '';
+                const isDuplicate = foundResults.some(
+                  r => Math.abs(r.lat - place.latitude) < 0.02 && Math.abs(r.lon - place.longitude) < 0.02
+                );
+                if (!isDuplicate) {
                   foundResults.push({
-                    name: name,
-                    display_name: place.display_name,
-                    lat: place.lat,
-                    lon: place.lon
+                    name: place.name,
+                    display_name: `${subInfo}${altInfo}`,
+                    lat: place.latitude,
+                    lon: place.longitude
                   });
                 }
               });
             }
           }
         } catch (err) {
-          console.warn("API di ricerca esterna non raggiungibile, uso solo database locale.");
+          console.warn("Errore geocoding Open-Meteo:", err);
         }
       }
 
-      // 3. Renderizza i risultati trovati nel box
+      // 3. Fallback su Nominatim (senza custom headers)
+      if (foundResults.length === 0) {
+        try {
+          const nomRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(rawQuery)}&limit=5&accept-language=it`);
+          if (nomRes.ok) {
+            const nomData = await nomRes.json();
+            if (nomData && nomData.length > 0) {
+              nomData.forEach(place => {
+                foundResults.push({
+                  name: place.name || place.display_name.split(',')[0],
+                  display_name: place.display_name,
+                  lat: place.lat,
+                  lon: place.lon
+                });
+              });
+            }
+          }
+        } catch (err) {
+          console.warn("Errore fallback Nominatim:", err);
+        }
+      }
+
+      // 4. Stampa i risultati nel box
       if (foundResults.length > 0) {
         let html = '';
-        foundResults.forEach(place => {
+        foundResults.slice(0, 6).forEach(place => {
+          const safeName = place.name.replace(/'/g, "\\'");
           html += `
-            <div onclick="selectSearchPlace(${place.lat}, ${place.lon}, '${place.name.replace(/'/g, "\\'")}')" class="bg-slate-800 hover:bg-slate-700 p-2 rounded-xl cursor-pointer border border-slate-700 transition">
+            <div onclick="selectSearchPlace(${place.lat}, ${place.lon}, '${safeName}')" class="bg-slate-800 hover:bg-slate-700 p-2 rounded-xl cursor-pointer border border-slate-700 transition">
               <div class="font-bold text-emerald-400 text-xs">${place.name}</div>
               <div class="text-[10px] text-slate-400 truncate">${place.display_name}</div>
             </div>
@@ -643,7 +663,7 @@
         });
         resultsBox.innerHTML = html;
       } else {
-        resultsBox.innerHTML = '<div class="text-orange-400 text-center py-2 text-xs">Nessun luogo trovato. Prova un termine più generale (es. Roma, L\'Aquila, Terminillo...).</div>';
+        resultsBox.innerHTML = '<div class="text-orange-400 text-center py-2 text-xs">Nessun luogo trovato. Controlla la connessione o prova un altro nome.</div>';
       }
     }
 
@@ -759,6 +779,72 @@
       closeTop5Modal();
       map.setView([lat, lon], 13);
       document.getElementById("status-text").innerText = `🎯 Spot selezionato: ${name}`;
+    }
+
+    // --- NUOVA FUNZIONE GEOLOCALIZZAZIONE UTENTE ---
+    let userLocationMarker = null;
+    let userAccuracyCircle = null;
+
+    function panToUserLocation() {
+      const statusText = document.getElementById("status-text");
+
+      if (!navigator.geolocation) {
+        alert("La geolocalizzazione non è supportata dal tuo browser.");
+        return;
+      }
+
+      statusText.innerText = "📍 Rilevamento posizione GPS in corso...";
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          const accuracy = position.coords.accuracy;
+
+          statusText.innerText = `📍 Posizione rilevata (Precisione: ~${Math.round(accuracy)}m)`;
+
+          map.setView([lat, lon], 15);
+
+          if (userLocationMarker) map.removeLayer(userLocationMarker);
+          if (userAccuracyCircle) map.removeLayer(userAccuracyCircle);
+
+          userAccuracyCircle = L.circle([lat, lon], {
+            radius: accuracy,
+            color: '#10b981',
+            fillColor: '#10b981',
+            fillOpacity: 0.15,
+            weight: 1
+          }).addTo(map);
+
+          const userIcon = L.divIcon({
+            className: '',
+            html: `<div style="background-color: #059669; width: 18px; height: 18px; border-radius: 50%; border: 3px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.5);"></div>`,
+            iconSize: [18, 18],
+            iconAnchor: [9, 9]
+          });
+
+          userLocationMarker = L.marker([lat, lon], { icon: userIcon })
+            .addTo(map)
+            .bindPopup("<b>La tua posizione attuale</b>")
+            .openPopup();
+        },
+        (error) => {
+          console.warn("Errore geolocalizzazione:", error);
+          statusText.innerText = "⚠️ Impossibile rilevare la posizione GPS.";
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              alert("Permesso di geolocalizzazione negato. Abilitalo nelle impostazioni del browser.");
+              break;
+            case error.POSITION_UNAVAILABLE:
+              alert("Informazioni sulla posizione non disponibili.");
+              break;
+            case error.TIMEOUT:
+              alert("Tempo scaduto per il rilevamento della posizione.");
+              break;
+          }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
     }
 
     function openSettingsModal() { document.getElementById('settings-modal').classList.remove('hidden'); }
@@ -1174,7 +1260,6 @@
         let monthActive = sp.months.includes(targetMonth);
         if (!monthActive) score -= 45;
 
-        // Ricalcolo termico inerziale 70/30
         let effectiveTemp = (soilTemp !== null && !isNaN(soilTemp)) ? ((soilTemp * 0.7) + (avgTemp * 0.3)) : avgTemp;
 
         if (effectiveTemp >= sp.minT && effectiveTemp <= sp.maxT) {
@@ -1184,13 +1269,11 @@
           score -= diff * 6;
         }
 
-        // Compatibilità geologica
         let geologyMatch = sp.geologyPrefs.some(pref => geologyLower.includes(pref));
         if (!geologyMatch) {
-          score *= 0.75; // Penalità moderata non distruttiva
+          score *= 0.75;
         }
 
-        // Finestre d'incubazione dinamiche
         let startIndex = Math.max(0, 25 - sp.maxDays);
         let endIndex = Math.min(25, 25 - sp.minDays);
         let spGoldenRain = rainDays.slice(startIndex, endIndex + 1).reduce((a, b) => a + b, 0);
@@ -1506,7 +1589,6 @@
         const targetMonth = new Date(targetDateStr).getMonth() + 1;
         const totalRain = rainDays.reduce((a, b) => a + b, 0);
 
-        // Modulazione geologica ritenzione idrica
         let geologyLower = (geology || "").toLowerCase();
         let retentionMultiplier = 1.0;
         if (geologyLower.includes('siliceo') || geologyLower.includes('arenario') || geologyLower.includes('acido') || geologyLower.includes('granito')) {
@@ -1515,7 +1597,6 @@
           retentionMultiplier = 1.10; 
         }
 
-        // Modello a due strati idrici
         let deepWaterSum = 0;
         for (let i = 0; i < rainDays.length; i++) {
           let decayFactor = Math.pow(0.92, 25 - i);
@@ -1523,7 +1604,6 @@
         }
         const deepMoistureEst = Math.min(100, Math.max(15, Math.round(deepWaterSum * 1.8 * retentionMultiplier)));
 
-        // --- 1. RIDUZIONE E RICALCOLO SCUDO RUGIADA (Range 0.7 - 1.1) ---
         const recentTemps = tempDays.slice(-7);
         const avgTempRaw = recentTemps.reduce((a, b) => a + b, 0) / recentTemps.length;
         const recentDewPoints = dewPointDays.slice(-7);
@@ -1539,7 +1619,6 @@
         const avgSoilTemp = avgSoilTempRaw * habMod.tempMod;
         const avgDewPoint = avgDewPointRaw;
 
-        // Ricalcolo termico inerziale 70% suolo / 30% aria
         const effectiveAvgTemp = (avgSoilTemp * 0.7) + (avgTemp * 0.3);
 
         let baseScore = 0;
@@ -1596,10 +1675,9 @@
 
             if (!monthActive) baseScore *= 0.3;
 
-            // Compatibilità geologica con penalità bilanciata
             let geologyMatch = spObj.geologyPrefs.some(pref => geologyLower.includes(pref));
             if (!geologyMatch) {
-              baseScore *= 0.80; // Ridotta la severità della penalità geologica
+              baseScore *= 0.80;
               geologyCompatStatus = `⚠️ Substrato atipico per la specie (${geology}) - Penalità moderata`;
               geologyWarning = `⚠️ Geologia sub-ottimale per ${spObj.name.split(' ')[0]}`;
             } else {
@@ -1655,7 +1733,7 @@
         let dryPenalty = 1.0;
 
         if (dryWindDaysCount >= 2) {
-          dryPenalty = Math.max(0.60, 1.0 - (dryWindDaysCount * 0.07)); // Penalità vento più conservativa
+          dryPenalty = Math.max(0.60, 1.0 - (dryWindDaysCount * 0.07));
           windNote = `💨 Vento secco persistente (${dryWindDaysCount} giorni)`;
           windDryNote = `⚠️ Siccità da vento prolungato (${dryWindDaysCount}gg post-pioggia): superficiale arido`;
         }
@@ -1707,12 +1785,10 @@
           stageMultiplier = 0.40;
         }
 
-        // --- 2. MITIGAZIONE CASCATA & LIMITE INFERIORE DI SICUREZZA (FLOOR) ---
         let combinedEnvModifier = aspectMultiplier * dryPenalty * stageMultiplier;
-        combinedEnvModifier = Math.max(0.65, combinedEnvModifier); // Evita crolli drastici sotto il 35% di penalità cumulativa
+        combinedEnvModifier = Math.max(0.65, combinedEnvModifier);
         baseScore = baseScore * combinedEnvModifier;
 
-        // Floor di sicurezza ecologico: se lo spot ha ricevuto piogge valide, evita l'azzeramento ingiusto
         if (goldenWindowRain >= 15 || totalRain >= 25) {
           baseScore = Math.max(28, baseScore);
         }
