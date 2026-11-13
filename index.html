@@ -108,7 +108,7 @@
     </button>
   </div>
 
-  <!-- LEGENDA COPERNICUS BOSCHI (In basso a sinistra, nascosta di default) -->
+  <!-- LEGENDA COPERNICUS BOSCHI -->
   <div id="forest-legend" class="absolute bottom-16 left-3 z-[1000] bg-slate-900/90 backdrop-blur-md border border-slate-700 p-2.5 rounded-xl text-[10px] hidden shadow-xl space-y-1.5">
     <div class="font-bold text-emerald-400 border-b border-slate-700 pb-1 flex items-center justify-between">
       <span>🌲 Copertura Forestale & Topo</span>
@@ -124,7 +124,7 @@
     </div>
   </div>
 
-  <!-- LEGENDA GEOLOGIA ISPRA (In basso a sinistra, nascosta di default) -->
+  <!-- LEGENDA GEOLOGIA ISPRA -->
   <div id="geology-legend" class="absolute bottom-16 left-3 z-[1000] bg-slate-900/90 backdrop-blur-md border border-slate-700 p-2.5 rounded-xl text-[10px] hidden shadow-xl space-y-1.5">
     <div class="font-bold text-amber-400 border-b border-slate-700 pb-1 flex items-center justify-between">
       <span>🪨 Carta Geolitologica (ISPRA)</span>
@@ -148,7 +148,7 @@
     </div>
   </div>
 
-  <!-- LEGENDA RADAR PIOGGIA (In basso a sinistra, nascosta di default) -->
+  <!-- LEGENDA RADAR PIOGGIA -->
   <div id="radar-legend" class="absolute bottom-16 left-3 z-[1000] bg-slate-900/90 backdrop-blur-md border border-slate-700 p-2 rounded-xl text-[10px] hidden shadow-xl">
     <div class="font-bold text-emerald-400 mb-1">Intensità Pioggia (Radar)</div>
     <div class="flex items-center space-x-1">
@@ -226,7 +226,7 @@
     </div>
   </div>
 
-  <!-- MODAL IMPOSTAZIONI & GITHUB -->
+  <!-- MODAL IMPOSTAZIONI & GITHUB & API KEY -->
   <div id="settings-modal" class="fixed inset-0 z-[2500] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -236,6 +236,10 @@
       <div class="space-y-3 text-xs">
         <button onclick="configGitHub()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 py-2.5 px-3 rounded-xl font-bold transition text-left flex items-center justify-between">
           <span>🔑 Configura Credenziali GitHub</span>
+          <span>➔</span>
+        </button>
+        <button onclick="configOpenMeteoKey()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 py-2.5 px-3 rounded-xl font-bold transition text-left flex items-center justify-between">
+          <span>🌤️ Configura API Key Open-Meteo</span>
           <span>➔</span>
         </button>
         <button onclick="forceReloadComuniCache()" class="w-full bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/50 py-2.5 px-3 rounded-xl font-bold transition text-left flex items-center justify-between">
@@ -601,6 +605,7 @@
       const statusText = document.getElementById("status-text");
       statusText.innerText = "🔄 Aggiornamento live in corso...";
       delete meteoCache[cacheKey];
+      localStorage.removeItem(`fungo_cache_${cacheKey}`);
       if (activeMarkers[locKey]) {
         map.removeLayer(activeMarkers[locKey]);
         delete activeMarkers[locKey];
@@ -984,6 +989,16 @@
       }
     }
 
+    function configOpenMeteoKey() {
+      closeSettingsModal();
+      const currentKey = localStorage.getItem("openmeteo_api_key") || "";
+      const newKey = prompt("Inserisci la tua API Key di Open-Meteo (opzionale):", currentKey);
+      if (newKey !== null) {
+        localStorage.setItem("openmeteo_api_key", newKey.trim());
+        alert("✅ API Key Open-Meteo salvata!");
+      }
+    }
+
     async function forceReloadComuniCache() {
       closeSettingsModal();
       if ('serviceWorker' in navigator) {
@@ -1015,6 +1030,7 @@
     let isRadarActive = false;
     let pendingLat = null;
     let pendingLon = null;
+    let mapMoveTimer = null; // Timer per il debounce di 3 secondi
 
     function initCustomCalendar() {
       try {
@@ -1089,9 +1105,7 @@
             }
           }
         }
-      } catch (err) {
-        console.warn("Servizio esterno non raggiungibile o in timeout. Uso logica altitudinale.");
-      } finally {
+      } catch (err) {} finally {
         clearTimeout(timeoutId);
       }
 
@@ -1212,7 +1226,15 @@
         document.getElementById('add-spot-modal').classList.remove('hidden');
       });
 
-      map.on('moveend zoomend', loadMeteoData);
+      // DEBOUNCE DI 3 SECONDI SUL MOVIMENTO DELLA MAPPA PER RISPARMIARE CHIAMATE API
+      map.on('moveend zoomend', function() {
+        clearTimeout(mapMoveTimer);
+        document.getElementById("status-text").innerText = "⏳ Attendendo fine movimento mappa...";
+        mapMoveTimer = setTimeout(() => {
+          loadMeteoData();
+        }, 3000); // Ritardo di 3 secondi prima di interrogare le API
+      });
+
       loadMeteoData();
     }
 
@@ -1233,7 +1255,6 @@
       }
 
       let geology = document.getElementById('new-spot-geology-select').value;
-
       closeAddSpotModal();
 
       const newSpotObj = {
@@ -1281,7 +1302,6 @@
         const geoProp = newSpot.geology ? `, geology: "${newSpot.geology}"` : ``;
         const newSpotJson = `,\n  { name: "${newSpot.name}", lat: ${newSpot.lat}, lon: ${newSpot.lon}, alt: ${newSpot.alt}, type: "Località"${habProp}${geoProp}${favProp}, minZoom: 9 }\n];`;
         const updatedJsText = currentJsText.substring(0, lastIndex) + newSpotJson;
-
         const updatedBase64 = btoa(unescape(encodeURIComponent(updatedJsText)));
 
         const putRes = await fetch(url, {
@@ -1468,92 +1488,97 @@
 
       if (!isRadarActive && !isForestActive && !isGeologyActive) statusText.innerText = `🍄 Caricamento ${visibleLocs.length} aree...`;
 
-      await Promise.all(visibleLocs.map(async (loc) => {
-        const altitude = loc.alt || 300;
-        const locKey = `${loc.lat}_${loc.lon}`;
-        const cacheKey = `${loc.lat}_${loc.lon}_${altitude}_${targetDateStr}_${selectedSpeciesFilter}`;
-        
-        if (activeMarkers[locKey]) return;
+      try {
+        await Promise.all(visibleLocs.map(async (loc) => {
+          const altitude = loc.alt || 300;
+          const locKey = `${loc.lat}_${loc.lon}`;
+          const cacheKey = `${loc.lat}_${loc.lon}_${altitude}_${targetDateStr}_${selectedSpeciesFilter}`;
+          
+          if (activeMarkers[locKey]) return;
 
-        let env = await fetchSpotEnvironmentData(loc.lat, loc.lon, altitude, loc.habitat, loc.geology);
-        if (env.habitat !== loc.habitat || env.geology !== loc.geology) {
-          loc.habitat = env.habitat;
-          loc.geology = env.geology;
-          queueSpotUpdateForGitHub(loc.name, env.habitat, env.geology);
-        }
+          let env = await fetchSpotEnvironmentData(loc.lat, loc.lon, altitude, loc.habitat, loc.geology);
+          if (env.habitat !== loc.habitat || env.geology !== loc.geology) {
+            loc.habitat = env.habitat;
+            loc.geology = env.geology;
+            queueSpotUpdateForGitHub(loc.name, env.habitat, env.geology);
+          }
 
-        const data = await getFungiScore(loc.lat, loc.lon, altitude, env.habitat, env.geology, env.aspectInfo);
-        if (!data) return;
+          const data = await getFungiScore(loc.lat, loc.lon, altitude, env.habitat, env.geology, env.aspectInfo);
+          if (!data) return;
 
-        let color = '#dc2626'; let labelText = "Molto Basso";
-        if (data.score > 20 && data.score <= 40) { color = '#f97316'; labelText = "Basso"; }
-        else if (data.score > 40 && data.score <= 60) { color = '#f59e0b'; labelText = "Medio"; }
-        else if (data.score > 60 && data.score <= 80) { color = '#16a34a'; labelText = "Buono"; }
-        else if (data.score > 80) { color = '#34d399'; labelText = "Eccellente"; }
+          let color = '#dc2626'; let labelText = "Molto Basso";
+          if (data.score > 20 && data.score <= 40) { color = '#f97316'; labelText = "Basso"; }
+          else if (data.score > 40 && data.score <= 60) { color = '#f59e0b'; labelText = "Medio"; }
+          else if (data.score > 60 && data.score <= 80) { color = '#16a34a'; labelText = "Buono"; }
+          else if (data.score > 80) { color = '#34d399'; labelText = "Eccellente"; }
 
-        const size = loc.type === "Provincia" ? 34 : 30;
-        let iconHtml = loc.isFavorite ? `
-          <div style="position: relative; width: ${size+6}px; height: ${size+6}px; display: flex; align-items: center; justify-content: center;">
-            <svg viewBox="0 0 24 24" style="position: absolute; width: 100%; height: 100%; fill: ${color}; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.6));">
-              <path d="M12 1.728l3.09 6.261 6.91 1.004-5 4.873 1.18 6.883-6.18-3.25-6.18 3.25 1.18-6.883-5-4.873 6.91-1.004z"/>
-            </svg>
-            <span style="position: relative; color: #ffffff; font-weight: 900; font-size: 9px; text-shadow: 0px 1px 3px #000; margin-top: 2px;">${data.score}%</span>
-          </div>
-        ` : `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #ffffff; font-weight: bold; font-size: 10px; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0px 1px 2px rgba(0,0,0,0.8);">${data.score}%</div>`;
-
-        const markerIcon = L.divIcon({ className: '', html: iconHtml, iconSize: [size+6, size+6], iconAnchor: [(size+6)/2, (size+6)/2] });
-        const favText = loc.isFavorite ? "⭐ Rimuovi dai Preferiti" : "☆ Aggiungi ai Preferiti ⭐";
-        let speciesHtml = data.topSpecies.map((sp, idx) => `<li class="text-[10px] text-slate-800"><b>${idx+1}.</b> ${sp.name} <span class="text-emerald-700 font-bold">(${sp.score}%)</span></li>`).join('');
-
-        const filterTitleTag = selectedSpeciesFilter !== 'ALL' ? `<div class="text-[10px] text-emerald-700 font-bold mb-1">🎯 Filtrato per: ${selectedSpeciesFilter}</div>` : '';
-
-        const marker = L.marker([loc.lat, loc.lon], { icon: markerIcon }).addTo(map).bindPopup(`
-          <div class="text-slate-900 p-1 max-w-[270px]">
-            <h3 class="font-bold text-sm border-b pb-1 mb-2 flex items-center justify-between">
-              <span>${loc.name} ${loc.isFavorite ? '⭐' : ''}</span>
-              <span class="text-[10px] text-slate-500 font-normal">(${loc.type} - ⛰️ ${loc.alt}m)</span>
-            </h3>
-            ${filterTitleTag}
-            <div class="bg-slate-100 p-2 rounded-lg mb-2 text-center relative">
-              <div class="text-xs text-slate-600">Probabilità Calcolata</div>
-              <div class="text-xl font-black" style="color:${color}">${data.score}% (${labelText})</div>
-              <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>
-              ${data.windDryNote ? `<div class="text-[9px] mt-1 text-red-700 font-bold bg-red-100 p-1 rounded">${data.windDryNote}</div>` : ''}
-              ${data.geologyWarning ? `<div class="text-[9px] mt-1 text-amber-700 font-bold bg-amber-100 p-1 rounded">${data.geologyWarning}</div>` : ''}
+          const size = loc.type === "Provincia" ? 34 : 30;
+          let iconHtml = loc.isFavorite ? `
+            <div style="position: relative; width: ${size+6}px; height: ${size+6}px; display: flex; align-items: center; justify-content: center;">
+              <svg viewBox="0 0 24 24" style="position: absolute; width: 100%; height: 100%; fill: ${color}; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.6));">
+                <path d="M12 1.728l3.09 6.261 6.91 1.004-5 4.873 1.18 6.883-6.18-3.25-6.18 3.25 1.18-6.883-5-4.873 6.91-1.004z"/>
+              </svg>
+              <span style="position: relative; color: #ffffff; font-weight: 900; font-size: 9px; text-shadow: 0px 1px 3px #000; margin-top: 2px;">${data.score}%</span>
             </div>
-            <div class="bg-emerald-50 border border-emerald-200 p-1.5 rounded-lg mb-2">
-              <div class="text-[10px] font-bold text-emerald-900 mb-0.5">🍄 Top 3 Specie Probabili:</div>
-              <ul class="space-y-0.5">${speciesHtml}</ul>
-            </div>
-            <div class="text-[11px] space-y-1.5 text-slate-700">
-              <p><b>🌳 Essenze:</b> ${env.habitat}</p>
-              <p><b>🪨 Substrato:</b> ${env.geology}</p>
-              <p><b>☀️ Esposizione:</b> ${env.aspectInfo.aspectStr}</p>
-              <p><b>🌍 Umidità Profonda (Micelio):</b> ${data.deepMoisture}%</p>
-              <p><b>💧 Umidità Superficiale (Primordi):</b> ${data.surfaceMoisture}%</p>
-              <p><b>🌡️ Temp. Inerziale (70% Suolo / 30% Aria):</b> ${data.effectiveTemp}°C</p>
-            </div>
-            <div class="mt-3 pt-2 border-t border-slate-200 space-y-1.5 text-center">
-              <button onclick="openCalcDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-emerald-700 hover:bg-emerald-600 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
-                🧠 Spiegazione Calcolo %
-              </button>
-              <button onclick="openDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-slate-900 hover:bg-slate-700 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
-                📊 Dettagli Storici (25 Giorni)
-              </button>
-              <button onclick="refreshSingleSpot(${loc.lat}, ${loc.lon}, ${altitude}, '${cacheKey}', '${locKey}')" class="bg-blue-600 hover:bg-blue-500 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
-                🔄 Aggiorna Meteo Live
-              </button>
-              <button onclick="toggleFavoriteSpot('${loc.name.replace(/'/g, "\\'")}', ${loc.lat}, ${loc.lon})" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 w-full py-1 px-3 rounded-lg text-[10px] font-bold transition shadow">
-                ${favText}
-              </button>
-            </div>
-          </div>
-        `);
+          ` : `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #ffffff; font-weight: bold; font-size: 10px; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0px 1px 2px rgba(0,0,0,0.8);">${data.score}%</div>`;
 
-        activeMarkers[locKey] = marker;
-      }));
+          const markerIcon = L.divIcon({ className: '', html: iconHtml, iconSize: [size+6, size+6], iconAnchor: [(size+6)/2, (size+6)/2] });
+          const favText = loc.isFavorite ? "⭐ Rimuovi dai Preferiti" : "☆ Aggiungi ai Preferiti ⭐";
+          let speciesHtml = data.topSpecies.map((sp, idx) => `<li class="text-[10px] text-slate-800"><b>${idx+1}.</b> ${sp.name} <span class="text-emerald-700 font-bold">(${sp.score}%)</span></li>`).join('');
 
-      if (!isRadarActive && !isForestActive && !isGeologyActive) statusText.innerText = `🍄 ${Object.keys(activeMarkers).length} aree caricate`;
+          const filterTitleTag = selectedSpeciesFilter !== 'ALL' ? `<div class="text-[10px] text-emerald-700 font-bold mb-1">🎯 Filtrato per: ${selectedSpeciesFilter}</div>` : '';
+
+          const marker = L.marker([loc.lat, loc.lon], { icon: markerIcon }).addTo(map).bindPopup(`
+            <div class="text-slate-900 p-1 max-w-[270px]">
+              <h3 class="font-bold text-sm border-b pb-1 mb-2 flex items-center justify-between">
+                <span>${loc.name} ${loc.isFavorite ? '⭐' : ''}</span>
+                <span class="text-[10px] text-slate-500 font-normal">(${loc.type} - ⛰️ ${loc.alt}m)</span>
+              </h3>
+              ${filterTitleTag}
+              <div class="bg-slate-100 p-2 rounded-lg mb-2 text-center relative">
+                <div class="text-xs text-slate-600">Probabilità Calcolata</div>
+                <div class="text-xl font-black" style="color:${color}">${data.score}% (${labelText})</div>
+                <div class="text-[10px] mt-1 ${data.predictionColor}">${data.predictionNote}</div>
+                ${data.windDryNote ? `<div class="text-[9px] mt-1 text-red-700 font-bold bg-red-100 p-1 rounded">${data.windDryNote}</div>` : ''}
+                ${data.geologyWarning ? `<div class="text-[9px] mt-1 text-amber-700 font-bold bg-amber-100 p-1 rounded">${data.geologyWarning}</div>` : ''}
+              </div>
+              <div class="bg-emerald-50 border border-emerald-200 p-1.5 rounded-lg mb-2">
+                <div class="text-[10px] font-bold text-emerald-900 mb-0.5">🍄 Top 3 Specie Probabili:</div>
+                <ul class="space-y-0.5">${speciesHtml}</ul>
+              </div>
+              <div class="text-[11px] space-y-1.5 text-slate-700">
+                <p><b>🌳 Essenze:</b> ${env.habitat}</p>
+                <p><b>🪨 Substrato:</b> ${env.geology}</p>
+                <p><b>☀️ Esposizione:</b> ${env.aspectInfo.aspectStr}</p>
+                <p><b>🌍 Umidità Profonda (Micelio):</b> ${data.deepMoisture}%</p>
+                <p><b>💧 Umidità Superficiale (Primordi):</b> ${data.surfaceMoisture}%</p>
+                <p><b>🌡️ Temp. Inerziale (70% Suolo / 30% Aria):</b> ${data.effectiveTemp}°C</p>
+              </div>
+              <div class="mt-3 pt-2 border-t border-slate-200 space-y-1.5 text-center">
+                <button onclick="openCalcDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-emerald-700 hover:bg-emerald-600 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
+                  🧠 Spiegazione Calcolo %
+                </button>
+                <button onclick="openDetailsModal('${loc.name.replace(/'/g, "\\'")}', '${cacheKey}')" class="bg-slate-900 hover:bg-slate-700 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
+                  📊 Dettagli Storici (25 Giorni)
+                </button>
+                <button onclick="refreshSingleSpot(${loc.lat}, ${loc.lon}, ${altitude}, '${cacheKey}', '${locKey}')" class="bg-blue-600 hover:bg-blue-500 text-white w-full py-1.5 px-3 rounded-lg text-xs font-bold transition shadow">
+                  🔄 Aggiorna Meteo Live
+                </button>
+                <button onclick="toggleFavoriteSpot('${loc.name.replace(/'/g, "\\'")}', ${loc.lat}, ${loc.lon})" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 w-full py-1 px-3 rounded-lg text-[10px] font-bold transition shadow">
+                  ${favText}
+                </button>
+              </div>
+            </div>
+          `);
+
+          activeMarkers[locKey] = marker;
+        }));
+
+        if (!isRadarActive && !isForestActive && !isGeologyActive) statusText.innerText = `🍄 ${Object.keys(activeMarkers).length} aree caricate`;
+      } catch (err) {
+        console.warn("Errore o limite API superato:", err);
+        statusText.innerText = "⚠️ Limite richieste meteo raggiunto. Riprova più tardi.";
+      }
     }
 
     function openCalcDetailsModal(locationName, cacheKey) {
@@ -1673,11 +1698,26 @@
       document.getElementById('details-modal').classList.remove('hidden');
     }
 
+    // --- FUNZIONE GET FUNGI SCORE CON CACHE PERSISTENTE (LOCALSTORAGE) ---
     async function getFungiScore(lat, lon, altitude = 300, habitat = "Bosco Misto", geology = "Siliceo / Arenario", aspectInfo = { aspect: 180, aspectStr: "Sud" }) {
       const targetDateStr = document.getElementById('targetDate').value;
       const selectedSpeciesFilter = localStorage.getItem('fungo_selected_species') || 'ALL';
       const cacheKey = `${lat}_${lon}_${altitude}_${targetDateStr}_${selectedSpeciesFilter}`;
+      
       if (meteoCache[cacheKey]) return meteoCache[cacheKey];
+
+      // Controllo Cache Locale nel browser (valida per 6 ore)
+      const localCacheKey = `fungo_cache_${cacheKey}`;
+      const cachedItem = localStorage.getItem(localCacheKey);
+      if (cachedItem) {
+        try {
+          const parsed = JSON.parse(cachedItem);
+          if (Date.now() - parsed.timestamp < 6 * 3600 * 1000) {
+            meteoCache[cacheKey] = parsed.data;
+            return parsed.data;
+          }
+        } catch(e) {}
+      }
 
       try {
         const todayObj = new Date();
@@ -1686,17 +1726,20 @@
         const isToday = (targetDateStr === localTodayStr);
         let url;
 
+        const userApiKey = localStorage.getItem("openmeteo_api_key") || "";
+        const apiKeyParam = userApiKey ? `&apikey=${userApiKey}` : "";
+
         const dailyParams = "precipitation_sum,temperature_2m_mean,temperature_2m_min,wind_speed_10m_max,wind_direction_10m_dominant";
         const hourlyParams = "soil_temperature_0_to_7cm,dew_point_2m";
 
         const totalDaysCount = 26;
         if (isToday) {
-          url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&past_days=25&forecast_days=1&daily=${dailyParams}&hourly=${hourlyParams}&timezone=Europe%2FRome`;
+          url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&past_days=25&forecast_days=1&daily=${dailyParams}&hourly=${hourlyParams}&timezone=Europe%2FRome${apiKeyParam}`;
         } else {
           const tDate = new Date(targetDateStr);
           const sDate = new Date(tDate);
           sDate.setDate(sDate.getDate() - 25);
-          url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&start_date=${sDate.toISOString().split('T')[0]}&end_date=${targetDateStr}&daily=${dailyParams}&hourly=${hourlyParams}&timezone=Europe%2FRome`;
+          url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&start_date=${sDate.toISOString().split('T')[0]}&end_date=${targetDateStr}&daily=${dailyParams}&hourly=${hourlyParams}&timezone=Europe%2FRome${apiKeyParam}`;
         }
 
         const res = await fetch(url);
@@ -1953,7 +1996,6 @@
         }
 
         const finalScore = Math.min(100, Math.max(0, Math.round(baseScore)));
-
         const topSpecies = getTopSpecies(habitat, avgTemp, deepMoistureEst, rainDays, targetMonth, avgSoilTemp, geology);
 
         const dailyHistory = [];
@@ -2011,6 +2053,8 @@
         };
 
         meteoCache[cacheKey] = result;
+        // Salvataggio in localStorage per 6 ore
+        localStorage.setItem(localCacheKey, JSON.stringify({ timestamp: Date.now(), data: result }));
         return result;
 
       } catch (e) { return null; }
