@@ -88,7 +88,11 @@
     </button>
     <button onclick="panToUserLocation()" class="flex flex-col items-center text-slate-300 hover:text-emerald-400 transition space-y-0.5">
       <span class="text-lg">📍</span>
-      <span class="text-[10px] font-semibold">Mia Posizione</span>
+      <span class="text-[10px] font-semibold">Posizione</span>
+    </button>
+    <button onclick="toggleForestLayer()" id="forest-btn" class="flex flex-col items-center text-slate-300 hover:text-emerald-400 transition space-y-0.5">
+      <span class="text-lg">🌲</span>
+      <span class="text-[10px] font-semibold">Boschi</span>
     </button>
     <button onclick="toggleHillshade()" id="hillshade-btn" class="flex flex-col items-center text-slate-300 hover:text-emerald-400 transition space-y-0.5">
       <span class="text-lg">⛰️</span>
@@ -98,6 +102,32 @@
       <span class="text-lg">📡</span>
       <span class="text-[10px] font-semibold">Radar</span>
     </button>
+  </div>
+
+  <!-- LEGENDA COPERNICUS BOSCHI (In basso a sinistra, nascosta di default) -->
+  <div id="forest-legend" class="absolute bottom-16 left-3 z-[1000] bg-slate-900/90 backdrop-blur-md border border-slate-700 p-2.5 rounded-xl text-[10px] hidden shadow-xl space-y-1.5">
+    <div class="font-bold text-emerald-400 border-b border-slate-700 pb-1 flex items-center justify-between">
+      <span>🌲 Copernicus Forest Type</span>
+      <span class="text-[9px] text-slate-400">UE / HRL</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <div class="w-3 h-3 rounded bg-emerald-600"></div>
+      <span class="text-slate-300">Bosco di Latifoglie (Faggi, Querce, Castagni)</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <div class="w-3 h-3 rounded bg-teal-800"></div>
+      <span class="text-slate-300">Bosco di Conifere (Pini, Abeti)</span>
+    </div>
+  </div>
+
+  <!-- LEGENDA RADAR PIOGGIA (In basso a sinistra, nascosta di default) -->
+  <div id="radar-legend" class="absolute bottom-16 left-3 z-[1000] bg-slate-900/90 backdrop-blur-md border border-slate-700 p-2 rounded-xl text-[10px] hidden shadow-xl">
+    <div class="font-bold text-emerald-400 mb-1">Intensità Pioggia (Radar)</div>
+    <div class="flex items-center space-x-1">
+      <span class="text-[9px] text-slate-400">Debole</span>
+      <div class="w-24 h-2.5 rounded-full" style="background: linear-gradient(to right, rgba(0,0,255,0.4), rgba(0,255,0,0.6), rgba(255,255,0,0.8), rgba(255,0,0,0.9))"></div>
+      <span class="text-[9px] text-slate-400">Fortissima</span>
+    </div>
   </div>
 
   <!-- MODAL CERCA LUOGO -->
@@ -225,7 +255,7 @@
           <input type="number" id="new-spot-alt" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors duration-200" placeholder="400">
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">🌳 Essenze / Habitat</label>
+          <label class="block text-slate-400 mb-1">🌳 Essenze / Habitat (Modificabile)</label>
           <select id="new-spot-habitat-select" onchange="checkCustomHabitat(this)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2">
             <option value="Faggeta Pura / Mista">Faggeta Pura / Mista</option>
             <option value="Castagneto">Castagneto</option>
@@ -573,7 +603,6 @@
     }
     function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
 
-    // --- FUNZIONE DI RICERCA AGGIORNATA E ROBUSTA (100% FUNZIONANTE) ---
     async function executeMapSearch() {
       const rawQuery = document.getElementById('search-query-input').value.trim();
       const query = rawQuery.toLowerCase();
@@ -584,7 +613,6 @@
       
       let foundResults = [];
 
-      // 1. Ricerca istantanea nel database locale COMUNI_ITALIA
       if (typeof COMUNI_ITALIA !== 'undefined' && Array.isArray(COMUNI_ITALIA)) {
         foundResults = COMUNI_ITALIA
           .filter(loc => loc && loc.name && loc.name.toLowerCase().includes(query))
@@ -597,7 +625,6 @@
           .slice(0, 5);
       }
 
-      // 2. Geocoding globale via Open-Meteo (veloce, gratuito, senza blocchi CORS)
       if (foundResults.length < 5) {
         try {
           const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(rawQuery)}&count=6&language=it&format=json`;
@@ -627,7 +654,6 @@
         }
       }
 
-      // 3. Fallback su Nominatim (senza custom headers)
       if (foundResults.length === 0) {
         try {
           const nomRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(rawQuery)}&limit=5&accept-language=it`);
@@ -649,7 +675,6 @@
         }
       }
 
-      // 4. Stampa i risultati nel box
       if (foundResults.length > 0) {
         let html = '';
         foundResults.slice(0, 6).forEach(place => {
@@ -693,13 +718,49 @@
           zIndex: 400, 
           maxZoom: 18, 
           maxNativeZoom: 13,
-          attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ'
+          attribution: 'Tiles &copy; Esri'
         }).addTo(map);
 
         isHillshadeActive = true;
         btn.classList.remove('text-slate-300');
         btn.classList.add('text-emerald-400');
         statusText.innerText = "⛰️ Rilievo Ombreggiato Attivo";
+      }
+    }
+
+    // --- NUOVO LAYER COPERNICUS FOREST TYPE ---
+    let forestLayer = null;
+    let isForestActive = false;
+
+    function toggleForestLayer() {
+      const btn = document.getElementById('forest-btn');
+      const statusText = document.getElementById("status-text");
+      const legend = document.getElementById('forest-legend');
+
+      if (isForestActive) {
+        if (forestLayer) { map.removeLayer(forestLayer); forestLayer = null; }
+        isForestActive = false;
+        btn.classList.remove('text-emerald-400');
+        btn.classList.add('text-slate-300');
+        legend.classList.add('hidden');
+        statusText.innerText = "Layer Boschi disattivato";
+      } else {
+        statusText.innerText = "🌲 Caricamento Copernicus Forest Type...";
+        // Servizio WMS dimostrativo/pubblico o endpoint standard open per copertura forestale HRL
+        forestLayer = L.tileLayer.wms('https://image.discomap.eea.europa.eu/arcgis/services/Forest/HRL_ForestType_2018/MapServer/WmsServer', {
+          layers: '1', // 1: Forest Type
+          format: 'image/png',
+          transparent: true,
+          opacity: 0.55,
+          zIndex: 450,
+          attribution: 'EEA / Copernicus Land Monitoring Service'
+        }).addTo(map);
+
+        isForestActive = true;
+        btn.classList.remove('text-slate-300');
+        btn.classList.add('text-emerald-400');
+        legend.classList.remove('hidden');
+        statusText.innerText = "🌲 Layer Boschi Copernicus Attivo";
       }
     }
 
@@ -781,7 +842,6 @@
       document.getElementById("status-text").innerText = `🎯 Spot selezionato: ${name}`;
     }
 
-    // --- NUOVA FUNZIONE GEOLOCALIZZAZIONE UTENTE ---
     let userLocationMarker = null;
     let userAccuracyCircle = null;
 
@@ -833,13 +893,13 @@
           statusText.innerText = "⚠️ Impossibile rilevare la posizione GPS.";
           switch(error.code) {
             case error.PERMISSION_DENIED:
-              alert("Permesso di geolocalizzazione negato. Abilitalo nelle impostazioni del browser.");
+              alert("Permesso di geolocalizzazione negato.");
               break;
             case error.POSITION_UNAVAILABLE:
-              alert("Informazioni sulla posizione non disponibili.");
+              alert("Posizione non disponibile.");
               break;
             case error.TIMEOUT:
-              alert("Tempo scaduto per il rilevamento della posizione.");
+              alert("Tempo scaduto.");
               break;
           }
         },
@@ -936,57 +996,74 @@
       }
     }
 
+    // --- CENSIMENTO SPOT CON FALLBACK ROBUSTO SU TIMEOUT/ERRORE ---
     async function fetchSpotEnvironmentData(lat, lon, alt, existingHabitat, existingGeology) {
       let habitat = existingHabitat;
       let geology = existingGeology || (alt > 900 ? "Calcareo / Roccioso" : "Siliceo / Arenario");
       let aspectInfo = { aspect: 180, aspectStr: "Sud (Aprico)" };
 
+      // Controller per gestire timeout (max 4 secondi di attesa per i servizi esterni)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1&extratags=1`);
-        const data = await res.json();
-        
-        if (data && data.extratags) {
-          const tags = data.extratags;
-          if (!habitat || habitat === "Bosco Misto") {
-            if (tags.species || tags['species:it'] || tags.genus) {
-              const sp = tags['species:it'] || tags.species || tags.genus;
-              habitat = `Bosco di ${sp}`;
-            } else if (tags.leaf_type === 'broadleaved' && tags.leaf_cycle === 'deciduous') {
-              habitat = alt >= 900 ? "Faggeta Pura / Mista" : "Cerro / Querceto";
-            } else if (tags.leaf_type === 'needleleaved') {
-              habitat = "Pineta / Conifere";
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1&extratags=1`, { signal: controller.signal });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.extratags) {
+            const tags = data.extratags;
+            if (!habitat || habitat === "Bosco Misto") {
+              if (tags.species || tags['species:it'] || tags.genus) {
+                const sp = tags['species:it'] || tags.species || tags.genus;
+                habitat = `Bosco di ${sp}`;
+              } else if (tags.leaf_type === 'broadleaved' && tags.leaf_cycle === 'deciduous') {
+                habitat = alt >= 900 ? "Faggeta Pura / Mista" : "Cerro / Querceto";
+              } else if (tags.leaf_type === 'needleleaved') {
+                habitat = "Pineta / Conifere";
+              }
+            }
+            if (tags.geological || tags.rock) {
+              geology = tags.geological || tags.rock;
             }
           }
-          if (tags.geological || tags.rock) {
-            geology = tags.geological || tags.rock;
-          }
-        }
-
-        if (!habitat) {
-          habitat = alt >= 1000 ? "Faggeta Pura / Mista" : (alt >= 600 ? "Castagneto" : "Cerro / Querceto");
-        }
-
-        const d = 0.0015;
-        const elRes = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat},${lat+d},${lat-d},${lat},${lat}&longitude=${lon},${lon},${lon},${lon+d},${lon-d}`);
-        const elData = await elRes.json();
-        if (elData && elData.elevation && elData.elevation.length >= 5) {
-          const [c, n, s, e, w] = elData.elevation;
-          const dzdx = e - w;
-          const dzdy = n - s;
-          let aspect = Math.atan2(-dzdy, dzdx) * (180 / Math.PI);
-          if (aspect < 0) aspect += 360;
-
-          let aspectStr = "Nord (Ombriva)";
-          if (aspect >= 315 || aspect < 45) aspectStr = "Nord (Ombriva - Fresco)";
-          else if (aspect >= 45 && aspect < 135) aspectStr = "Est (Mattino)";
-          else if (aspect >= 135 && aspect < 225) aspectStr = "Sud (Aprico - Caldo)";
-          else aspectStr = "Ovest (Pomeriggio)";
-
-          aspectInfo = { aspect, aspectStr };
         }
       } catch (err) {
-        if (!habitat) habitat = alt >= 1000 ? "Faggeta Pura / Mista" : "Cerro / Querceto";
+        // Fallback immediato in caso di timeout o errore di rete senza bloccare l'utente
+        console.warn("Servizio forestale esterno non raggiungibile o in timeout. Uso logica altitudinale.");
+      } finally {
+        clearTimeout(timeoutId);
       }
+
+      // Fallback altitudinale deterministico se il servizio esterno non ha restituito nulla
+      if (!habitat) {
+        habitat = alt >= 1000 ? "Faggeta Pura / Mista" : (alt >= 600 ? "Castagneto" : "Cerro / Querceto");
+      }
+
+      try {
+        const elCtrl = new AbortController();
+        const elTimeout = setTimeout(() => elCtrl.abort(), 3000);
+        const d = 0.0015;
+        const elRes = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat},${lat+d},${lat-d},${lat},${lat}&longitude=${lon},${lon},${lon},${lon+d},${lon-d}`, { signal: elCtrl.signal });
+        clearTimeout(elTimeout);
+        if (elRes.ok) {
+          const elData = await elRes.json();
+          if (elData && elData.elevation && elData.elevation.length >= 5) {
+            const [c, n, s, e, w] = elData.elevation;
+            const dzdx = e - w;
+            const dzdy = n - s;
+            let aspect = Math.atan2(-dzdy, dzdx) * (180 / Math.PI);
+            if (aspect < 0) aspect += 360;
+
+            let aspectStr = "Nord (Ombriva)";
+            if (aspect >= 315 || aspect < 45) aspectStr = "Nord (Ombriva - Fresco)";
+            else if (aspect >= 45 && aspect < 135) aspectStr = "Est (Mattino)";
+            else if (aspect >= 135 && aspect < 225) aspectStr = "Sud (Aprico - Caldo)";
+            else aspectStr = "Ovest (Pomeriggio)";
+
+            aspectInfo = { aspect, aspectStr };
+          }
+        }
+      } catch (e) {}
 
       return { habitat, geology, aspectInfo };
     }
@@ -1197,12 +1274,14 @@
     async function toggleRadar() {
       const btn = document.getElementById('radar-btn');
       const statusText = document.getElementById("status-text");
+      const legend = document.getElementById('radar-legend');
 
       if (isRadarActive) {
         if (radarLayer) { map.removeLayer(radarLayer); radarLayer = null; }
         isRadarActive = false;
         btn.classList.remove('text-emerald-400');
         btn.classList.add('text-slate-300');
+        legend.classList.add('hidden');
         statusText.innerText = "Radar disattivato";
       } else {
         statusText.innerText = "📡 Caricamento Radar Live...";
@@ -1212,12 +1291,13 @@
           if (data && data.radar && data.radar.past && data.radar.past.length > 0) {
             const latestFrame = data.radar.past[data.radar.past.length - 1];
             radarLayer = L.tileLayer(`${data.host || 'https://tilecache.rainviewer.com'}${latestFrame.path}/256/{z}/{x}/{y}/2/1_1.png`, {
-              opacity: 0.75, zIndex: 500, maxNativeZoom: 7, maxZoom: 18, attribution: 'Weather data by RainViewer'
+              opacity: 0.75, zIndex: 500, maxNativeZoom: 7, maxZoom: 18, attribution: 'RainViewer'
             }).addTo(map);
 
             isRadarActive = true;
             btn.classList.remove('text-slate-300');
             btn.classList.add('text-emerald-400');
+            legend.classList.remove('hidden');
             statusText.innerText = "📡 Radar Pioggia Attivo (Live)";
           } else {
             statusText.innerText = "⚠️ Nessun dato radar disponibile";
@@ -1307,7 +1387,7 @@
         return currentZoom >= loc.minZoom && bounds.contains([loc.lat, loc.lon]);
       });
 
-      if (!isRadarActive) statusText.innerText = `🍄 Caricamento ${visibleLocs.length} aree...`;
+      if (!isRadarActive && !isForestActive) statusText.innerText = `🍄 Caricamento ${visibleLocs.length} aree...`;
 
       await Promise.all(visibleLocs.map(async (loc) => {
         const altitude = loc.alt || 300;
@@ -1394,7 +1474,7 @@
         activeMarkers[locKey] = marker;
       }));
 
-      if (!isRadarActive) statusText.innerText = `🍄 ${Object.keys(activeMarkers).length} aree caricate`;
+      if (!isRadarActive && !isForestActive) statusText.innerText = `🍄 ${Object.keys(activeMarkers).length} aree caricate`;
     }
 
     function openCalcDetailsModal(locationName, cacheKey) {
