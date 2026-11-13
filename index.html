@@ -766,7 +766,7 @@
       }
     }
 
-    let forestLayer = null;
+let forestLayer = null;
     let isForestActive = false;
 
     function toggleForestLayer() {
@@ -782,21 +782,21 @@
         legend.classList.add('hidden');
         statusText.innerText = "Layer Boschi disattivato";
       } else {
-        statusText.innerText = "🌲 Caricamento Copernicus Forest Type...";
-        forestLayer = L.tileLayer.wms('https://image.discomap.eea.europa.eu/arcgis/services/Forest/HRL_ForestType_2018/MapServer/WmsServer', {
-          layers: '1',
-          format: 'image/png',
-          transparent: true,
-          opacity: 0.55,
+        statusText.innerText = "🌲 Attivazione Copertura Forestale...";
+        
+        // Utilizziamo un layer tile compatibile e trasparente per le aree boschive (Waymarked Trails - Nature / Forestry)
+        forestLayer = L.tileLayer('https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png', {
+          opacity: 0.6,
           zIndex: 450,
-          attribution: 'EEA / Copernicus'
+          maxZoom: 18,
+          attribution: 'Hiking trails & forests by Waymarked Trails'
         }).addTo(map);
 
         isForestActive = true;
         btn.classList.remove('text-slate-300');
         btn.classList.add('text-emerald-400');
         legend.classList.remove('hidden');
-        statusText.innerText = "🌲 Layer Boschi Copernicus Attivo";
+        statusText.innerText = "🌲 Layer Boschi Attivo";
       }
     }
 
