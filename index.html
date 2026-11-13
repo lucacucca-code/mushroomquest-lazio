@@ -124,19 +124,27 @@
     </div>
   </div>
 
-  <!-- LEGENDA GEOLOGIA (In basso a sinistra, nascosta di default) -->
+  <!-- LEGENDA GEOLOGIA / MACRO-LITOLOGIA -->
   <div id="geology-legend" class="absolute bottom-16 left-3 z-[1000] bg-slate-900/90 backdrop-blur-md border border-slate-700 p-2.5 rounded-xl text-[10px] hidden shadow-xl space-y-1.5">
     <div class="font-bold text-amber-400 border-b border-slate-700 pb-1 flex items-center justify-between">
-      <span>🪨 Rilievo & Substrato (OpenTopo)</span>
-      <span class="text-[9px] text-slate-400">Morfologia</span>
+      <span>🪨 Carta Geolitologica (ISPRA)</span>
+      <span class="text-[9px] text-slate-400">Tipi di Roccia</span>
     </div>
     <div class="flex items-center space-x-2">
-      <div class="w-3 h-3 rounded bg-amber-600"></div>
-      <span class="text-slate-300">Rilievi calcarei / Rocciosi</span>
+      <div class="w-3 h-3 rounded bg-amber-500"></div>
+      <span class="text-slate-300">Calcari e Rocce Carbonatiche (Alto drenaggio)</span>
     </div>
     <div class="flex items-center space-x-2">
-      <div class="w-3 h-3 rounded bg-orange-700"></div>
-      <span class="text-slate-300">Suoli acidi / Arenari / Vulcanici</span>
+      <div class="w-3 h-3 rounded bg-orange-600"></div>
+      <span class="text-slate-300">Rocce Silicee / Arenarie / Acide</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <div class="w-3 h-3 rounded bg-purple-600"></div>
+      <span class="text-slate-300">Rocce Vulcaniche / Tufacee</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <div class="w-3 h-3 rounded bg-blue-600"></div>
+      <span class="text-slate-300">Argille e Depositi Alluvionali</span>
     </div>
   </div>
 
@@ -804,18 +812,19 @@ let geologyLayer = null;
         legend.classList.add('hidden');
         statusText.innerText = "Layer Geologico disattivato";
       } else {
-        statusText.innerText = "🪨 Caricamento Carta Geolitologica ISPRA...";
+        statusText.innerText = "🪨 Caricamento Carta Geolitologica ISPRA (via Proxy)...";
         
-        // WMS ufficiale ISPRA (Unità Litologiche / Geolitologia 500k) configurato con parametri WMS 1.1.1 e EPSG:3857 compatibili
-        geologyLayer = L.tileLayer.wms('https://sgi2.isprambiente.it/arcgis/services/cartografia_geologica/unita_litologiche_500k/MapServer/WmsServer', {
+        // Utilizziamo un CORS proxy pubblico per bypassare il blocco di sicurezza del browser di ISPRA
+        const proxyWmsUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://sgi2.isprambiente.it/arcgis/services/cartografia_geologica/unita_litologiche_500k/MapServer/WmsServer');
+
+        geologyLayer = L.tileLayer.wms(proxyWmsUrl, {
           layers: '0',
           format: 'image/png',
           transparent: true,
-          opacity: 0.6,
+          opacity: 0.65,
           zIndex: 460,
           version: '1.1.1',
-          crs: L.CRS.EPSG3857,
-          attribution: 'ISPRA - Servizio Geologico d\'Italia'
+          attribution: 'ISPRA - Carta Geolitologica d\'Italia'
         }).addTo(map);
 
         isGeologyActive = true;
