@@ -583,33 +583,67 @@
     }
     function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
 
-    async function executeMapSearch() {
-      const query = document.getElementById('search-query-input').value.trim();
+   async function executeMapSearch() {
+      const query = document.getElementById('search-query-input').value.trim().toLowerCase();
       const resultsBox = document.getElementById('search-results-box');
       if (!query) return;
 
       resultsBox.innerHTML = '<div class="text-slate-400 text-center py-2 text-xs">Ricerca in corso...</div>';
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&accept-language=it`);
-        const data = await res.json();
-        if (data && data.length > 0) {
-          let html = '';
-          data.forEach(place => {
-            const name = place.name || place.display_name.split(',')[0];
-            const fullName = place.display_name;
-            html += `
-              <div onclick="selectSearchPlace(${place.lat}, ${place.lon}, '${name.replace(/'/g, "\\'")}')" class="bg-slate-800 hover:bg-slate-700 p-2 rounded-xl cursor-pointer border border-slate-700 transition">
-                <div class="font-bold text-emerald-400 text-xs">${name}</div>
-                <div class="text-[10px] text-slate-400 truncate">${fullName}</div>
-              </div>
-            `;
+      
+      let foundResults = [];
+
+      // 1. Prima ricerca locale istantanea nel database COMUNI_ITALIA (affidabile al 100%)
+      if (typeof COMUNI_ITALIA !== 'undefined') {
+        foundResults = COMUNI_ITALIA.filter(loc => loc.name.toLowerCase().includes(query)).map(loc => ({
+          name: loc.name,
+          display_name: `${loc.name} (${loc.type || 'Località'}, ⛰️ ${loc.alt || 300}m)`,
+          lat: loc.lat,
+          lon: loc.lon
+        })).slice(0, 5);
+      }
+
+      // 2. Se i risultati locali sono pochi, interroghiamo Nominatim (OpenStreetMap) come supporto esterno
+      if (foundResults.length < 5) {
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&accept-language=it`, {
+            headers: { 'User-Agent': 'FungoradarItalia/2.6' }
           });
-          resultsBox.innerHTML = html;
-        } else {
-          resultsBox.innerHTML = '<div class="text-orange-400 text-center py-2 text-xs">Nessun luogo trovato.</div>';
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.length > 0) {
+              data.forEach(place => {
+                const name = place.name || place.display_name.split(',')[0];
+                // Evita duplicati se già presenti nel DB locale
+                if (!foundResults.some(r => r.name.toLowerCase() === name.toLowerCase())) {
+                  foundResults.push({
+                    name: name,
+                    display_name: place.display_name,
+                    lat: place.lat,
+                    lon: place.lon
+                  });
+                }
+              });
+            }
+          }
+        } catch (err) {
+          console.warn("API di ricerca esterna non raggiungibile, uso solo database locale.");
         }
-      } catch (err) {
-        resultsBox.innerHTML = '<div class="text-red-400 text-center py-2 text-xs">Errore di connessione.</div>';
+      }
+
+      // 3. Renderizza i risultati trovati nel box
+      if (foundResults.length > 0) {
+        let html = '';
+        foundResults.forEach(place => {
+          html += `
+            <div onclick="selectSearchPlace(${place.lat}, ${place.lon}, '${place.name.replace(/'/g, "\\'")}')" class="bg-slate-800 hover:bg-slate-700 p-2 rounded-xl cursor-pointer border border-slate-700 transition">
+              <div class="font-bold text-emerald-400 text-xs">${place.name}</div>
+              <div class="text-[10px] text-slate-400 truncate">${place.display_name}</div>
+            </div>
+          `;
+        });
+        resultsBox.innerHTML = html;
+      } else {
+        resultsBox.innerHTML = '<div class="text-orange-400 text-center py-2 text-xs">Nessun luogo trovato. Prova un termine più generale (es. Roma, L\'Aquila, Terminillo...).</div>';
       }
     }
 
