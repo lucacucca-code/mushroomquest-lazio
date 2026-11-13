@@ -788,7 +788,7 @@
       }
     }
 
-    let geologyLayer = null;
+let geologyLayer = null;
     let isGeologyActive = false;
 
     function toggleGeologyLayer() {
@@ -804,20 +804,25 @@
         legend.classList.add('hidden');
         statusText.innerText = "Layer Geologico disattivato";
       } else {
-        statusText.innerText = "🪨 Caricamento Substrato Geologico (Esri Shaded Relief)...";
-        // Sostituiamo il WMS bloccato da CORS con le hillshade e i pattern geologici globali di Esri
-        geologyLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Specialty/DeLorme_World_Base_Map/MapServer/tile/{z}/{y}/{x}', {
-          maxZoom: 13,
-          opacity: 0.65,
+        statusText.innerText = "🪨 Caricamento Carta Geolitologica ISPRA...";
+        
+        // WMS ufficiale ISPRA (Unità Litologiche / Geolitologia 500k) configurato con parametri WMS 1.1.1 e EPSG:3857 compatibili
+        geologyLayer = L.tileLayer.wms('https://sgi2.isprambiente.it/arcgis/services/cartografia_geologica/unita_litologiche_500k/MapServer/WmsServer', {
+          layers: '0',
+          format: 'image/png',
+          transparent: true,
+          opacity: 0.6,
           zIndex: 460,
-          attribution: 'Tiles &copy; Esri &mdash; Copyright DeLorme'
+          version: '1.1.1',
+          crs: L.CRS.EPSG3857,
+          attribution: 'ISPRA - Servizio Geologico d\'Italia'
         }).addTo(map);
 
         isGeologyActive = true;
         btn.classList.remove('text-slate-300');
         btn.classList.add('text-amber-400');
         legend.classList.remove('hidden');
-        statusText.innerText = "🪨 Substrato Geologico Attivo (Zero CORS Error)";
+        statusText.innerText = "🪨 Carta Geolitologica ISPRA Attiva";
       }
     }
 
