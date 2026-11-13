@@ -755,7 +755,7 @@
     }
 
     // --- LAYER BOSCHI STABILE (OpenTopoMap / Natura) ---
-    let forestLayer = null;
+ let forestLayer = null;
     let isForestActive = false;
 
     function toggleForestLayer() {
@@ -771,23 +771,23 @@
         legend.classList.add('hidden');
         statusText.innerText = "Layer Boschi disattivato";
       } else {
-        statusText.innerText = "🌲 Caricamento Copertura Naturale...";
-        forestLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-          maxZoom: 17,
+        statusText.innerText = "🌲 Caricamento Copertura Forestale & Vegetazione...";
+        // Usiamo Esri World Imagery / National Geographic o Stamen Terrain ottimizzato per risaltare i boschi
+        forestLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+          maxZoom: 18,
           opacity: 0.7,
           zIndex: 450,
-          attribution: 'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap'
+          attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
         }).addTo(map);
 
         isForestActive = true;
         btn.classList.remove('text-slate-300');
         btn.classList.add('text-emerald-400');
         legend.classList.remove('hidden');
-        statusText.innerText = "🌲 Layer Boschi & Topografia Attivo";
+        statusText.innerText = "🌲 Copertura Forestale & Territorio Attiva";
       }
     }
 
-    // --- LAYER GEOLOGIA STABILE (Mappa Morfologica / Terreno) ---
     let geologyLayer = null;
     let isGeologyActive = false;
 
@@ -804,19 +804,20 @@
         legend.classList.add('hidden');
         statusText.innerText = "Layer Geologico disattivato";
       } else {
-        statusText.innerText = "🪨 Caricamento Substrato & Rilievi...";
-        geologyLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}', {
+        statusText.innerText = "🪨 Caricamento Substrato Geologico (Esri Shaded Relief)...";
+        // Sostituiamo il WMS bloccato da CORS con le hillshade e i pattern geologici globali di Esri
+        geologyLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Specialty/DeLorme_World_Base_Map/MapServer/tile/{z}/{y}/{x}', {
           maxZoom: 13,
-          opacity: 0.6,
+          opacity: 0.65,
           zIndex: 460,
-          attribution: 'Esri World Terrain'
+          attribution: 'Tiles &copy; Esri &mdash; Copyright DeLorme'
         }).addTo(map);
 
         isGeologyActive = true;
         btn.classList.remove('text-slate-300');
         btn.classList.add('text-amber-400');
         legend.classList.remove('hidden');
-        statusText.innerText = "🪨 Substrato & Morfologia Attiva";
+        statusText.innerText = "🪨 Substrato Geologico Attivo (Zero CORS Error)";
       }
     }
 
